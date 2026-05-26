@@ -1,5 +1,12 @@
 # CPE Network Dashboard Web Changelog
 
+## Website 1.1.0 (2026-05-27)
+
+- 官网改为分页式产品介绍结构：首屏、场景、平台、界面、设备覆盖、下载、更新和隐私统计各自成段，不再用单页堆叠日志。
+- 使用 CPE 网络看板应用图标作为导航和首屏品牌标志，并重做首屏产品截图、桌面窗口和下载状态展示。
+- 下载区改为一屏下载板，Android、macOS、Windows EXE、Windows MSI 和 Windows Portable 均保留直接静态下载入口与 SHA-256 复制。
+- 更新记录改为面向用户的产品语言，Android 3.1 重点说明烽火、测速页和 OPPO 系闪屏修复带来的实际体验变化。
+
 ## Android 3.1 (2026-05-26)
 
 - 修复烽火 AMBR 显示错误，屏蔽烽火 PUCCH，修复 4G 下 Trans.Mode 显示，并更新接口逻辑。

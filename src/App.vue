@@ -1,14 +1,14 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import {
-  changelog,
+  appIcon,
   desktopScreens,
   downloads,
-  features,
   heroDesktopImage,
   phoneScreens,
   platformCards,
-  productStats,
+  releaseNotes,
+  scenePages,
   supportedDevices,
 } from './content';
 import { fetchSummary, trackDownload, trackVisit } from './api';
@@ -21,16 +21,14 @@ const copiedChecksum = ref('');
 const downloadTotals = computed(() => summary.value?.downloadsByFile || {});
 const totalDownloads = computed(() => summary.value?.downloadsTotal ?? null);
 const totalVisits = computed(() => summary.value?.visits?.total ?? null);
-const todayVisits = computed(() => summary.value?.visits?.today ?? null);
-const recentEvents = computed(() => summary.value?.recent || []);
 
 function valueOrPreview(value) {
-  return Number.isFinite(value) ? value.toLocaleString('zh-CN') : '本地预览';
+  return Number.isFinite(value) ? value.toLocaleString('zh-CN') : '部署后统计';
 }
 
 function statForDownload(id) {
   const item = downloadTotals.value[id];
-  if (!item) return '待统计';
+  if (!item) return analyticsState.value === 'ready' ? '0 次' : '待统计';
   return `${Number(item.total || 0).toLocaleString('zh-CN')} 次`;
 }
 
@@ -69,136 +67,130 @@ onMounted(async () => {
   <div class="site-shell">
     <header class="topbar">
       <a class="brand-lockup" href="#top" aria-label="CPE 网络看板首页">
-        <span class="brand-mark">CPE</span>
+        <img :src="appIcon" alt="" />
         <span>
           <strong>CPE 网络看板</strong>
           <small>Network Dashboard</small>
         </span>
       </a>
       <nav class="nav-links" aria-label="主导航">
+        <a href="#scene">场景</a>
         <a href="#platforms">平台</a>
-        <a href="#features">能力</a>
+        <a href="#gallery">界面</a>
         <a href="#downloads">下载</a>
-        <a href="#changelog">更新</a>
-        <a href="#privacy">隐私</a>
+        <a href="#release">更新</a>
       </nav>
     </header>
 
     <main id="top">
-      <section class="hero" :style="{ '--hero-image': `url(${heroDesktopImage})` }">
-        <div class="hero-shade"></div>
-        <div class="hero-content">
-          <p class="eyebrow">Android 3.1 / macOS 3.0.0 / Windows 3.0.0</p>
-          <h1>CPE 网络看板</h1>
-          <p class="hero-copy">
-            面向 4G/5G CPE 的跨平台管理工具。实时信号、频段与小区控制、邻区扫描、测速、Ping
-            和路由测试，收进一个能在现场直接工作的看板里。
+      <section class="hero page">
+        <div class="hero-copy-block">
+          <p class="eyebrow">CPE Network Dashboard</p>
+          <h1>
+            <span>先看清 CPE，</span>
+            <span>再调好网络。</span>
+          </h1>
+          <p>
+            给 4G/5G CPE 用户的一张操作台。信号、小区、锁频、测速和出口状态放在一起看，
+            少翻几层后台，也少靠感觉判断。
           </p>
-          <div class="hero-actions" aria-label="主要操作">
+          <div class="hero-actions">
             <a class="primary-action" href="#downloads">
               <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 20h14" />
+                <path d="M12 4v10m0 0 3.5-3.5M12 14l-3.5-3.5M5 20h14" />
               </svg>
               下载最新版
             </a>
-            <a class="secondary-action" href="#changelog">查看更新日志</a>
+            <a class="secondary-action" href="#scene">看看能做什么</a>
           </div>
-          <dl class="hero-facts" aria-label="产品状态">
-            <div v-for="item in productStats" :key="item.label">
-              <dt>{{ item.label }}</dt>
-              <dd>{{ item.value }}</dd>
-              <span>{{ item.detail }}</span>
+        </div>
+
+        <div class="hero-product">
+          <div class="hero-icon-card">
+            <img :src="appIcon" alt="CPE 网络看板应用图标" />
+            <span>Android 3.1</span>
+          </div>
+          <div class="hero-window">
+            <div class="window-bar">
+              <span></span>
+              <span></span>
+              <span></span>
+              <strong>正在查看 CPE 连接状态</strong>
             </div>
-          </dl>
-        </div>
-      </section>
-
-      <section class="release-rail" aria-label="实时发布统计">
-        <div class="release-stat">
-          <span>访问</span>
-          <strong>{{ valueOrPreview(totalVisits) }}</strong>
-          <small>今日 {{ valueOrPreview(todayVisits) }}</small>
-        </div>
-        <div class="release-stat">
-          <span>下载</span>
-          <strong>{{ valueOrPreview(totalDownloads) }}</strong>
-          <small>{{ analyticsState === 'ready' ? 'ESA EdgeKV 聚合' : '部署后自动记录' }}</small>
-        </div>
-        <div class="release-stat wide">
-          <span>当前公开包</span>
-          <strong>Android 3.1 + Desktop 3.0.0</strong>
-          <small>静态安装包由 ESA 直接分发，统计走轻量边缘函数</small>
-        </div>
-      </section>
-
-      <section id="platforms" class="section band-soft">
-        <div class="section-heading split-heading">
-          <div>
-            <p class="eyebrow">Platform matrix</p>
-            <h2>每个平台都按自己的手感做</h2>
+            <img :src="heroDesktopImage" alt="CPE 网络看板桌面界面" />
           </div>
+          <div class="signal-card">
+            <span>当前公开下载</span>
+            <strong>Android / macOS / Windows</strong>
+            <small>安装包由 ESA 静态分发，点击统计不影响下载。</small>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene" class="page scene-page">
+        <article v-for="scene in scenePages" :key="scene.title" class="scene-panel">
+          <div>
+            <p class="eyebrow">{{ scene.kicker }}</p>
+            <h2>{{ scene.title }}</h2>
+          </div>
+          <p>{{ scene.copy }}</p>
+          <ul>
+            <li v-for="point in scene.points" :key="point">{{ point }}</li>
+          </ul>
+        </article>
+      </section>
+
+      <section id="platforms" class="page platforms-page">
+        <div class="page-heading">
+          <p class="eyebrow">Platforms</p>
+          <h2>手机随身看，电脑展开看。</h2>
           <p>
-            Android 负责移动端主线，macOS 和 Windows 已提供桌面安装包；iOS
-            基线保留在跨平台工程里，等真机回归稳定后再进入公开分发。
+            同一个产品，不强行套同一种界面。Android 适合现场快速处理，macOS 和 Windows
+            适合长时间看状态和做复盘。
           </p>
         </div>
-        <div class="platform-grid">
+        <div class="platform-strip">
           <article v-for="platform in platformCards" :key="platform.name" class="platform-card">
-            <div class="platform-head">
-              <span>{{ platform.name }}</span>
-              <small>{{ platform.version }}</small>
-            </div>
-            <p class="platform-posture">{{ platform.posture }}</p>
+            <span>{{ platform.name }} / {{ platform.version }}</span>
+            <h3>{{ platform.title }}</h3>
             <p>{{ platform.copy }}</p>
-            <ul>
-              <li v-for="item in platform.bullets" :key="item">{{ item }}</li>
-            </ul>
           </article>
         </div>
       </section>
 
-      <section class="media-section">
-        <div class="desktop-stage">
-          <img :src="activeDesktop" alt="CPE 网络看板桌面端界面截图" />
-        </div>
-        <div class="desktop-thumbs" aria-label="桌面端截图切换">
-          <button
-            v-for="screen in desktopScreens"
-            :key="screen"
-            type="button"
-            :class="{ active: activeDesktop === screen }"
-            @click="activeDesktop = screen"
-          >
-            <img :src="screen" alt="" />
-          </button>
-        </div>
-        <div class="phone-strip" aria-label="Android 端界面截图">
-          <img v-for="screen in phoneScreens.slice(0, 7)" :key="screen" :src="screen" alt="CPE 网络看板 Android 界面截图" />
-        </div>
-      </section>
-
-      <section id="features" class="section">
-        <div class="section-heading">
-          <p class="eyebrow">Product depth</p>
-          <h2>不是一张状态页，是一套 CPE 工作台</h2>
-        </div>
-        <div class="feature-grid">
-          <article v-for="feature in features" :key="feature.title" class="feature-tile">
-            <p>{{ feature.eyebrow }}</p>
-            <h3>{{ feature.title }}</h3>
-            <span>{{ feature.copy }}</span>
-          </article>
-        </div>
-      </section>
-
-      <section class="section support-band">
-        <div class="section-heading split-heading">
-          <div>
-            <p class="eyebrow">Device coverage</p>
-            <h2>围绕真实设备族整理接口</h2>
-          </div>
+      <section id="gallery" class="page gallery-page">
+        <div class="gallery-copy">
+          <p class="eyebrow">Interface</p>
+          <h2>桌面端给信息留空间，手机端给操作留速度。</h2>
           <p>
-            不同固件字段和锁定能力可能不同，锁频、锁小区、网络模式切换建议在真实设备上执行回读验证。
+            大屏上把信号、锁频、测速和日志铺开；手机上保留卡片式节奏。两边都不只是“截图好看”，而是为了现场少点犹豫。
+          </p>
+          <div class="screen-switcher" aria-label="切换桌面截图">
+            <button
+              v-for="(screen, index) in desktopScreens"
+              :key="screen"
+              type="button"
+              :class="{ active: activeDesktop === screen }"
+              @click="activeDesktop = screen"
+            >
+              {{ String(index + 1).padStart(2, '0') }}
+            </button>
+          </div>
+        </div>
+        <div class="gallery-stage">
+          <img class="desktop-shot" :src="activeDesktop" alt="CPE 网络看板桌面截图" />
+          <div class="phone-stack" aria-label="Android 界面预览">
+            <img v-for="screen in phoneScreens.slice(0, 3)" :key="screen" :src="screen" alt="CPE 网络看板 Android 截图" />
+          </div>
+        </div>
+      </section>
+
+      <section class="page device-page">
+        <div class="page-heading compact">
+          <p class="eyebrow">Device coverage</p>
+          <h2>面向真实设备，不写空泛兼容。</h2>
+          <p>
+            不同固件的字段会有差异，所以看板把设备族分开处理。能读到什么、能锁什么、有没有回读，都按真实接口来。
           </p>
         </div>
         <div class="device-table">
@@ -209,28 +201,22 @@ onMounted(async () => {
         </div>
       </section>
 
-      <section id="downloads" class="section download-section">
-        <div class="section-heading split-heading">
-          <div>
-            <p class="eyebrow">Direct release files</p>
-            <h2>安装包直接放在前端分发</h2>
-          </div>
+      <section id="downloads" class="page downloads-page">
+        <div class="page-heading compact">
+          <p class="eyebrow">Downloads</p>
+          <h2>选择你现在要用的平台。</h2>
           <p>
-            下载链接指向静态文件，ESA 负责边缘分发；点击统计通过单文件边缘函数写入 EdgeKV，
-            即使统计接口离线也不影响下载。
+            下载文件直接放在前端静态目录里，ESA 可以就近分发。统计接口只做聚合记录，离线也不挡下载。
           </p>
         </div>
-        <div class="download-grid">
+        <div class="download-board">
           <article v-for="download in downloads" :key="download.id" class="download-card">
             <div class="download-topline">
-              <span>{{ download.platform }}</span>
-              <small>{{ download.version }}</small>
+              <span>{{ download.label }}</span>
+              <small>{{ download.platform }} {{ download.version }}</small>
             </div>
             <h3>{{ download.title }}</h3>
-            <p class="file-name">{{ download.fileName }}</p>
-            <ul>
-              <li v-for="note in download.notes" :key="note">{{ note }}</li>
-            </ul>
+            <p>{{ download.copy }}</p>
             <div class="download-meta">
               <span>{{ download.size }}</span>
               <span>{{ statForDownload(download.id) }}</span>
@@ -243,65 +229,44 @@ onMounted(async () => {
                 下载
               </a>
               <button type="button" class="checksum-button" @click="copyChecksum(download)">
-                {{ copiedChecksum === download.id ? '已复制 SHA-256' : '复制 SHA-256' }}
+                {{ copiedChecksum === download.id ? '已复制' : 'SHA-256' }}
               </button>
             </div>
           </article>
         </div>
       </section>
 
-      <section id="changelog" class="section changelog-section">
-        <div class="section-heading split-heading">
-          <div>
-            <p class="eyebrow">Changelog</p>
-            <h2>更新日志已经按公开发布口径整理</h2>
-          </div>
+      <section id="release" class="page release-page">
+        <div class="release-intro">
+          <p class="eyebrow">Release notes</p>
+          <h2>更新不是堆条目，是让现场少踩坑。</h2>
           <p>
-            Android 3.1 使用你提供的最新更新记录；桌面和跨平台条目来自当前项目 README、VERSION
-            与 release notes。
+            这里只保留用户真正会感知到的变化。校验值放在下载卡片里，更新记录则尽量说清楚这次用起来哪里更稳。
           </p>
         </div>
-        <div class="timeline">
-          <article v-for="entry in changelog" :key="entry.version" class="timeline-item">
-            <div class="timeline-pin"></div>
-            <div class="timeline-body">
-              <p class="timeline-meta">{{ entry.date }} / {{ entry.version }}</p>
-              <h3>{{ entry.title }}</h3>
-              <ul>
-                <li v-for="item in entry.items" :key="item">{{ item }}</li>
-              </ul>
-            </div>
+        <div class="release-list">
+          <article v-for="note in releaseNotes" :key="note.version">
+            <span>{{ note.date }} / {{ note.version }}</span>
+            <h3>{{ note.title }}</h3>
+            <p>{{ note.copy }}</p>
           </article>
         </div>
       </section>
 
-      <section id="privacy" class="section privacy-section">
-        <div class="privacy-copy">
-          <p class="eyebrow">Public repository safety</p>
-          <h2>公共仓库只放官网、公开安装包和聚合统计逻辑</h2>
+      <section class="page privacy-page">
+        <div>
+          <p class="eyebrow">Privacy</p>
+          <h2>官网做统计，应用不替你上传设备信息。</h2>
           <p>
-            边缘函数不会返回完整 IP、原始 User-Agent 或任何设备登录信息；统计页面只读取访问总量、今日访问、
-            下载次数、设备类型和来源域名等聚合结果。CPE 登录、锁频和测速仍发生在用户本机与局域网设备之间。
+            CPE 登录、锁频、测速都发生在你的设备和局域网 CPE 之间。官网只记录访问量、下载量、来源和设备类型这类聚合信息，不公开完整 IP 或原始 User-Agent。
           </p>
         </div>
-        <div class="privacy-panel">
-          <span>Edge Function</span>
-          <strong>single js</strong>
-          <p>/api/track / /api/download / /api/analytics/summary</p>
-        </div>
-      </section>
-
-      <section class="section analytics-strip" v-if="recentEvents.length">
-        <div class="section-heading">
-          <p class="eyebrow">Recent public events</p>
-          <h2>最近聚合事件</h2>
-        </div>
-        <div class="event-list">
-          <div v-for="event in recentEvents.slice(0, 6)" :key="`${event.time}-${event.kind}-${event.file || event.page}`">
-            <span>{{ event.kind === 'download' ? '下载' : '访问' }}</span>
-            <strong>{{ event.fileLabel || event.page || '/' }}</strong>
-            <small>{{ event.device || 'Unknown device' }}</small>
-          </div>
+        <div class="counter-panel">
+          <span>官网访问</span>
+          <strong>{{ valueOrPreview(totalVisits) }}</strong>
+          <small>{{ analyticsState === 'ready' ? '来自 ESA EdgeKV 聚合' : '本地预览时不会写入线上统计' }}</small>
+          <span>累计下载</span>
+          <strong>{{ valueOrPreview(totalDownloads) }}</strong>
         </div>
       </section>
     </main>
