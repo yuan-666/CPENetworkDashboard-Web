@@ -1,0 +1,5 @@
+9aed997cc91f34a0b17bf79c31230ca1f459064a9f797f49d78a9df0b547b790  CPE-Network-Dashboard-3.1-android.apk
+35ae5e36c5c72723e520c7240a7ff39263a51567f48936815b9973478d5de952  CPE-Network-Dashboard-3.0.0-macos.dmg
+0d613ea043d0f38f17d52334ad3c42fddb4beeb80877eda0aa87c6165d466803  CPE-Network-Dashboard-3.0.0-windows-x64.exe
+9e738a7cedfe93ffdaa2c8a73a8689d31d9118ccf4c5b757664d6a4e7039f7cf  CPE-Network-Dashboard-3.0.0-windows-x64.msi
+a359d9eff066173efd7431687b804d6fa7a63a511aa477f21440f06fecb9983a  CPE-Network-Dashboard-3.0.0-protected-portable-windows-x64.zip
