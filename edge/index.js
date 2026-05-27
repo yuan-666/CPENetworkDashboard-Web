@@ -29,19 +29,19 @@ const DOWNLOADS = {
   },
   'macos-3.0.0': {
     label: 'macOS 3.0.0 DMG',
-    href: '/downloads/CPE-Network-Dashboard-3.0.0-macos.dmg',
+    href: '/#downloads',
   },
   'windows-exe-3.0.0': {
     label: 'Windows 3.0.0 EXE',
-    href: '/downloads/CPE-Network-Dashboard-3.0.0-windows-x64.exe',
+    href: '/#downloads',
   },
   'windows-msi-3.0.0': {
     label: 'Windows 3.0.0 MSI',
-    href: '/downloads/CPE-Network-Dashboard-3.0.0-windows-x64.msi',
+    href: '/#downloads',
   },
   'windows-portable-3.0.0': {
     label: 'Windows 3.0.0 Portable',
-    href: '/downloads/CPE-Network-Dashboard-3.0.0-protected-portable-windows-x64.zip',
+    href: '/#downloads',
   },
 };
 

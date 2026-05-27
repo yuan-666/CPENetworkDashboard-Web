@@ -294,6 +294,11 @@ p {
   background: rgba(255, 255, 255, 0.96);
 }
 
+.download-row-actions button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
 .primary-action svg,
 .download-button svg {
   width: 18px;

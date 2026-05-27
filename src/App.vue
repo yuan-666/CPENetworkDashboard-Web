@@ -18,6 +18,7 @@ const analyticsState = ref('loading');
 const activeDesktop = ref(heroDesktopImage);
 const activeMobile = ref(mobileScreens[0]);
 const copiedChecksum = ref('');
+const downloadStates = ref({});
 
 const primaryDownload = computed(() => downloads[0]);
 const desktopDownloads = computed(() => downloads.slice(1));
@@ -37,6 +38,89 @@ function statForDownload(id) {
 
 function handleDownload(fileId) {
   trackDownload(fileId);
+}
+
+function setDownloadState(fileId, nextState) {
+  downloadStates.value = {
+    ...downloadStates.value,
+    [fileId]: {
+      ...(downloadStates.value[fileId] || {}),
+      ...nextState,
+    },
+  };
+}
+
+function getDownloadState(fileId) {
+  return downloadStates.value[fileId] || {};
+}
+
+function downloadButtonText(download) {
+  const state = getDownloadState(download.id);
+  if (state.status === 'downloading') return `正在下载 ${state.progress || 0}%`;
+  if (state.status === 'assembling') return '正在合并';
+  if (state.status === 'done') return '已开始保存';
+  if (state.status === 'error') return '重试下载';
+  return download.chunks?.length ? '下载并自动合并' : '下载';
+}
+
+function readChunkBlob(url) {
+  if (typeof window.fetch === 'function') {
+    return window.fetch(url).then((response) => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.blob();
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open('GET', url, true);
+    request.responseType = 'blob';
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) {
+        resolve(request.response);
+      } else {
+        reject(new Error(`HTTP ${request.status}`));
+      }
+    };
+    request.onerror = () => reject(new Error('Network error'));
+    request.send();
+  });
+}
+
+async function downloadChunkedFile(download) {
+  if (!download.chunks?.length) return;
+  trackDownload(download.id);
+  setDownloadState(download.id, { status: 'downloading', progress: 0 });
+
+  try {
+    const blobs = [];
+    for (let index = 0; index < download.chunks.length; index += 1) {
+      blobs.push(await readChunkBlob(download.chunks[index]));
+      setDownloadState(download.id, {
+        status: 'downloading',
+        progress: Math.round(((index + 1) / download.chunks.length) * 100),
+      });
+    }
+
+    setDownloadState(download.id, { status: 'assembling', progress: 100 });
+    const blob = new Blob(blobs, { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = download.fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 8000);
+    setDownloadState(download.id, { status: 'done', progress: 100 });
+    window.setTimeout(() => {
+      if (getDownloadState(download.id).status === 'done') {
+        setDownloadState(download.id, { status: 'idle', progress: 0 });
+      }
+    }, 2200);
+  } catch {
+    setDownloadState(download.id, { status: 'error', progress: 0 });
+  }
 }
 
 async function copyChecksum(download) {
@@ -90,21 +174,21 @@ onMounted(async () => {
         <div class="hero-copy">
           <p class="eyebrow">For 4G / 5G CPE</p>
           <h1>
-            <span>先看清 CPE，</span>
-            <span>再调好网络。</span>
+            <span>CPE 网速不对，</span>
+            <span>先别急着重启。</span>
           </h1>
           <p>
-            CPE 网络看板把信号、小区、锁频、测速和路由测试放到一个清楚的界面里。
-            网速变慢、信号飘、设备切小区时，你先看到原因，再决定怎么调。
+            先看看它连在哪个小区、信号质量怎么样、测速和 Ping 走的是哪条链路。
+            CPE 网络看板做的事很简单：把这些原本分散在后台里的信息，放到你能直接判断的地方。
           </p>
           <div class="hero-actions">
             <a class="primary-action" href="#downloads">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 4v10m0 0 3.5-3.5M12 14l-3.5-3.5M5 20h14" />
               </svg>
-              下载最新版
+              下载 Android 3.1
             </a>
-            <a class="secondary-action" href="#scene">先看看适不适合你</a>
+            <a class="secondary-action" href="#scene">看看它能帮你省哪一步</a>
           </div>
           <div class="hero-points" aria-label="核心能力">
             <span>信号质量</span>
@@ -134,10 +218,9 @@ onMounted(async () => {
       <section id="scene" class="page story-page">
         <div class="section-copy story-intro">
           <p class="eyebrow">When to use it</p>
-          <h2>当 CPE 表现不稳定时，你需要的是判断顺序。</h2>
+          <h2>多数时候，你缺的不是按钮，是依据。</h2>
           <p>
-            这个工具不是把后台字段搬出来给你看，而是按真实排障过程组织信息：
-            先看状态，再调参数，最后验证结果。
+            设备后台能做的事很多，但现场排查真正需要的是顺序。先确认状态，再决定要不要锁频、锁小区，最后用测速和 Ping 验证。
           </p>
         </div>
         <div class="story-grid">
@@ -152,10 +235,9 @@ onMounted(async () => {
       <section id="desktop" class="page desktop-page">
         <div class="section-copy">
           <p class="eyebrow">Computer screenshots</p>
-          <h2>电脑端：把信息摊开看。</h2>
+          <h2>电脑端适合慢慢看。</h2>
           <p>
-            横向界面留给 macOS 和 Windows。大屏上可以同时看连接、锁频、测速和日志，
-            适合坐下来做一轮完整排查。
+            坐在电脑前排查时，信息越集中越好。连接、锁频、测速和日志铺在同一个横向界面里，来回切后台的次数会少很多。
           </p>
         </div>
         <div class="desktop-showcase">
@@ -203,10 +285,9 @@ onMounted(async () => {
         </div>
         <div class="section-copy mobile-copy">
           <p class="eyebrow">Phone screenshots</p>
-          <h2>手机端：站在设备旁边也能操作。</h2>
+          <h2>手机端适合现场动手。</h2>
           <p>
-            Android 的长屏界面适合站在设备旁边快速看信号、锁频、测速，
-            不需要打开电脑，也不用在路由器后台来回翻。
+            CPE 放在窗边、弱电箱、机柜里时，手机更顺手。看一眼信号，扫一下邻区，必要时直接改锁定策略。
           </p>
           <div class="mobile-notes">
             <span>现场调试</span>
@@ -219,10 +300,9 @@ onMounted(async () => {
       <section id="platforms" class="page platforms-page">
         <div class="section-copy">
           <p class="eyebrow">Three ways to use</p>
-          <h2>不是同一个界面硬套三端。</h2>
+          <h2>手机和电脑，各做各的事。</h2>
           <p>
-            手机负责现场速度，电脑负责展开信息。不同平台都围绕同一件事：
-            让 CPE 的状态更容易被看懂。
+            手机负责快，电脑负责看得全。你在哪个场景里处理 CPE，就用哪个版本。
           </p>
         </div>
         <div class="platform-list">
@@ -237,10 +317,9 @@ onMounted(async () => {
       <section class="page device-page">
         <div class="section-copy">
           <p class="eyebrow">Device coverage</p>
-          <h2>按真实设备族适配，不写空泛兼容。</h2>
+          <h2>不同设备，别当成一个后台来处理。</h2>
           <p>
-            不同 CPE 固件的字段和能力会有差异。看板会按设备族处理显示、锁定和回读能力，
-            能读到什么、能下发什么，尽量让你在界面里看清楚。
+            华为、烽火、鲲鹏、中兴的字段和接口都不太一样。看板按设备族处理显示、锁定和回读，少用一套通用说法糊弄过去。
           </p>
         </div>
         <div class="device-table">
@@ -254,9 +333,9 @@ onMounted(async () => {
       <section id="downloads" class="page downloads-page">
         <div class="section-copy download-copy">
           <p class="eyebrow">Downloads</p>
-          <h2>现在要在哪台设备上用，就下哪一个包。</h2>
+          <h2>选你现在手边的设备。</h2>
           <p>
-            安装包直接分发。官网只记录聚合访问和下载次数，统计离线也不影响你拿到文件。
+            Android 包直接下载；桌面安装包比较大，会自动分片取回再合成原文件。你不用手动拼接。
           </p>
         </div>
         <div class="download-layout">
@@ -293,7 +372,13 @@ onMounted(async () => {
               </div>
               <div class="download-row-actions">
                 <small>{{ download.size }} / {{ statForDownload(download.id) }}</small>
-                <a :href="download.href" download @click="handleDownload(download.id)">下载</a>
+                <button
+                  type="button"
+                  :disabled="['downloading', 'assembling'].includes(getDownloadState(download.id).status)"
+                  @click="downloadChunkedFile(download)"
+                >
+                  {{ downloadButtonText(download) }}
+                </button>
                 <button type="button" @click="copyChecksum(download)">
                   {{ copiedChecksum === download.id ? '已复制' : 'SHA-256' }}
                 </button>
@@ -306,9 +391,9 @@ onMounted(async () => {
       <section id="release" class="page release-page">
         <div class="section-copy">
           <p class="eyebrow">Recent improvements</p>
-          <h2>最近值得更新的原因。</h2>
+          <h2>这几版主要是把常见坑填掉。</h2>
           <p>
-            这里不堆完整条目，只挑会影响使用体验的变化：哪里更稳、哪里更准、哪些设备少出问题。
+            完整记录放在仓库里。这里说人话：哪些设备更稳了，哪些显示更准了，哪些场景少闪退少误判。
           </p>
         </div>
         <div class="release-list">

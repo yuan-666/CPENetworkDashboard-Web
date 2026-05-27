@@ -2,6 +2,15 @@
 
 CPE 网络看板产品官网。前端使用 Vue + Vite，下载文件放在 `public/downloads`，截图放在 `public/media`，可直接构建后放到阿里云 ESA 静态站点分发。
 
+## ESA 25MB 文件限制
+
+ESA 静态构建产物单文件限制为 25MB。当前发布方式是：
+
+- Android APK 小于 25MB，保留原始文件直链。
+- macOS DMG、Windows EXE、Windows MSI、Windows Portable 原始包移出 `public`，不进入 `dist`。
+- 大文件按 20MiB 拆到 `public/downloads/chunks/<file-id>/`，前端点击下载时逐片读取并在浏览器中合成为原文件。
+- 原始大文件仅保留在本地 `release-originals/`，该目录被 `.gitignore` 忽略，不参与 ESA 发布。
+
 ## 官网内容结构
 
 - 首屏使用应用图标和电脑端截图作为品牌识别，直接进入“先看清 CPE，再调好网络”的产品表达。
@@ -21,7 +30,7 @@ CPE 网络看板产品官网。前端使用 Vue + Vite，下载文件放在 `pub
 | `CPE-Network-Dashboard-3.0.0-windows-x64.msi` | Windows x64 | 3.0.0 | 98.9 MiB |
 | `CPE-Network-Dashboard-3.0.0-protected-portable-windows-x64.zip` | Windows x64 | 3.0.0 | 97.5 MiB |
 
-SHA-256 见 `public/downloads/checksums.txt`。
+SHA-256 见 `public/downloads/checksums.txt`。桌面端大文件在网页里自动分片下载并合并，用户不需要手动处理分片。
 
 ## 本地开发
 
@@ -36,7 +45,7 @@ npm run dev
 npm run build
 ```
 
-构建产物在 `dist/`。下载文件会随 Vite public 目录复制到 `dist/downloads/`，适合直接上传到 ESA 静态资源托管。
+构建产物在 `dist/`。`public/downloads` 中只保留 APK、校验文件和不超过 25MB 的分片文件，适合直接上传到 ESA 静态资源托管。
 
 ## ESA Edge Function
 
@@ -63,7 +72,7 @@ cpe_network_dashboard_web
 | `/api/counter?skip=1` | GET | 读取访问计数 |
 | `/api/track` | POST | 写入页面访问事件 |
 | `/api/download` | POST | 写入下载点击事件 |
-| `/api/download?file=<id>` | GET | 统计后 302 到静态下载文件 |
+| `/api/download?file=<id>` | GET | 统计后跳转；大文件请使用页面内分片下载 |
 | `/api/downloads` | GET | 读取下载计数 |
 | `/api/analytics/summary` | GET | 公开聚合统计 |
 
