@@ -18,7 +18,11 @@ const activeMobile = ref(mobileScreens[0])
   <section class="page-view product-page">
     <header class="page-heading">
       <p>产品介绍</p>
-      <h1>先看清楚，再动手，再验证。</h1>
+      <h1>
+        <span>先看清楚，</span>
+        <span>再动手，</span>
+        <span>再验证。</span>
+      </h1>
       <span>
         面向 4G/5G CPE
         的日常排障、现场调试和设备巡检。我们把原本分散在后台里的信息，整理成调试时真的会用到的顺序。
@@ -50,7 +54,9 @@ const activeMobile = ref(mobileScreens[0])
             <span></span>
             <strong>macOS / Windows</strong>
           </div>
-          <LazyImage :src="activeDesktop" alt="CPE 网络看板电脑端截图" />
+          <div class="desktop-screen-frame">
+            <LazyImage :src="activeDesktop" alt="CPE 网络看板电脑端截图" />
+          </div>
         </div>
         <div class="thumb-row desktop-thumbs" aria-label="切换电脑端截图">
           <button
@@ -109,8 +115,11 @@ const activeMobile = ref(mobileScreens[0])
     <section class="device-section">
       <div class="section-copy">
         <p>设备覆盖</p>
-        <h2>不同设备族，按不同接口认真处理。</h2>
-        <span>华为、烽火、鲲鹏、中兴的字段和接口都不一样，看板按设备族处理显示、锁定和回读。</span>
+        <h2>写到哪台，就按哪台来。</h2>
+        <span>
+          华为、烽火、鲲鹏这些设备族会按各自接口处理。中兴目前只放 G5 Pro 和 U60
+          Pro，不把没有做过的机型写成全系支持。
+        </span>
       </div>
       <div class="device-table">
         <div v-for="[brand, models] in supportedDevices" :key="brand" class="device-row">

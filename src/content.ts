@@ -125,7 +125,7 @@ export const supportedDevices: Array<[string, string]> = [
   ['HUAWEI', 'H168-383 / H155-381 / H153-381'],
   ['FiberHome', 'LG6121D / LG6121F / LG6121H / LG6851F / LG6151M'],
   ['NRADIO / 鲲鹏无限', 'LuCI NRADIO CPE，兼容 cpe / cpe1 / wan0 模板'],
-  ['ZTE / 中兴', '支持 UBUS Web API 的中兴 CPE'],
+  ['ZTE / 中兴', 'G5 Pro / U60 Pro，目前只按这两台实测设备写支持范围'],
 ]
 
 export const downloads: Download[] = [

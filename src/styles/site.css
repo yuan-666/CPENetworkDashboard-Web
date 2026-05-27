@@ -1,7 +1,8 @@
 :root {
   color-scheme: light;
   font-family:
-    Satoshi, Geist, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei UI', system-ui, sans-serif;
+    'HarmonyOS Sans SC', MiSans, 'PingFang SC', 'Noto Sans CJK SC', 'Microsoft YaHei UI',
+    'Microsoft YaHei', 'SF Pro Display', system-ui, sans-serif;
   color: #181b18;
   background: #f4f3ed;
   font-synthesis: none;
@@ -18,7 +19,7 @@
   --accent: #206d63;
   --accent-2: #315f9f;
   --warm: #ad7333;
-  --mono: 'SF Mono', 'Cascadia Mono', 'JetBrains Mono', monospace;
+  --mono: 'SF Mono', 'Cascadia Mono', 'JetBrains Mono', 'Roboto Mono', monospace;
 }
 
 * {
@@ -33,9 +34,9 @@ body {
   min-width: 320px;
   margin: 0;
   background:
-    linear-gradient(rgba(24, 27, 24, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(24, 27, 24, 0.035) 1px, transparent 1px), var(--soft);
-  background-size: 42px 42px;
+    linear-gradient(rgba(24, 27, 24, 0.024) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(24, 27, 24, 0.02) 1px, transparent 1px), var(--soft);
+  background-size: 56px 56px;
 }
 
 body::before {
@@ -44,12 +45,12 @@ body::before {
   z-index: -1;
   content: '';
   background:
-    linear-gradient(115deg, rgba(32, 109, 99, 0.12), transparent 36%),
+    linear-gradient(115deg, rgba(32, 109, 99, 0.08), transparent 36%),
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.82),
-      rgba(244, 243, 237, 0.28) 44%,
-      rgba(244, 243, 237, 0.94)
+      rgba(255, 255, 255, 0.9),
+      rgba(244, 243, 237, 0.42) 44%,
+      rgba(244, 243, 237, 0.96)
     );
   pointer-events: none;
 }
@@ -92,7 +93,7 @@ img {
   padding: 8px;
   border: 1px solid rgba(255, 255, 255, 0.76);
   border-radius: 12px;
-  background: rgba(247, 246, 240, 0.82);
+  background: rgba(249, 248, 243, 0.92);
   box-shadow:
     0 18px 54px rgba(24, 27, 24, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -124,6 +125,7 @@ img {
   color: var(--ink);
   font-size: 15px;
   line-height: 1.12;
+  font-weight: 720;
 }
 
 .brand-lockup small {
@@ -220,9 +222,9 @@ p {
 .page-heading h1 {
   margin-bottom: 20px;
   color: var(--ink);
-  font-size: clamp(42px, 5vw, 64px);
-  line-height: 1.06;
-  font-weight: 760;
+  font-size: clamp(40px, 4.7vw, 60px);
+  line-height: 1.08;
+  font-weight: 720;
   letter-spacing: 0;
 }
 
@@ -349,8 +351,8 @@ p {
   border-radius: 8px;
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.18)),
-    linear-gradient(rgba(24, 27, 24, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(24, 27, 24, 0.08) 1px, transparent 1px);
+    linear-gradient(rgba(24, 27, 24, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(24, 27, 24, 0.045) 1px, transparent 1px);
   background-size:
     auto,
     28px 28px,
@@ -408,13 +410,13 @@ p {
 
 .desktop-window {
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.74);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(24, 27, 24, 0.1);
+  border-radius: 14px;
+  background: #f8faf7;
   box-shadow:
-    0 24px 70px rgba(24, 27, 24, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.86);
-  backdrop-filter: blur(18px);
+    0 24px 70px rgba(24, 27, 24, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  isolation: isolate;
 }
 
 .hero-desktop {
@@ -432,6 +434,7 @@ p {
   gap: 7px;
   padding: 0 13px;
   border-bottom: 1px solid rgba(24, 27, 24, 0.1);
+  background: rgba(248, 249, 247, 0.94);
 }
 
 .window-bar span {
@@ -448,10 +451,24 @@ p {
   font-size: 11px;
 }
 
-.desktop-window img {
+.desktop-screen-frame {
+  overflow: hidden;
+  border-radius: 0 0 13px 13px;
+  background: #f8faf7;
+}
+
+.desktop-screen-frame img {
   width: 100%;
+  max-width: none;
   aspect-ratio: 244 / 152;
   object-fit: cover;
+  transform: scale(1.014);
+  transform-origin: center center;
+}
+
+.desktop-thumbs img {
+  transform: scale(1.04);
+  transform-origin: center center;
 }
 
 .phone-shell {
@@ -580,7 +597,12 @@ p {
 
 .page-heading h1 {
   max-width: 760px;
-  font-size: clamp(38px, 4.7vw, 58px);
+  font-size: clamp(36px, 4.2vw, 54px);
+  text-wrap: balance;
+}
+
+.page-heading h1 span {
+  white-space: nowrap;
 }
 
 .page-heading span,
@@ -615,11 +637,11 @@ p {
 .thanks-card {
   border: 1px solid rgba(24, 27, 24, 0.11);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.74);
+  background: rgba(255, 255, 255, 0.86);
   box-shadow:
-    0 18px 50px rgba(24, 27, 24, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(16px);
+    0 18px 46px rgba(24, 27, 24, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(8px);
 }
 
 .flow-item {
@@ -639,13 +661,13 @@ p {
   margin: 16px 0 12px;
   color: var(--ink);
   font-size: clamp(25px, 3vw, 40px);
-  line-height: 1.12;
-  font-weight: 740;
+  line-height: 1.16;
+  font-weight: 700;
   letter-spacing: 0;
 }
 
 .flow-item h2 {
-  font-size: clamp(24px, 2.35vw, 32px);
+  font-size: clamp(24px, 2.2vw, 30px);
 }
 
 .flow-item div {
@@ -673,8 +695,8 @@ p {
 .device-section,
 .about-section {
   display: grid;
-  grid-template-columns: minmax(280px, 0.46fr) minmax(560px, 1fr);
-  gap: 42px;
+  grid-template-columns: minmax(280px, 0.42fr) minmax(560px, 1fr);
+  gap: 48px;
   align-items: center;
   margin-top: 70px;
 }
@@ -1165,7 +1187,7 @@ p {
 .person-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .makers-section {
@@ -1191,14 +1213,61 @@ p {
   padding: 20px;
 }
 
-.makers-section .person-card {
-  min-height: 158px;
-  background: linear-gradient(135deg, rgba(23, 26, 24, 0.92), rgba(23, 26, 24, 0.78)), var(--dark);
+.makers-section .maker-card {
+  position: relative;
+  min-height: 232px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  border-color: rgba(255, 255, 255, 0.16);
+  background:
+    linear-gradient(135deg, rgba(23, 26, 24, 0.96), rgba(30, 47, 43, 0.86)),
+    radial-gradient(circle at 88% 8%, rgba(255, 255, 255, 0.16), transparent 32%), var(--dark);
   color: #f8faf5;
 }
 
-.makers-section .person-card h3 {
+.makers-section .maker-card::before {
+  position: absolute;
+  right: -36px;
+  bottom: -58px;
+  width: 156px;
+  height: 156px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  content: '';
+  pointer-events: none;
+}
+
+.maker-index {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(248, 250, 245, 0.78);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.maker-card small {
+  display: block;
+  color: rgba(248, 250, 245, 0.64);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.makers-section .maker-card h3 {
+  position: relative;
+  margin-top: 10px;
   color: #f8faf5;
+  font-size: clamp(28px, 3.2vw, 42px);
+  line-height: 1.05;
+  font-weight: 720;
 }
 
 .makers-section .person-links a {
@@ -1208,6 +1277,7 @@ p {
 }
 
 .person-links {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -1498,7 +1568,8 @@ p {
   .hero-copy h1,
   .page-heading h1,
   .about-hero h1 {
-    font-size: 38px;
+    font-size: 36px;
+    line-height: 1.1;
   }
 
   .hero-copy p,

@@ -51,7 +51,9 @@ const marqueeWords = [...telemetryWords, ...telemetryWords]
           <span></span>
           <strong>Desktop Dashboard</strong>
         </div>
-        <LazyImage :src="heroDesktopImage" alt="CPE 网络看板电脑端截图" eager />
+        <div class="desktop-screen-frame">
+          <LazyImage :src="heroDesktopImage" alt="CPE 网络看板电脑端截图" eager />
+        </div>
       </div>
       <div class="phone-shell hero-phone">
         <LazyImage :src="mobileScreens[0]" alt="CPE 网络看板 Android 截图" eager />
