@@ -12,12 +12,12 @@ export const desktopScreens = [
   '/media/computer/bbf5fbd9716c05be2903dfddd6be5e49.png',
 ];
 
-export const phoneScreens = [
-  '/media/phone/176d49b8c01d0904883c1d50c5d61f4f.jpg',
-  '/media/phone/1ee8508406def15a2c0ab82ed88066af.jpg',
+export const mobileScreens = [
   '/media/phone/313254916b9f1917e928d3499c389ead.jpg',
   '/media/phone/3b426262ac549c51e1aff8f7c1eda93b.jpg',
   '/media/phone/402b81006b43c3f12b7a20f368972d0a.jpg',
+  '/media/phone/1ee8508406def15a2c0ab82ed88066af.jpg',
+  '/media/phone/176d49b8c01d0904883c1d50c5d61f4f.jpg',
   '/media/phone/60d457163b7068c9129ba5960fa5d480.jpg',
   '/media/phone/6ecd8cc18d11fcc995659c3b7f295556.jpg',
   '/media/phone/82b19cf05c055f7648ea013ed26eaddf.jpg',
@@ -28,24 +28,21 @@ export const phoneScreens = [
   '/media/phone/fa604e99c37426bf1b886a77af64abb1.jpg',
 ];
 
-export const scenePages = [
+export const storyCards = [
   {
-    kicker: '01 / 先看懂',
-    title: '信号不好时，别先猜。',
-    copy: '打开看板，先把 RSRP、RSRQ、SINR、CA、小区、邻区和签约速率摆在同一张桌面上。你不用在设备后台来回翻，也不用靠感觉判断是信号、频段还是小区切换出了问题。',
-    points: ['当前小区与邻区放在一起看', '射频和功率指标保留质量判断', '烽火、华为、鲲鹏、中兴按设备族分开呈现'],
+    label: '看状态',
+    title: '先确认信号和小区是不是正常。',
+    copy: 'RSRP、RSRQ、SINR、当前小区、邻区和签约速率放在一起看。网速突然不对时，先知道问题更像出在信号、频段，还是小区切换。',
   },
   {
-    kicker: '02 / 再动手',
-    title: '锁频和锁小区，不做盲操作。',
-    copy: '网络模式、Band、ARFCN、PCI、卡槽和邻区扫描都围绕“能下发，也要能回读”来设计。现场调整之后，马上知道设备有没有真的吃到配置。',
-    points: ['Band / ARFCN / PCI / 小区锁定', 'NRADIO 卡槽与邻区扫描', '操作日志保留给排障复盘'],
+    label: '调参数',
+    title: '锁频、锁小区，要能下发也要能读回。',
+    copy: '看板会按设备族处理 Band、ARFCN、PCI、网络模式和邻区扫描。现场改完不用靠猜，回读结果会告诉你配置有没有真的生效。',
   },
   {
-    kicker: '03 / 最后验证',
-    title: '测速、Ping、路由测试，走你正在用的网络。',
-    copy: '测速不是摆一个漂亮数字，而是帮你确认这台电脑或手机当前经过 CPE 出口的实际状态。桌面端还保留采样折线和一键 Ping 全部，方便对比不同站点。',
-    points: ['本机下载探测', '常用国内站点延迟预设', '路由测试估算 CPE 到公网边缘状态'],
+    label: '做验证',
+    title: '测速和 Ping 直接走当前这条链路。',
+    copy: '电脑或手机连着 CPE 时，就用它来测出口、延迟和路由路径。调完网络以后，马上验证体验有没有变好。',
   },
 ];
 
@@ -53,20 +50,20 @@ export const platformCards = [
   {
     name: 'Android',
     version: '3.1',
-    title: '随身调试的主力版本',
-    copy: '手机在手边，现场就能看信号、扫邻区、调模式。Android 版保留最完整的移动端入口，也是现在公开下载的最新版。',
+    title: '拿着手机，在设备旁边就能处理。',
+    copy: '适合上门、机房、弱电箱旁边的快速调试。打开应用，连接设备，看状态，必要时直接调整锁定策略。',
   },
   {
     name: 'macOS',
     version: '3.0.0',
-    title: '给桌面大屏看的版本',
-    copy: '用 Liquid Glass 的方向重做窗口、侧栏和指标卡。适合一边看日志，一边做锁频、测速和连接状态对比。',
+    title: '放在桌面上，适合长时间观察。',
+    copy: '桌面端用更宽的布局展示信号、测速、Ping、锁频和日志，适合一边调试一边记录结果。',
   },
   {
     name: 'Windows',
     version: '3.0.0',
-    title: '给维护电脑准备的版本',
-    copy: '同一套桌面功能，换成更清晰的 Windows 玻璃材质和字体渲染。MSI、EXE、便携包都已经放出。',
+    title: '维护电脑也能直接使用。',
+    copy: '提供 EXE、MSI 和便携包。临时电脑、常用维护机、不能安装软件的环境，都有对应入口。',
   },
 ];
 
@@ -80,8 +77,8 @@ export const downloads = [
     href: '/downloads/CPE-Network-Dashboard-3.1-android.apk',
     size: '12.6 MiB',
     checksum: '9aed997cc91f34a0b17bf79c31230ca1f459064a9f797f49d78a9df0b547b790',
-    label: '推荐',
-    copy: '适合手机现场调试，包含最新的烽火修复和测速页稳定性调整。',
+    label: '手机现场调试',
+    copy: '推荐先装这一版。适合日常看状态、锁频锁小区、测速和路由测试。',
   },
   {
     id: 'macos-3.0.0',
@@ -92,8 +89,8 @@ export const downloads = [
     href: '/downloads/CPE-Network-Dashboard-3.0.0-macos.dmg',
     size: '85.7 MiB',
     checksum: '35ae5e36c5c72723e520c7240a7ff39263a51567f48936815b9973478d5de952',
-    label: '桌面版',
-    copy: '适合 macOS 电脑查看大屏指标、做 Ping / 路由测试和桌面端配置回读。',
+    label: '桌面观察',
+    copy: '适合 macOS 电脑查看大屏指标，做长时间对比和现场复盘。',
   },
   {
     id: 'windows-exe-3.0.0',
@@ -104,8 +101,8 @@ export const downloads = [
     href: '/downloads/CPE-Network-Dashboard-3.0.0-windows-x64.exe',
     size: '99.6 MiB',
     checksum: '0d613ea043d0f38f17d52334ad3c42fddb4beeb80877eda0aa87c6165d466803',
-    label: '安装器',
-    copy: '适合普通 Windows 用户直接安装，包含字体清晰度和 HiDPI 渲染优化。',
+    label: '普通安装',
+    copy: '适合大多数 Windows 用户直接安装。',
   },
   {
     id: 'windows-msi-3.0.0',
@@ -116,8 +113,8 @@ export const downloads = [
     href: '/downloads/CPE-Network-Dashboard-3.0.0-windows-x64.msi',
     size: '98.9 MiB',
     checksum: '9e738a7cedfe93ffdaa2c8a73a8689d31d9118ccf4c5b757664d6a4e7039f7cf',
-    label: '部署',
-    copy: '适合更偏维护环境的安装方式，便于在 Windows 设备上做稳定安装。',
+    label: '稳定部署',
+    copy: '适合维护电脑或偏固定的 Windows 环境。',
   },
   {
     id: 'windows-portable-3.0.0',
@@ -128,8 +125,8 @@ export const downloads = [
     href: '/downloads/CPE-Network-Dashboard-3.0.0-protected-portable-windows-x64.zip',
     size: '97.5 MiB',
     checksum: 'a359d9eff066173efd7431687b804d6fa7a63a511aa477f21440f06fecb9983a',
-    label: '便携',
-    copy: '适合临时调试机、U 盘携带或不方便安装软件的现场环境。',
+    label: '免安装',
+    copy: '适合临时调试机、U 盘携带或不方便安装软件的现场。',
   },
 ];
 
@@ -137,20 +134,20 @@ export const releaseNotes = [
   {
     version: 'Android 3.1',
     date: '2026.05',
-    title: '烽火和 OPPO 用户，这版更稳。',
-    copy: '烽火 AMBR 显示、4G 下 Trans.Mode、接口读取逻辑都重新校正；容易误导的 PUCCH 信息被收起。测速页也重新适配了速率监控，数值不再容易溢出，OPPO 系设备在烽火配置下的闪屏问题也一并处理。',
+    title: '烽火设备和 OPPO 手机，这次会更顺。',
+    copy: '修正烽火 AMBR、4G Trans.Mode 和接口读取逻辑，收起容易误导的 PUCCH 信息；测速页也重新适配速率监控，减少数值溢出和闪屏。',
   },
   {
     version: 'Desktop 3.0.0',
     date: '2026.05',
-    title: '电脑端不再只是“能跑”。',
-    copy: 'macOS 和 Windows 都给出了安装包。桌面端把信号、锁频、测速、Ping、路由测试和设置项铺开，更适合长时间看状态、做对比和现场复盘。',
+    title: '电脑端已经可以作为日常调试入口。',
+    copy: 'macOS 和 Windows 安装包都已放出。大屏上能同时看连接、锁频、测速、Ping、路由测试和日志，更适合长时间排障。',
   },
   {
     version: 'Cross-platform 3.0',
     date: '2026.05',
-    title: '同一套设备能力，开始真正跨端。',
-    copy: '跨平台分支同步了 Android V3.0 的设备逻辑，桌面端补齐烽火 CA、中兴 CA/频段能力和鲲鹏多 speed name 聚合；iOS 侧也接入了原生网络桥，后续会继续做真机回归。',
+    title: '同一套设备能力，开始覆盖更多平台。',
+    copy: '设备逻辑向跨平台版本同步，烽火、中兴、鲲鹏等设备族的显示和读取能力继续补齐。',
   },
 ];
 

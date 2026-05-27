@@ -5,19 +5,22 @@ import {
   desktopScreens,
   downloads,
   heroDesktopImage,
-  phoneScreens,
+  mobileScreens,
   platformCards,
   releaseNotes,
-  scenePages,
+  storyCards,
   supportedDevices,
 } from './content';
 import { fetchSummary, trackDownload, trackVisit } from './api';
 
 const summary = ref(null);
 const analyticsState = ref('loading');
-const activeDesktop = ref(desktopScreens[0]);
+const activeDesktop = ref(heroDesktopImage);
+const activeMobile = ref(mobileScreens[0]);
 const copiedChecksum = ref('');
 
+const primaryDownload = computed(() => downloads[0]);
+const desktopDownloads = computed(() => downloads.slice(1));
 const downloadTotals = computed(() => summary.value?.downloadsByFile || {});
 const totalDownloads = computed(() => summary.value?.downloadsTotal ?? null);
 const totalVisits = computed(() => summary.value?.visits?.total ?? null);
@@ -75,8 +78,8 @@ onMounted(async () => {
       </a>
       <nav class="nav-links" aria-label="主导航">
         <a href="#scene">场景</a>
-        <a href="#platforms">平台</a>
-        <a href="#gallery">界面</a>
+        <a href="#desktop">电脑端</a>
+        <a href="#mobile">手机端</a>
         <a href="#downloads">下载</a>
         <a href="#release">更新</a>
       </nav>
@@ -84,15 +87,15 @@ onMounted(async () => {
 
     <main id="top">
       <section class="hero page">
-        <div class="hero-copy-block">
-          <p class="eyebrow">CPE Network Dashboard</p>
+        <div class="hero-copy">
+          <p class="eyebrow">For 4G / 5G CPE</p>
           <h1>
             <span>先看清 CPE，</span>
             <span>再调好网络。</span>
           </h1>
           <p>
-            给 4G/5G CPE 用户的一张操作台。信号、小区、锁频、测速和出口状态放在一起看，
-            少翻几层后台，也少靠感觉判断。
+            CPE 网络看板把信号、小区、锁频、测速和路由测试放到一个清楚的界面里。
+            网速变慢、信号飘、设备切小区时，你先看到原因，再决定怎么调。
           </p>
           <div class="hero-actions">
             <a class="primary-action" href="#downloads">
@@ -101,71 +104,71 @@ onMounted(async () => {
               </svg>
               下载最新版
             </a>
-            <a class="secondary-action" href="#scene">看看能做什么</a>
+            <a class="secondary-action" href="#scene">先看看适不适合你</a>
+          </div>
+          <div class="hero-points" aria-label="核心能力">
+            <span>信号质量</span>
+            <span>锁频锁小区</span>
+            <span>测速与 Ping</span>
           </div>
         </div>
 
-        <div class="hero-product">
-          <div class="hero-icon-card">
-            <img :src="appIcon" alt="CPE 网络看板应用图标" />
-            <span>Android 3.1</span>
-          </div>
-          <div class="hero-window">
-            <div class="window-bar">
+        <div class="hero-media" aria-label="电脑端界面预览">
+          <div class="desktop-frame hero-frame">
+            <div class="frame-bar">
               <span></span>
               <span></span>
               <span></span>
-              <strong>正在查看 CPE 连接状态</strong>
+              <strong>电脑端界面</strong>
             </div>
-            <img :src="heroDesktopImage" alt="CPE 网络看板桌面界面" />
+            <img :src="heroDesktopImage" alt="CPE 网络看板电脑端截图" />
           </div>
-          <div class="signal-card">
-            <span>当前公开下载</span>
-            <strong>Android / macOS / Windows</strong>
-            <small>安装包由 ESA 静态分发，点击统计不影响下载。</small>
+          <div class="product-tag">
+            <img :src="appIcon" alt="" />
+            <span>Android 3.1</span>
+            <strong>macOS / Windows 3.0.0</strong>
           </div>
         </div>
       </section>
 
-      <section id="scene" class="page scene-page">
-        <article v-for="scene in scenePages" :key="scene.title" class="scene-panel">
-          <div>
-            <p class="eyebrow">{{ scene.kicker }}</p>
-            <h2>{{ scene.title }}</h2>
-          </div>
-          <p>{{ scene.copy }}</p>
-          <ul>
-            <li v-for="point in scene.points" :key="point">{{ point }}</li>
-          </ul>
-        </article>
-      </section>
-
-      <section id="platforms" class="page platforms-page">
-        <div class="page-heading">
-          <p class="eyebrow">Platforms</p>
-          <h2>手机随身看，电脑展开看。</h2>
+      <section id="scene" class="page story-page">
+        <div class="section-copy story-intro">
+          <p class="eyebrow">When to use it</p>
+          <h2>当 CPE 表现不稳定时，你需要的是判断顺序。</h2>
           <p>
-            同一个产品，不强行套同一种界面。Android 适合现场快速处理，macOS 和 Windows
-            适合长时间看状态和做复盘。
+            这个工具不是把后台字段搬出来给你看，而是按真实排障过程组织信息：
+            先看状态，再调参数，最后验证结果。
           </p>
         </div>
-        <div class="platform-strip">
-          <article v-for="platform in platformCards" :key="platform.name" class="platform-card">
-            <span>{{ platform.name }} / {{ platform.version }}</span>
-            <h3>{{ platform.title }}</h3>
-            <p>{{ platform.copy }}</p>
+        <div class="story-grid">
+          <article v-for="card in storyCards" :key="card.title" class="story-card">
+            <span>{{ card.label }}</span>
+            <h3>{{ card.title }}</h3>
+            <p>{{ card.copy }}</p>
           </article>
         </div>
       </section>
 
-      <section id="gallery" class="page gallery-page">
-        <div class="gallery-copy">
-          <p class="eyebrow">Interface</p>
-          <h2>桌面端给信息留空间，手机端给操作留速度。</h2>
+      <section id="desktop" class="page desktop-page">
+        <div class="section-copy">
+          <p class="eyebrow">Computer screenshots</p>
+          <h2>电脑端：把信息摊开看。</h2>
           <p>
-            大屏上把信号、锁频、测速和日志铺开；手机上保留卡片式节奏。两边都不只是“截图好看”，而是为了现场少点犹豫。
+            横向界面留给 macOS 和 Windows。大屏上可以同时看连接、锁频、测速和日志，
+            适合坐下来做一轮完整排查。
           </p>
-          <div class="screen-switcher" aria-label="切换桌面截图">
+        </div>
+        <div class="desktop-showcase">
+          <div class="desktop-frame">
+            <div class="frame-bar">
+              <span></span>
+              <span></span>
+              <span></span>
+              <strong>Desktop / macOS / Windows</strong>
+            </div>
+            <img :src="activeDesktop" alt="CPE 网络看板电脑端截图" />
+          </div>
+          <div class="desktop-thumbs" aria-label="切换电脑端截图">
             <button
               v-for="(screen, index) in desktopScreens"
               :key="screen"
@@ -173,24 +176,71 @@ onMounted(async () => {
               :class="{ active: activeDesktop === screen }"
               @click="activeDesktop = screen"
             >
-              {{ String(index + 1).padStart(2, '0') }}
+              <img :src="screen" alt="" />
+              <span>{{ String(index + 1).padStart(2, '0') }}</span>
             </button>
-          </div>
-        </div>
-        <div class="gallery-stage">
-          <img class="desktop-shot" :src="activeDesktop" alt="CPE 网络看板桌面截图" />
-          <div class="phone-stack" aria-label="Android 界面预览">
-            <img v-for="screen in phoneScreens.slice(0, 3)" :key="screen" :src="screen" alt="CPE 网络看板 Android 截图" />
           </div>
         </div>
       </section>
 
-      <section class="page device-page">
-        <div class="page-heading compact">
-          <p class="eyebrow">Device coverage</p>
-          <h2>面向真实设备，不写空泛兼容。</h2>
+      <section id="mobile" class="page mobile-page">
+        <div class="mobile-gallery">
+          <div class="phone-frame phone-main">
+            <img :src="activeMobile" alt="CPE 网络看板 Android 手机截图" />
+          </div>
+          <div class="phone-strip" aria-label="切换 Android 手机截图">
+            <button
+              v-for="(screen, index) in mobileScreens.slice(0, 7)"
+              :key="screen"
+              type="button"
+              :class="{ active: activeMobile === screen }"
+              @click="activeMobile = screen"
+            >
+              <img :src="screen" alt="" />
+              <span>{{ String(index + 1).padStart(2, '0') }}</span>
+            </button>
+          </div>
+        </div>
+        <div class="section-copy mobile-copy">
+          <p class="eyebrow">Phone screenshots</p>
+          <h2>手机端：站在设备旁边也能操作。</h2>
           <p>
-            不同固件的字段会有差异，所以看板把设备族分开处理。能读到什么、能锁什么、有没有回读，都按真实接口来。
+            Android 的长屏界面适合站在设备旁边快速看信号、锁频、测速，
+            不需要打开电脑，也不用在路由器后台来回翻。
+          </p>
+          <div class="mobile-notes">
+            <span>现场调试</span>
+            <span>深色移动界面</span>
+            <span>Android 3.1 最新版</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="platforms" class="page platforms-page">
+        <div class="section-copy">
+          <p class="eyebrow">Three ways to use</p>
+          <h2>不是同一个界面硬套三端。</h2>
+          <p>
+            手机负责现场速度，电脑负责展开信息。不同平台都围绕同一件事：
+            让 CPE 的状态更容易被看懂。
+          </p>
+        </div>
+        <div class="platform-list">
+          <article v-for="platform in platformCards" :key="platform.name" class="platform-row">
+            <span>{{ platform.name }} / {{ platform.version }}</span>
+            <h3>{{ platform.title }}</h3>
+            <p>{{ platform.copy }}</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="page device-page">
+        <div class="section-copy">
+          <p class="eyebrow">Device coverage</p>
+          <h2>按真实设备族适配，不写空泛兼容。</h2>
+          <p>
+            不同 CPE 固件的字段和能力会有差异。看板会按设备族处理显示、锁定和回读能力，
+            能读到什么、能下发什么，尽量让你在界面里看清楚。
           </p>
         </div>
         <div class="device-table">
@@ -202,46 +252,63 @@ onMounted(async () => {
       </section>
 
       <section id="downloads" class="page downloads-page">
-        <div class="page-heading compact">
+        <div class="section-copy download-copy">
           <p class="eyebrow">Downloads</p>
-          <h2>选择你现在要用的平台。</h2>
+          <h2>现在要在哪台设备上用，就下哪一个包。</h2>
           <p>
-            下载文件直接放在前端静态目录里，ESA 可以就近分发。统计接口只做聚合记录，离线也不挡下载。
+            安装包直接分发。官网只记录聚合访问和下载次数，统计离线也不影响你拿到文件。
           </p>
         </div>
-        <div class="download-board">
-          <article v-for="download in downloads" :key="download.id" class="download-card">
+        <div class="download-layout">
+          <article class="download-feature">
             <div class="download-topline">
-              <span>{{ download.label }}</span>
-              <small>{{ download.platform }} {{ download.version }}</small>
+              <span>{{ primaryDownload.label }}</span>
+              <small>{{ primaryDownload.platform }} {{ primaryDownload.version }}</small>
             </div>
-            <h3>{{ download.title }}</h3>
-            <p>{{ download.copy }}</p>
+            <h3>{{ primaryDownload.title }}</h3>
+            <p>{{ primaryDownload.copy }}</p>
             <div class="download-meta">
-              <span>{{ download.size }}</span>
-              <span>{{ statForDownload(download.id) }}</span>
+              <span>{{ primaryDownload.size }}</span>
+              <span>{{ statForDownload(primaryDownload.id) }}</span>
             </div>
             <div class="download-actions">
-              <a class="download-button" :href="download.href" download @click="handleDownload(download.id)">
+              <a class="download-button" :href="primaryDownload.href" download @click="handleDownload(primaryDownload.id)">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 4v10m0 0 3.5-3.5M12 14l-3.5-3.5M5 20h14" />
                 </svg>
-                下载
+                下载 APK
               </a>
-              <button type="button" class="checksum-button" @click="copyChecksum(download)">
-                {{ copiedChecksum === download.id ? '已复制' : 'SHA-256' }}
+              <button type="button" class="checksum-button" @click="copyChecksum(primaryDownload)">
+                {{ copiedChecksum === primaryDownload.id ? '已复制' : 'SHA-256' }}
               </button>
             </div>
           </article>
+
+          <div class="desktop-downloads">
+            <article v-for="download in desktopDownloads" :key="download.id" class="download-row">
+              <div>
+                <span>{{ download.label }}</span>
+                <h3>{{ download.title }}</h3>
+                <p>{{ download.copy }}</p>
+              </div>
+              <div class="download-row-actions">
+                <small>{{ download.size }} / {{ statForDownload(download.id) }}</small>
+                <a :href="download.href" download @click="handleDownload(download.id)">下载</a>
+                <button type="button" @click="copyChecksum(download)">
+                  {{ copiedChecksum === download.id ? '已复制' : 'SHA-256' }}
+                </button>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
 
       <section id="release" class="page release-page">
-        <div class="release-intro">
-          <p class="eyebrow">Release notes</p>
-          <h2>更新不是堆条目，是让现场少踩坑。</h2>
+        <div class="section-copy">
+          <p class="eyebrow">Recent improvements</p>
+          <h2>最近值得更新的原因。</h2>
           <p>
-            这里只保留用户真正会感知到的变化。校验值放在下载卡片里，更新记录则尽量说清楚这次用起来哪里更稳。
+            这里不堆完整条目，只挑会影响使用体验的变化：哪里更稳、哪里更准、哪些设备少出问题。
           </p>
         </div>
         <div class="release-list">
@@ -254,11 +321,12 @@ onMounted(async () => {
       </section>
 
       <section class="page privacy-page">
-        <div>
+        <div class="section-copy">
           <p class="eyebrow">Privacy</p>
-          <h2>官网做统计，应用不替你上传设备信息。</h2>
+          <h2>应用和 CPE 的通信，留在你的局域网里。</h2>
           <p>
-            CPE 登录、锁频、测速都发生在你的设备和局域网 CPE 之间。官网只记录访问量、下载量、来源和设备类型这类聚合信息，不公开完整 IP 或原始 User-Agent。
+            CPE 登录、锁频、测速发生在你的设备和局域网 CPE 之间。官网只记录聚合访问量、下载量、
+            来源和设备类型，不公开完整 IP 或原始 User-Agent。
           </p>
         </div>
         <div class="counter-panel">
