@@ -72,7 +72,7 @@ npm run build
 EdgeKV namespace：
 
 ```text
-cpe_network_dashboard_web
+cpeweb
 ```
 
 公开 API：

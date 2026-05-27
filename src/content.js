@@ -43,6 +43,13 @@ function chunkedParts(folder, fileName, count) {
   );
 }
 
+const chunkBytes = {
+  'macos-3.0.0': [20971520, 20971520, 20971520, 20971520, 5976951],
+  'windows-exe-3.0.0': [20971520, 20971520, 20971520, 20971520, 20507136],
+  'windows-msi-3.0.0': [20971520, 20971520, 20971520, 20971520, 19799576],
+  'windows-portable-3.0.0': [20971520, 20971520, 20971520, 20971520, 18346522],
+};
+
 export const heroFacts = [
   { label: '当前小区', value: 'PCI / ARFCN' },
   { label: '射频质量', value: 'RSRP / SINR' },
@@ -65,14 +72,14 @@ export const telemetryWords = [
 export const productMoments = [
   {
     label: '先看清',
-    title: '先确认它连在哪。',
+    title: '先确认它连到了哪里。',
     copy:
-      '当前小区、邻区、信号质量、签约速率和连接状态放在一起。先判断是信号掉了、频段变了，还是设备后台没有说清楚。',
+      '当前小区、邻区、信号质量、签约速率和连接状态放在一起。先判断是信号掉了、频段变了，还是后台字段没有说清楚。',
     points: ['当前/邻区', 'RSRP / RSRQ / SINR', 'SIM / AMBR'],
   },
   {
     label: '再动手',
-    title: '要不要锁，先看证据。',
+    title: '要不要锁，先看依据。',
     copy:
       'Band、ARFCN、PCI、网络模式和邻区扫描放在同一条思路里。改完立刻回读，知道设备有没有真的吃到配置。',
     points: ['Band 锁定', 'ARFCN / PCI', '网络偏好'],
@@ -90,20 +97,20 @@ export const platformCards = [
   {
     name: 'Android',
     version: '3.1',
-    title: '站在设备旁边时，手机最顺手。',
-    copy: '打开、登录、看信号、扫邻区、改锁定。弱电箱、窗边、机柜旁边，用手机会比搬电脑自然得多。',
+    title: '站在设备旁边，手机最顺手。',
+    copy: '打开、登录、看信号、扫邻区、改锁定。弱电箱、窗边、机柜旁边，用手机比搬电脑自然得多。',
   },
   {
     name: 'macOS',
     version: '3.0.0',
-    title: '坐下来排查时，Mac 端看得更完整。',
-    copy: '连接、锁定、测试和日志能铺开，适合边调边记，也适合把一段时间的结果放在大屏上对比。',
+    title: '坐下来排查，Mac 端看得更完整。',
+    copy: '连接、锁定、测试和日志能铺开，适合边调边记，也适合把一段时间的结果放到大屏上对比。',
   },
   {
     name: 'Windows',
     version: '3.0.0',
     title: '维护电脑、临时电脑，都留了入口。',
-    copy: '常规 EXE、固定环境 MSI、免安装 Portable 都准备好了。能安装就安装，不能安装也能临时带走。',
+    copy: '常规 EXE、固定环境 MSI、免安装 Portable 都准备好了。能安装就安装，不能安装也能带走。',
   },
 ];
 
@@ -134,6 +141,7 @@ export const downloads = [
     title: 'macOS DMG',
     fileName: 'CPE-Network-Dashboard-3.0.0-macos.dmg',
     chunks: chunkedParts('macos-3.0.0', 'CPE-Network-Dashboard-3.0.0-macos.dmg', 5),
+    chunkBytes: chunkBytes['macos-3.0.0'],
     size: '85.7 MiB',
     checksum: '35ae5e36c5c72723e520c7240a7ff39263a51567f48936815b9973478d5de952',
     label: 'Mac 桌面版',
@@ -146,6 +154,7 @@ export const downloads = [
     title: 'Windows EXE',
     fileName: 'CPE-Network-Dashboard-3.0.0-windows-x64.exe',
     chunks: chunkedParts('windows-exe-3.0.0', 'CPE-Network-Dashboard-3.0.0-windows-x64.exe', 5),
+    chunkBytes: chunkBytes['windows-exe-3.0.0'],
     size: '99.6 MiB',
     checksum: '0d613ea043d0f38f17d52334ad3c42fddb4beeb80877eda0aa87c6165d466803',
     label: 'Windows 常规安装',
@@ -158,6 +167,7 @@ export const downloads = [
     title: 'Windows MSI',
     fileName: 'CPE-Network-Dashboard-3.0.0-windows-x64.msi',
     chunks: chunkedParts('windows-msi-3.0.0', 'CPE-Network-Dashboard-3.0.0-windows-x64.msi', 5),
+    chunkBytes: chunkBytes['windows-msi-3.0.0'],
     size: '98.9 MiB',
     checksum: '9e738a7cedfe93ffdaa2c8a73a8689d31d9118ccf4c5b757664d6a4e7039f7cf',
     label: 'Windows 固定部署',
@@ -174,6 +184,7 @@ export const downloads = [
       'CPE-Network-Dashboard-3.0.0-protected-portable-windows-x64.zip',
       5,
     ),
+    chunkBytes: chunkBytes['windows-portable-3.0.0'],
     size: '97.5 MiB',
     checksum: 'a359d9eff066173efd7431687b804d6fa7a63a511aa477f21440f06fecb9983a',
     label: 'Windows 免安装',
@@ -187,7 +198,7 @@ export const changelogEntries = [
     date: '2026-05-26',
     badge: 'Android 用户建议更新',
     lead:
-      '这版不追求新花样，主要把烽火设备、测速页和 OPPO 系手机上容易让人误判的地方修稳。',
+      '这次主要把烽火设备、测速页和 OPPO 系手机上容易影响使用的地方修稳。已经在用烽火配置的朋友，建议直接更新。',
     sections: [
       {
         title: '烽火设备显示更可靠',
@@ -218,7 +229,7 @@ export const changelogEntries = [
     date: '2026-05-26',
     badge: 'macOS / Windows 首个完整桌面分发',
     lead:
-      '桌面版不是把手机界面简单放大，而是为了长时间排障准备的横向工作台。',
+      '久等了，各位。3.0.0 开始，macOS 和 Windows 都有了公开安装包。桌面版不是把手机界面简单放大，而是为长时间排障准备的工作台。',
     sections: [
       {
         title: '电脑端安装包齐了',
@@ -251,7 +262,7 @@ export const changelogEntries = [
     date: '2026-05-24',
     badge: '多平台逻辑开始统一',
     lead:
-      '这一轮把设备接口和展示规则从单一 Android 逻辑里拆出来，为 macOS、Windows 和 iOS 继续铺路。',
+      '这一轮把设备接口和展示规则从 Android 里拆出来，为 macOS、Windows 和 iOS 继续铺路。',
     sections: [
       {
         title: '共享逻辑',
@@ -274,7 +285,7 @@ export const changelogEntries = [
     date: '2026-05-20',
     badge: '鲲鹏 / NRADIO 兼容增强',
     lead:
-      '这版主要解决不同 NRADIO 模板把信息藏在不同位置的问题，尤其是 C5800 / AK68 一类设备。',
+      '这版主要解决不同 NRADIO 模板把信息放在不同位置的问题，尤其是 C5800 / AK68 一类设备。',
     sections: [
       {
         title: '运行状态读取更会找',
@@ -325,6 +336,8 @@ export const aboutInfo = {
   userGroup: '955206409',
   description:
     '面向 4G/5G CPE 的管理工具。覆盖连接状态、射频指标、SIM/AMBR、锁频锁小区、邻区扫描、测速、Ping 与路由测试。',
+  note:
+    '首先还是要感谢共同参与和帮助过我们的朋友们。CPE 网络看板能走到 3.0，不只是一个人的代码，也有测试设备、接口抓包、UI 方案、建议和很多次反馈。',
   makers: [
     {
       name: '当然是小原啦',

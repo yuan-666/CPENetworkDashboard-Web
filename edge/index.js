@@ -10,14 +10,14 @@
  *   /api/analytics/summary
  *
  * Storage:
- *   EdgeKV namespace: cpe_network_dashboard_web
+ *   EdgeKV namespace: cpeweb
  *
  * Privacy:
  *   Public responses do not expose full IP addresses or raw User-Agent values.
  *   IPs are used only for coarse rate-limit buckets.
  */
 
-const KV_NAMESPACE = 'cpe_network_dashboard_web';
+const KV_NAMESPACE = 'cpeweb';
 const MAX_JSON_BYTES = 24 * 1024;
 const MAX_DAILY_EVENTS = 360;
 const PUBLIC_DAYS = 7;

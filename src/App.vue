@@ -156,23 +156,46 @@ function downloadButtonText(download) {
   return download.chunks?.length ? '下载并自动合并' : '下载';
 }
 
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '';
+  const mib = bytes / 1024 / 1024;
+  if (mib >= 1) return `${mib.toFixed(mib >= 100 ? 0 : 1)} MiB`;
+  return `${Math.round(bytes / 1024)} KiB`;
+}
+
+function downloadStatusText(download) {
+  const state = getDownloadState(download.id);
+  if (state.status === 'downloading') {
+    const chunk = state.chunkCount ? `分片 ${state.currentChunk || 1}/${state.chunkCount}` : '正在下载';
+    const bytes = state.loadedBytes && state.totalBytes
+      ? `，${formatBytes(state.loadedBytes)} / ${formatBytes(state.totalBytes)}`
+      : '';
+    return `${chunk}${bytes}`;
+  }
+  if (state.status === 'assembling') return '分片已下载完成，正在合并成原始安装包。';
+  if (state.status === 'done') return '浏览器已经开始保存文件。';
+  if (state.status === 'error') return '下载中断了，可以重新点击下载。';
+  return '';
+}
+
 function handleDownload(fileId) {
   trackDownload(fileId);
   window.setTimeout(loadSummary, 800);
 }
 
-function readChunkBlob(url) {
-  if (typeof window.fetch === 'function') {
-    return window.fetch(url).then((response) => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return response.blob();
-    });
-  }
-
+function readChunkBlob(url, onProgress) {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open('GET', url, true);
     request.responseType = 'blob';
+    request.onprogress = (event) => {
+      if (typeof onProgress === 'function') {
+        onProgress({
+          loaded: event.loaded,
+          total: event.lengthComputable ? event.total : 0,
+        });
+      }
+    };
     request.onload = () => {
       if (request.status >= 200 && request.status < 300) {
         resolve(request.response);
@@ -188,19 +211,56 @@ function readChunkBlob(url) {
 async function downloadChunkedFile(download) {
   if (!download.chunks?.length) return;
   trackDownload(download.id);
-  setDownloadState(download.id, { status: 'downloading', progress: 0 });
+  const totalBytes = (download.chunkBytes || []).reduce((sum, value) => sum + value, 0);
+  let loadedBefore = 0;
+  setDownloadState(download.id, {
+    status: 'downloading',
+    progress: 0,
+    loadedBytes: 0,
+    totalBytes,
+    currentChunk: 1,
+    chunkCount: download.chunks.length,
+  });
 
   try {
     const blobs = [];
     for (let index = 0; index < download.chunks.length; index += 1) {
-      blobs.push(await readChunkBlob(download.chunks[index]));
+      const expectedChunkBytes = download.chunkBytes?.[index] || 0;
+      const blob = await readChunkBlob(download.chunks[index], ({ loaded, total }) => {
+        const safeTotal = totalBytes || download.chunks.length * (total || expectedChunkBytes || 1);
+        const safeLoaded = loadedBefore + loaded;
+        const progress = safeTotal
+          ? Math.min(99, Math.round((safeLoaded / safeTotal) * 100))
+          : Math.round(((index + 1) / download.chunks.length) * 100);
+        setDownloadState(download.id, {
+          status: 'downloading',
+          progress,
+          loadedBytes: safeLoaded,
+          totalBytes: safeTotal,
+          currentChunk: index + 1,
+          chunkCount: download.chunks.length,
+        });
+      });
+      blobs.push(blob);
+      loadedBefore += expectedChunkBytes || blob.size || 0;
       setDownloadState(download.id, {
         status: 'downloading',
-        progress: Math.round(((index + 1) / download.chunks.length) * 100),
+        progress: totalBytes ? Math.min(99, Math.round((loadedBefore / totalBytes) * 100)) : Math.round(((index + 1) / download.chunks.length) * 100),
+        loadedBytes: loadedBefore,
+        totalBytes,
+        currentChunk: index + 1,
+        chunkCount: download.chunks.length,
       });
     }
 
-    setDownloadState(download.id, { status: 'assembling', progress: 100 });
+    setDownloadState(download.id, {
+      status: 'assembling',
+      progress: 100,
+      loadedBytes: totalBytes || loadedBefore,
+      totalBytes: totalBytes || loadedBefore,
+      currentChunk: download.chunks.length,
+      chunkCount: download.chunks.length,
+    });
     const blob = new Blob(blobs, { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -213,7 +273,7 @@ async function downloadChunkedFile(download) {
     setDownloadState(download.id, { status: 'done', progress: 100 });
     window.setTimeout(() => {
       if (getDownloadState(download.id).status === 'done') {
-        setDownloadState(download.id, { status: 'idle', progress: 0 });
+        setDownloadState(download.id, { status: '', progress: 0 });
       }
     }, 2200);
     window.setTimeout(loadSummary, 800);
@@ -307,8 +367,11 @@ onUnmounted(() => {
           </div>
           <h1>别先重启，先看 CPE。</h1>
           <p>
-            CPE 网络看板不是另一个路由器后台。它把信号、小区、锁定和测试结果放在一起，
-            让你少猜几次，也少重启几次。
+            久等了，各位。Android 3.1 已经放出，macOS 和 Windows 也有了 3.0.0 桌面包。
+            我们想做的不是另一个后台，而是让你看清楚 CPE 现在到底发生了什么。
+          </p>
+          <p class="hero-note">
+            信号、小区、锁定、测速、Ping 和路由测试放在同一个地方。现场调试时少猜一点，改完以后也能马上验证。
           </p>
           <div class="hero-actions">
             <a class="action primary" :href="routeHref('/download')">下载适合的版本</a>
@@ -324,6 +387,11 @@ onUnmounted(() => {
 
         <div class="hero-stage" aria-label="产品界面预览">
           <div class="scan-line"></div>
+          <div class="signal-radar" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
           <div class="desktop-window hero-desktop">
             <div class="window-bar">
               <span></span>
@@ -338,8 +406,14 @@ onUnmounted(() => {
           </div>
           <div class="live-card">
             <span>Local CPE</span>
-            <strong>192.168.8.1</strong>
+            <strong>192.168.x.1</strong>
             <small>signal / lock / test</small>
+          </div>
+          <div class="metric-tape" aria-hidden="true">
+            <span>RSRP -86</span>
+            <span>SINR 23</span>
+            <span>PCI 147</span>
+            <span>AMBR 1000M</span>
           </div>
         </div>
 
@@ -357,7 +431,7 @@ onUnmounted(() => {
           <p>产品介绍</p>
           <h1>先看清楚，再动手，再验证。</h1>
           <span>
-            面向 4G/5G CPE 的日常排障、现场调试和设备巡检。手机负责快，电脑负责看得全。
+            面向 4G/5G CPE 的日常排障、现场调试和设备巡检。我们把原本分散在后台里的信息，整理成调试时真的会用到的顺序。
           </span>
         </header>
 
@@ -468,7 +542,7 @@ onUnmounted(() => {
           <p>下载</p>
           <h1>按当前设备，直接下对版本。</h1>
           <span>
-            页面会自动识别 Android、macOS 或 Windows。桌面大包会按分片取回，并在浏览器里合成原文件。
+            页面会自动识别 Android、macOS 或 Windows。桌面大包会按分片取回，下载过程中可以看到实时进度，最后在浏览器里合成原文件。
           </span>
         </header>
 
@@ -527,6 +601,16 @@ onUnmounted(() => {
                 {{ copiedChecksum === recommendedDownload.id ? '已复制校验值' : '复制校验值' }}
               </button>
             </div>
+            <div
+              v-if="getDownloadState(recommendedDownload.id).status"
+              class="download-progress"
+              :class="`state-${getDownloadState(recommendedDownload.id).status}`"
+            >
+              <div>
+                <span :style="{ width: `${getDownloadState(recommendedDownload.id).progress || 0}%` }"></span>
+              </div>
+              <p>{{ downloadStatusText(recommendedDownload) }}</p>
+            </div>
             <div v-if="getDownloadState(recommendedDownload.id).status === 'error'" class="download-error">
               分片下载中断了，可以重试；已经下载的临时数据不会保存。
             </div>
@@ -561,6 +645,14 @@ onUnmounted(() => {
               <button type="button" @click="copyChecksum(download)">
                 {{ copiedChecksum === download.id ? '已复制' : 'SHA-256' }}
               </button>
+              <div
+                v-if="getDownloadState(download.id).status"
+                class="row-progress"
+                :class="`state-${getDownloadState(download.id).status}`"
+              >
+                <span :style="{ width: `${getDownloadState(download.id).progress || 0}%` }"></span>
+                <small>{{ downloadStatusText(download) }}</small>
+              </div>
             </div>
           </article>
         </div>
@@ -606,17 +698,21 @@ onUnmounted(() => {
         </header>
 
         <section class="about-intro">
-          <p>{{ aboutInfo.description }}</p>
+          <div>
+            <p>{{ aboutInfo.description }}</p>
+            <small>{{ aboutInfo.note }}</small>
+          </div>
           <div class="about-stats">
             <span>QQ群</span>
             <strong>{{ aboutInfo.userGroup }}</strong>
           </div>
         </section>
 
-        <section class="about-section">
+        <section class="about-section makers-section">
           <div class="section-copy">
             <p>制作者</p>
-            <h2>项目的制作者。</h2>
+            <h2>项目由我们一起维护。</h2>
+            <span>当然是小原啦 与叉子么为本项目并列开发者，负责 UI、部分接口以及整体重构等工作。</span>
           </div>
           <div class="person-grid">
             <article v-for="person in aboutInfo.makers" :key="person.name" class="person-card">
@@ -630,10 +726,11 @@ onUnmounted(() => {
           </div>
         </section>
 
-        <section class="about-section">
+        <section class="about-section thanks-section">
           <div class="section-copy">
             <p>致谢</p>
-            <h2>这些帮助，也应该留在官网里。</h2>
+            <h2>也感谢这些朋友。</h2>
+            <span>测试设备、接口帮助、宣传建议和 UI 开源方案，都实实在在推进了这个版本。</span>
           </div>
           <div class="thanks-list">
             <article v-for="person in aboutInfo.thanks" :key="person.name" class="thanks-card">
@@ -647,26 +744,22 @@ onUnmounted(() => {
             </article>
           </div>
         </section>
-
-        <section class="privacy-strip">
-          <div>
-            <span>官网访问</span>
-            <strong>{{ valueOrPreview(totalVisits) }}</strong>
-          </div>
-          <div>
-            <span>累计下载</span>
-            <strong>{{ valueOrPreview(totalDownloads) }}</strong>
-          </div>
-          <p>
-            应用和 CPE 的通信留在你的局域网里。官网只记录聚合访问量、下载量、来源和设备类型，不公开完整 IP 或原始 User-Agent。
-          </p>
-        </section>
       </section>
     </main>
 
     <footer class="footer">
-      <span>CPE 网络看板 / CPE Network Dashboard</span>
-      <a href="https://github.com/yuan-666/CPENetworkDashboard-Web" rel="noreferrer">GitHub</a>
+      <div class="footer-main">
+        <span>CPE 网络看板 / CPE Network Dashboard</span>
+        <small>Copyright © 2026 yuan-666 and contributors. Released under GPL-3.0-or-later.</small>
+      </div>
+      <div class="footer-stats" aria-label="官网统计">
+        <span>访问 {{ valueOrPreview(totalVisits) }}</span>
+        <span>下载 {{ valueOrPreview(totalDownloads) }}</span>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/yuan-666/CPENetworkDashboard-Web" rel="noreferrer">官网仓库</a>
+        <a href="https://github.com/yuan-666" rel="noreferrer">作者 GitHub</a>
+      </div>
     </footer>
   </div>
 </template>
