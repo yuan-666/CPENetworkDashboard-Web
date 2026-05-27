@@ -1,5 +1,15 @@
 # CPE Network Dashboard Web Changelog
 
+## Website 2.0.0 (2026-05-27)
+
+- 完成官网工程重构：从 Vue 单文件堆叠拆成 `pages`、`components`、`composables`、`utils` 和 typed content，后续改页面不用再在一个大文件里找半天。
+- 引入 TypeScript、Vue Router、Tailwind CSS v4、ESLint flat config、Prettier、Vitest 和 `vue-tsc`，构建前会先做类型检查。
+- 路由改为懒加载：首页、产品介绍、下载、更新日志、关于各自独立打包，打开下载页或更新日志时不需要一次性执行全部页面代码。
+- 下载逻辑独立为 composable：自动识别当前设备，桌面大包按分片实时显示字节进度，下载完成后再由浏览器合成原始安装包。
+- 统计逻辑统一：页面访问和下载点击都会刷新聚合数据；ESA Edge Function 改用 `cpeweb` EdgeKV，并支持可选写入 token。
+- 更新页、关于页和下载页继续按面向用户的表达重写，不把官网写成开发日志；关于页保留 AppMetadata 名单，同时把制作者和致谢分开呈现。
+- 增加 Vitest 覆盖格式化和平台识别逻辑，保留 ESA 25MB 单文件检查作为发布前验证项。
+
 ## Website 1.4.0 (2026-05-27)
 
 - EdgeKV namespace 改为用户已创建的 `cpeweb`，用于访问量、下载量等聚合统计。

@@ -1,14 +1,24 @@
-export const appIcon = '/media/app-icon.png';
+import type {
+  AboutInfo,
+  ChangelogEntry,
+  Download,
+  HeroFact,
+  PlatformCard,
+  ProductMoment,
+  Route,
+} from '@/types'
 
-export const routes = [
+export const appIcon = '/media/app-icon.png'
+
+export const routes: Route[] = [
   { path: '/', label: '首页', title: 'CPE 网络看板' },
   { path: '/product', label: '介绍', title: '产品介绍' },
   { path: '/download', label: '下载', title: '下载 CPE 网络看板' },
   { path: '/changelog', label: '更新日志', title: '更新日志' },
   { path: '/about', label: '关于', title: '关于 CPE 网络看板' },
-];
+]
 
-export const heroDesktopImage = '/media/computer/29b0da59250a42a033e3cb98ba1a786f.png';
+export const heroDesktopImage = '/media/computer/29b0da59250a42a033e3cb98ba1a786f.png'
 
 export const desktopScreens = [
   '/media/computer/29b0da59250a42a033e3cb98ba1a786f.png',
@@ -18,7 +28,7 @@ export const desktopScreens = [
   '/media/computer/6bc260e09db214eab82a0fc0c8bca98f.png',
   '/media/computer/ad0052a60b290d111c9c012149faff94.png',
   '/media/computer/bbf5fbd9716c05be2903dfddd6be5e49.png',
-];
+]
 
 export const mobileScreens = [
   '/media/phone/313254916b9f1917e928d3499c389ead.jpg',
@@ -34,27 +44,27 @@ export const mobileScreens = [
   '/media/phone/b5b61464b42036d72f26552afdd47168.jpg',
   '/media/phone/d597071b57ea38eae45b94581d48bf2d.jpg',
   '/media/phone/fa604e99c37426bf1b886a77af64abb1.jpg',
-];
+]
 
-function chunkedParts(folder, fileName, count) {
+function chunkedParts(folder: string, fileName: string, count: number): string[] {
   return Array.from(
     { length: count },
-    (_, index) => `/downloads/chunks/${folder}/${fileName}.part${String(index).padStart(2, '0')}`,
-  );
+    (_, index) => `/downloads/chunks/${folder}/${fileName}.part${String(index).padStart(2, '0')}`
+  )
 }
 
-const chunkBytes = {
+const chunkBytes: Record<string, number[]> = {
   'macos-3.0.0': [20971520, 20971520, 20971520, 20971520, 5976951],
   'windows-exe-3.0.0': [20971520, 20971520, 20971520, 20971520, 20507136],
   'windows-msi-3.0.0': [20971520, 20971520, 20971520, 20971520, 19799576],
   'windows-portable-3.0.0': [20971520, 20971520, 20971520, 20971520, 18346522],
-};
+}
 
-export const heroFacts = [
+export const heroFacts: HeroFact[] = [
   { label: '当前小区', value: 'PCI / ARFCN' },
   { label: '射频质量', value: 'RSRP / SINR' },
   { label: '验证链路', value: 'Speed / Ping' },
-];
+]
 
 export const telemetryWords = [
   'RSRP',
@@ -67,33 +77,30 @@ export const telemetryWords = [
   'Ping',
   'Route',
   'Lock',
-];
+]
 
-export const productMoments = [
+export const productMoments: ProductMoment[] = [
   {
     label: '先看清',
     title: '先确认它连到了哪里。',
-    copy:
-      '当前小区、邻区、信号质量、签约速率和连接状态放在一起。先判断是信号掉了、频段变了，还是后台字段没有说清楚。',
+    copy: '当前小区、邻区、信号质量、签约速率和连接状态放在一起。先判断是信号掉了、频段变了，还是后台字段没有说清楚。',
     points: ['当前/邻区', 'RSRP / RSRQ / SINR', 'SIM / AMBR'],
   },
   {
     label: '再动手',
     title: '要不要锁，先看依据。',
-    copy:
-      'Band、ARFCN、PCI、网络模式和邻区扫描放在同一条思路里。改完立刻回读，知道设备有没有真的吃到配置。',
+    copy: 'Band、ARFCN、PCI、网络模式和邻区扫描放在同一条思路里。改完立刻回读，知道设备有没有真的吃到配置。',
     points: ['Band 锁定', 'ARFCN / PCI', '网络偏好'],
   },
   {
     label: '最后验证',
     title: '改完，马上测这一条链路。',
-    copy:
-      '测速、Ping 和路由测试不是为了给一个好看的数字，而是确认刚才那次调整有没有意义。电脑端适合长时间看，手机端适合现场走动。',
+    copy: '测速、Ping 和路由测试不是为了给一个好看的数字，而是确认刚才那次调整有没有意义。电脑端适合长时间看，手机端适合现场走动。',
     points: ['下载测速', 'Ping 折线', '路由测试'],
   },
-];
+]
 
-export const platformCards = [
+export const platformCards: PlatformCard[] = [
   {
     name: 'Android',
     version: '3.1',
@@ -112,16 +119,16 @@ export const platformCards = [
     title: '维护电脑、临时电脑，都留了入口。',
     copy: '常规 EXE、固定环境 MSI、免安装 Portable 都准备好了。能安装就安装，不能安装也能带走。',
   },
-];
+]
 
-export const supportedDevices = [
+export const supportedDevices: Array<[string, string]> = [
   ['HUAWEI', 'H168-383 / H155-381 / H153-381'],
   ['FiberHome', 'LG6121D / LG6121F / LG6121H / LG6851F / LG6151M'],
   ['NRADIO / 鲲鹏无限', 'LuCI NRADIO CPE，兼容 cpe / cpe1 / wan0 模板'],
   ['ZTE / 中兴', '支持 UBUS Web API 的中兴 CPE'],
-];
+]
 
-export const downloads = [
+export const downloads: Download[] = [
   {
     id: 'android-3.1',
     platform: 'Android',
@@ -182,7 +189,7 @@ export const downloads = [
     chunks: chunkedParts(
       'windows-portable-3.0.0',
       'CPE-Network-Dashboard-3.0.0-protected-portable-windows-x64.zip',
-      5,
+      5
     ),
     chunkBytes: chunkBytes['windows-portable-3.0.0'],
     size: '97.5 MiB',
@@ -190,15 +197,14 @@ export const downloads = [
     label: 'Windows 免安装',
     copy: '临时电脑、U 盘携带、没有安装权限的时候，用这个版本。',
   },
-];
+]
 
-export const changelogEntries = [
+export const changelogEntries: ChangelogEntry[] = [
   {
     version: 'Android 3.1',
     date: '2026-05-26',
     badge: 'Android 用户建议更新',
-    lead:
-      '这次主要把烽火设备、测速页和 OPPO 系手机上容易影响使用的地方修稳。已经在用烽火配置的朋友，建议直接更新。',
+    lead: '这次主要把烽火设备、测速页和 OPPO 系手机上容易影响使用的地方修稳。已经在用烽火配置的朋友，建议直接更新。',
     sections: [
       {
         title: '烽火设备显示更可靠',
@@ -228,8 +234,7 @@ export const changelogEntries = [
     version: 'Desktop 3.0.0',
     date: '2026-05-26',
     badge: 'macOS / Windows 首个完整桌面分发',
-    lead:
-      '久等了，各位。3.0.0 开始，macOS 和 Windows 都有了公开安装包。桌面版不是把手机界面简单放大，而是为长时间排障准备的工作台。',
+    lead: '久等了，各位。3.0.0 开始，macOS 和 Windows 都有了公开安装包。桌面版不是把手机界面简单放大，而是为长时间排障准备的工作台。',
     sections: [
       {
         title: '电脑端安装包齐了',
@@ -261,8 +266,7 @@ export const changelogEntries = [
     version: 'Cross-platform 3.0',
     date: '2026-05-24',
     badge: '多平台逻辑开始统一',
-    lead:
-      '这一轮把设备接口和展示规则从 Android 里拆出来，为 macOS、Windows 和 iOS 继续铺路。',
+    lead: '这一轮把设备接口和展示规则从 Android 里拆出来，为 macOS、Windows 和 iOS 继续铺路。',
     sections: [
       {
         title: '共享逻辑',
@@ -284,8 +288,7 @@ export const changelogEntries = [
     version: 'Upstream 2.7',
     date: '2026-05-20',
     badge: '鲲鹏 / NRADIO 兼容增强',
-    lead:
-      '这版主要解决不同 NRADIO 模板把信息放在不同位置的问题，尤其是 C5800 / AK68 一类设备。',
+    lead: '这版主要解决不同 NRADIO 模板把信息放在不同位置的问题，尤其是 C5800 / AK68 一类设备。',
     sections: [
       {
         title: '运行状态读取更会找',
@@ -307,8 +310,7 @@ export const changelogEntries = [
     version: 'Upstream 2.6',
     date: '2026-05-19',
     badge: '跨平台基础继续补齐',
-    lead:
-      '这一版把华为、烽火和鲲鹏逻辑继续同步到桌面副本，同时把 Windows 和 iOS 的工程基线铺好。',
+    lead: '这一版把华为、烽火和鲲鹏逻辑继续同步到桌面副本，同时把 Windows 和 iOS 的工程基线铺好。',
     sections: [
       {
         title: '设备侧能力',
@@ -327,17 +329,16 @@ export const changelogEntries = [
       },
     ],
   },
-];
+]
 
-export const aboutInfo = {
+export const aboutInfo: AboutInfo = {
   chineseName: 'CPE网络看板',
   englishName: 'CPE Network Dashboard',
   versionName: '3.0.0',
   userGroup: '955206409',
   description:
     '面向 4G/5G CPE 的管理工具。覆盖连接状态、射频指标、SIM/AMBR、锁频锁小区、邻区扫描、测速、Ping 与路由测试。',
-  note:
-    '首先还是要感谢共同参与和帮助过我们的朋友们。CPE 网络看板能走到 3.0，不只是一个人的代码，也有测试设备、接口抓包、UI 方案、建议和很多次反馈。',
+  note: '首先还是要感谢共同参与和帮助过我们的朋友们。CPE 网络看板能走到 3.0，不只是一个人的代码，也有测试设备、接口抓包、UI 方案、建议和很多次反馈。',
   makers: [
     {
       name: '当然是小原啦',
@@ -357,7 +358,8 @@ export const aboutInfo = {
   thanks: [
     {
       name: '墨戥玳',
-      contribution: '为项目宣传部分做出贡献。纯血鸿蒙设备可继续关注由墨戥玳独立开发的 CPE 监控面板。',
+      contribution:
+        '为项目宣传部分做出贡献。纯血鸿蒙设备可继续关注由墨戥玳独立开发的 CPE 监控面板。',
     },
     {
       name: '空',
@@ -365,7 +367,8 @@ export const aboutInfo = {
     },
     {
       name: 'AndroidLiquidGlassView',
-      contribution: '本 app 的 UI 设计引用了 GitHub 上 AndroidLiquidGlassView 项目的方案，非常感谢作者的开源实现。',
+      contribution:
+        '本 app 的 UI 设计引用了 GitHub 上 AndroidLiquidGlassView 项目的方案，非常感谢作者的开源实现。',
       links: [{ label: 'GitHub', href: 'https://github.com/QmDeve/AndroidLiquidGlassView' }],
     },
     {
@@ -382,4 +385,4 @@ export const aboutInfo = {
       contribution: '提供鲲鹏多设备测试和接口帮助，并提出了很多修改意见。',
     },
   ],
-};
+}
