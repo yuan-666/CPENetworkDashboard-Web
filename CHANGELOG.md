@@ -1,5 +1,15 @@
 # CPE Network Dashboard Web Changelog
 
+## Website 1.3.0 (2026-05-27)
+
+- 将官网从单页长滚动改为独立页面：`#/` 首页、`#/product` 产品介绍、`#/download` 下载、`#/changelog` 更新日志、`#/about` 关于。
+- 首页重写为更短的产品表达，并加入截图动效、扫描线和指标滚动条，避免把功能清单堆在首屏。
+- 产品介绍页重新分开电脑端与手机端展示：电脑端只使用 `public/media/computer` 横向截图，手机端只使用 `public/media/phone` 长屏截图。
+- 下载页加入设备自动识别：Android 推荐 APK，macOS 推荐 DMG，Windows 推荐 EXE，同时保留 MSI 和 Portable 手动选择。
+- 更新日志页独立出来，并按用户场景展开 Android 3.1、Desktop 3.0.0、Cross-platform 3.0、Upstream 2.7 / 2.6 的详细变化。
+- 关于页同步应用内部 `AppMetadata`：软件名、英文名、版本、QQ群、制作者和完整致谢名单。
+- 下载统计改为记录 hash 页面路径，桌面大包的边缘函数跳转改到 `/#/download`。
+
 ## Website 1.2.0 (2026-05-27)
 
 - 重写首页、场景、平台、下载和更新文案，减少工程说明和功能罗列，改成更贴近日常 CPE 排障的表达。

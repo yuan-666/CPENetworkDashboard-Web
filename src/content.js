@@ -1,5 +1,13 @@
 export const appIcon = '/media/app-icon.png';
 
+export const routes = [
+  { path: '/', label: '首页', title: 'CPE 网络看板' },
+  { path: '/product', label: '介绍', title: '产品介绍' },
+  { path: '/download', label: '下载', title: '下载 CPE 网络看板' },
+  { path: '/changelog', label: '更新日志', title: '更新日志' },
+  { path: '/about', label: '关于', title: '关于 CPE 网络看板' },
+];
+
 export const heroDesktopImage = '/media/computer/29b0da59250a42a033e3cb98ba1a786f.png';
 
 export const desktopScreens = [
@@ -35,21 +43,46 @@ function chunkedParts(folder, fileName, count) {
   );
 }
 
-export const storyCards = [
+export const heroFacts = [
+  { label: '当前小区', value: 'PCI / ARFCN' },
+  { label: '射频质量', value: 'RSRP / SINR' },
+  { label: '验证链路', value: 'Speed / Ping' },
+];
+
+export const telemetryWords = [
+  'RSRP',
+  'RSRQ',
+  'SINR',
+  'AMBR',
+  'PCI',
+  'ARFCN',
+  'CA',
+  'Ping',
+  'Route',
+  'Lock',
+];
+
+export const productMoments = [
   {
-    label: '看状态',
-    title: '网速突然不对，先别急着重启。',
-    copy: '先看当前小区、邻区、RSRP、RSRQ、SINR 和签约速率。很多问题不是设备坏了，而是信号质量、频段或小区选择变了。',
+    label: '先看清',
+    title: '先确认它连在哪。',
+    copy:
+      '当前小区、邻区、信号质量、签约速率和连接状态放在一起。先判断是信号掉了、频段变了，还是设备后台没有说清楚。',
+    points: ['当前/邻区', 'RSRP / RSRQ / SINR', 'SIM / AMBR'],
   },
   {
-    label: '调参数',
-    title: '需要锁频锁小区时，别靠感觉填。',
-    copy: 'Band、ARFCN、PCI、网络模式和邻区扫描放在一起。改完以后再读一次，知道设备有没有真的吃到配置。',
+    label: '再动手',
+    title: '要不要锁，先看证据。',
+    copy:
+      'Band、ARFCN、PCI、网络模式和邻区扫描放在同一条思路里。改完立刻回读，知道设备有没有真的吃到配置。',
+    points: ['Band 锁定', 'ARFCN / PCI', '网络偏好'],
   },
   {
-    label: '做验证',
-    title: '调完以后，马上测这一条链路。',
-    copy: '测速、Ping 和路由测试走你正在用的 CPE 出口。不是看一个漂亮数字，而是确认刚才的调整有没有意义。',
+    label: '最后验证',
+    title: '改完，马上测这一条链路。',
+    copy:
+      '测速、Ping 和路由测试不是为了给一个好看的数字，而是确认刚才那次调整有没有意义。电脑端适合长时间看，手机端适合现场走动。',
+    points: ['下载测速', 'Ping 折线', '路由测试'],
   },
 ];
 
@@ -57,21 +90,28 @@ export const platformCards = [
   {
     name: 'Android',
     version: '3.1',
-    title: '人在设备旁边，就用手机看。',
-    copy: '上门、机房、弱电箱旁边，手机打开就能看状态、扫邻区、调锁定。很多时候不用再掏电脑。',
+    title: '站在设备旁边时，手机最顺手。',
+    copy: '打开、登录、看信号、扫邻区、改锁定。弱电箱、窗边、机柜旁边，用手机会比搬电脑自然得多。',
   },
   {
     name: 'macOS',
     version: '3.0.0',
-    title: '坐下来排查，就把它放在桌面上。',
-    copy: '大屏能把信号、测速、Ping、锁频和日志摊开，适合边调边记，也适合反复对比结果。',
+    title: '坐下来排查时，Mac 端看得更完整。',
+    copy: '连接、锁定、测试和日志能铺开，适合边调边记，也适合把一段时间的结果放在大屏上对比。',
   },
   {
     name: 'Windows',
     version: '3.0.0',
     title: '维护电脑、临时电脑，都留了入口。',
-    copy: 'EXE、MSI、便携包都准备了。能安装就安装，不能安装就用便携版。',
+    copy: '常规 EXE、固定环境 MSI、免安装 Portable 都准备好了。能安装就安装，不能安装也能临时带走。',
   },
+];
+
+export const supportedDevices = [
+  ['HUAWEI', 'H168-383 / H155-381 / H153-381'],
+  ['FiberHome', 'LG6121D / LG6121F / LG6121H / LG6851F / LG6151M'],
+  ['NRADIO / 鲲鹏无限', 'LuCI NRADIO CPE，兼容 cpe / cpe1 / wan0 模板'],
+  ['ZTE / 中兴', '支持 UBUS Web API 的中兴 CPE'],
 ];
 
 export const downloads = [
@@ -84,8 +124,8 @@ export const downloads = [
     href: '/downloads/CPE-Network-Dashboard-3.1-android.apk',
     size: '12.6 MiB',
     checksum: '9aed997cc91f34a0b17bf79c31230ca1f459064a9f797f49d78a9df0b547b790',
-    label: '先装这个',
-    copy: 'Android 是现场调试最顺手的版本。拿着手机站在 CPE 旁边，看状态、调锁定、测出口。',
+    label: '现场调试优先',
+    copy: '人在 CPE 旁边，直接装 Android 版。看状态、扫邻区、调锁定、做一次测速，动作最少。',
   },
   {
     id: 'macos-3.0.0',
@@ -96,8 +136,8 @@ export const downloads = [
     chunks: chunkedParts('macos-3.0.0', 'CPE-Network-Dashboard-3.0.0-macos.dmg', 5),
     size: '85.7 MiB',
     checksum: '35ae5e36c5c72723e520c7240a7ff39263a51567f48936815b9973478d5de952',
-    label: 'Mac 上看大屏',
-    copy: '适合坐下来观察一段时间，边看指标边做 Ping、测速和锁频回读。',
+    label: 'Mac 桌面版',
+    copy: '适合在桌面上长时间观察，边看信号边做 Ping、测速和锁定回读。',
   },
   {
     id: 'windows-exe-3.0.0',
@@ -108,8 +148,8 @@ export const downloads = [
     chunks: chunkedParts('windows-exe-3.0.0', 'CPE-Network-Dashboard-3.0.0-windows-x64.exe', 5),
     size: '99.6 MiB',
     checksum: '0d613ea043d0f38f17d52334ad3c42fddb4beeb80877eda0aa87c6165d466803',
-    label: '常规安装',
-    copy: '平时就在这台 Windows 电脑上维护 CPE，选 EXE 最省事。',
+    label: 'Windows 常规安装',
+    copy: '这台电脑以后还会维护 CPE，选 EXE 最省事。',
   },
   {
     id: 'windows-msi-3.0.0',
@@ -120,8 +160,8 @@ export const downloads = [
     chunks: chunkedParts('windows-msi-3.0.0', 'CPE-Network-Dashboard-3.0.0-windows-x64.msi', 5),
     size: '98.9 MiB',
     checksum: '9e738a7cedfe93ffdaa2c8a73a8689d31d9118ccf4c5b757664d6a4e7039f7cf',
-    label: '固定电脑',
-    copy: '更适合维护机、办公电脑这类长期使用的环境。',
+    label: 'Windows 固定部署',
+    copy: '维护机、办公电脑或更偏固定安装的环境，用 MSI 会更合适。',
   },
   {
     id: 'windows-portable-3.0.0',
@@ -136,35 +176,197 @@ export const downloads = [
     ),
     size: '97.5 MiB',
     checksum: 'a359d9eff066173efd7431687b804d6fa7a63a511aa477f21440f06fecb9983a',
-    label: '免安装',
-    copy: '临时电脑、U 盘携带、不方便安装软件时，用这个版本。',
+    label: 'Windows 免安装',
+    copy: '临时电脑、U 盘携带、没有安装权限的时候，用这个版本。',
   },
 ];
 
-export const releaseNotes = [
+export const changelogEntries = [
   {
     version: 'Android 3.1',
-    date: '2026.05',
-    title: '如果你用烽火，或者 OPPO 手机，这版值得更新。',
-    copy: 'AMBR、4G Trans.Mode 和接口读取逻辑重新整理；测速页的速率显示也更稳，OPPO 系设备在烽火配置下的闪屏问题已经处理。',
+    date: '2026-05-26',
+    badge: 'Android 用户建议更新',
+    lead:
+      '这版不追求新花样，主要把烽火设备、测速页和 OPPO 系手机上容易让人误判的地方修稳。',
+    sections: [
+      {
+        title: '烽火设备显示更可靠',
+        items: [
+          '修复烽火 AMBR 显示错误，签约速率不会再因为字段读取问题显示得不对。',
+          '屏蔽烽火 PUCCH，避免把不适合展示的字段放进用户判断里。',
+          '修复 4G 下 Trans.Mode 显示，并同步调整接口读取逻辑。',
+        ],
+      },
+      {
+        title: '测速页重新适配',
+        items: [
+          '速率监控重新整理，减少大数值或异常瞬时值带来的溢出。',
+          '测速时更关注可读性，避免一眼看过去像是软件坏了。',
+        ],
+      },
+      {
+        title: 'OPPO 系手机体验修复',
+        items: [
+          '处理 OPPO 系设备在烽火配置下的闪屏问题。',
+          '如果之前一进入烽火配置就闪一下或反复重绘，这版会更稳。',
+        ],
+      },
+    ],
   },
   {
     version: 'Desktop 3.0.0',
-    date: '2026.05',
-    title: '电脑端现在可以认真用了。',
-    copy: 'macOS 和 Windows 都有安装包。需要长时间看状态、对比 Ping 和测速结果时，不必只盯着手机。',
+    date: '2026-05-26',
+    badge: 'macOS / Windows 首个完整桌面分发',
+    lead:
+      '桌面版不是把手机界面简单放大，而是为了长时间排障准备的横向工作台。',
+    sections: [
+      {
+        title: '电脑端安装包齐了',
+        items: [
+          'macOS 提供 DMG，Windows 提供 EXE、MSI 和 Portable 免安装包。',
+          '官网使用 20MiB 分片分发桌面大包，浏览器会自动下载并合成原始文件。',
+          '所有公开安装包都提供 SHA-256，下载后可以自己校验。',
+        ],
+      },
+      {
+        title: '桌面上能认真看数据',
+        items: [
+          '连接、锁定、测速、Ping、路由测试和日志分开呈现，横向空间利用更充分。',
+          'Ping 和路由测试加入折线采样，适合观察一段时间内的变化。',
+          '连接看板支持指标卡大小、排序、分区列数、质量样式和标签显示方式。',
+        ],
+      },
+      {
+        title: '设备逻辑跟上 Android 3.0',
+        items: [
+          '同步烽火 CA/Header/时长、中兴 CA/频段能力、鲲鹏多 speed name 聚合。',
+          '共享显示元数据进入 shared-logic，减少不同平台同一字段解释不一致的问题。',
+          '桌面本地 CPE 请求绕开系统代理，减少访问 192.168.* 设备时被代理影响的情况。',
+        ],
+      },
+    ],
   },
   {
     version: 'Cross-platform 3.0',
-    date: '2026.05',
-    title: '多平台版本开始跟上同一套设备逻辑。',
-    copy: '烽火、中兴、鲲鹏等设备族的显示和读取能力继续补齐。以后换设备、换电脑，使用方式会更接近。',
+    date: '2026-05-24',
+    badge: '多平台逻辑开始统一',
+    lead:
+      '这一轮把设备接口和展示规则从单一 Android 逻辑里拆出来，为 macOS、Windows 和 iOS 继续铺路。',
+    sections: [
+      {
+        title: '共享逻辑',
+        items: [
+          '新增 shared-logic，统一指标显示、运营商解析、字段别名和展示设置。',
+          'Android 基线升级到 3.0，桌面和 iOS 包版本同步到 3.0.0。',
+        ],
+      },
+      {
+        title: 'iOS 方向',
+        items: [
+          '新增 IosCpeBridge，使用 NSURLSession 和 Kotlin crypto 覆盖华为 V2、中兴、鲲鹏 NRADIO 和基础烽火 probe。',
+          '测速、Ping、路由测试在 iOS 和桌面端补齐真实探测逻辑。',
+        ],
+      },
+    ],
+  },
+  {
+    version: 'Upstream 2.7',
+    date: '2026-05-20',
+    badge: '鲲鹏 / NRADIO 兼容增强',
+    lead:
+      '这版主要解决不同 NRADIO 模板把信息藏在不同位置的问题，尤其是 C5800 / AK68 一类设备。',
+    sections: [
+      {
+        title: '运行状态读取更会找',
+        items: [
+          '运行状态选择扩展到 cpe、cpe1、wan0、overview speed names、外置 CPE 列表和 cpestatus/cellinfo。',
+          '新增外置设备字段、SIM 备注、RSSI/CQI、PUSCH、PUCCH、SRS、PRACH 和 AMBR 解析。',
+        ],
+      },
+      {
+        title: '速率显示更稳',
+        items: [
+          '改进实时速率候选、计数回绕和异常值过滤。',
+          '避免旧固件或多接口设备因为字段不同而直接显示空白。',
+        ],
+      },
+    ],
+  },
+  {
+    version: 'Upstream 2.6',
+    date: '2026-05-19',
+    badge: '跨平台基础继续补齐',
+    lead:
+      '这一版把华为、烽火和鲲鹏逻辑继续同步到桌面副本，同时把 Windows 和 iOS 的工程基线铺好。',
+    sections: [
+      {
+        title: '设备侧能力',
+        items: [
+          '新增鲲鹏 / NRADIO overview 解析，覆盖设备详情、Wi-Fi、SIM/网络状态、动态 SIM 卡槽、AMBR、流量和 IP/DNS。',
+          '补齐 NRADIO 网络模式、锁频、锁小区、邻区扫描和解锁回退流程。',
+          '增强华为 NSA 显示，分开呈现 4G / 5G 小区、射频、功率和链路数据。',
+        ],
+      },
+      {
+        title: '跨平台准备',
+        items: [
+          '新增 Windows 打包基线和 iOS host 工程。',
+          '桌面连接页按设备配置拆开，避免不同设备族共用过度压缩的通用页面。',
+        ],
+      },
+    ],
   },
 ];
 
-export const supportedDevices = [
-  ['HUAWEI', 'H168-383 / H155-381 / H153-381'],
-  ['FiberHome', 'LG6121D / LG6121F / LG6121H / LG6851F / LG6151M'],
-  ['NRADIO / 鲲鹏无限', 'LuCI NRADIO CPE，兼容 cpe / cpe1 / wan0 模板'],
-  ['ZTE / 中兴', '支持 UBUS Web API 的中兴 CPE'],
-];
+export const aboutInfo = {
+  chineseName: 'CPE网络看板',
+  englishName: 'CPE Network Dashboard',
+  versionName: '3.0.0',
+  userGroup: '955206409',
+  description:
+    '面向 4G/5G CPE 的管理工具。覆盖连接状态、射频指标、SIM/AMBR、锁频锁小区、邻区扫描、测速、Ping 与路由测试。',
+  makers: [
+    {
+      name: '当然是小原啦',
+      links: [
+        { label: 'GitHub', href: 'https://github.com/yuan-666' },
+        { label: '酷安', href: 'https://www.coolapk.com/u/2779987' },
+      ],
+    },
+    {
+      name: '叉子么',
+      links: [
+        { label: 'GitHub', href: 'https://github.com/chazime/' },
+        { label: '酷安', href: 'https://www.coolapk.com/u/3517558' },
+      ],
+    },
+  ],
+  thanks: [
+    {
+      name: '墨戥玳',
+      contribution: '为项目宣传部分做出贡献。纯血鸿蒙设备可继续关注由墨戥玳独立开发的 CPE 监控面板。',
+    },
+    {
+      name: '空',
+      contribution: '空哥在需要测试的时候提供了设备，也给了项目很多其他方面的帮助。',
+    },
+    {
+      name: 'AndroidLiquidGlassView',
+      contribution: '本 app 的 UI 设计引用了 GitHub 上 AndroidLiquidGlassView 项目的方案，非常感谢作者的开源实现。',
+      links: [{ label: 'GitHub', href: 'https://github.com/QmDeve/AndroidLiquidGlassView' }],
+    },
+    {
+      name: '大湾区网络观察',
+      contribution: '建议增加中兴、烽火的载波聚合显示卡片，让当前载波聚合的小区连接情况更直观。',
+    },
+    {
+      name: '马野',
+      contribution: '提供鲲鹏多设备接口 C5800+AK68 帮助；马野正在开发鲲鹏系统的一键安装脚本。',
+      links: [{ label: '鲲鹏脚本', href: 'https://nradio.mayebano.shop/' }],
+    },
+    {
+      name: '春风不语',
+      contribution: '提供鲲鹏多设备测试和接口帮助，并提出了很多修改意见。',
+    },
+  ],
+};

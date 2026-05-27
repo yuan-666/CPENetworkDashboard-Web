@@ -29,19 +29,19 @@ const DOWNLOADS = {
   },
   'macos-3.0.0': {
     label: 'macOS 3.0.0 DMG',
-    href: '/#downloads',
+    href: '/#/download',
   },
   'windows-exe-3.0.0': {
     label: 'Windows 3.0.0 EXE',
-    href: '/#downloads',
+    href: '/#/download',
   },
   'windows-msi-3.0.0': {
     label: 'Windows 3.0.0 MSI',
-    href: '/#downloads',
+    href: '/#/download',
   },
   'windows-portable-3.0.0': {
     label: 'Windows 3.0.0 Portable',
-    href: '/#downloads',
+    href: '/#/download',
   },
 };
 

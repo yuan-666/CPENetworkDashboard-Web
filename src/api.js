@@ -18,7 +18,12 @@ export async function fetchSummary() {
   return readJson(response);
 }
 
-export async function trackVisit(page = window.location.pathname) {
+function currentPagePath() {
+  const hashPath = window.location.hash?.startsWith('#/') ? window.location.hash.slice(1) : '';
+  return hashPath || window.location.pathname || '/';
+}
+
+export async function trackVisit(page = currentPagePath()) {
   const response = await fetch(apiUrl('/track'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -35,7 +40,7 @@ export async function trackVisit(page = window.location.pathname) {
 export function trackDownload(fileId) {
   const payload = JSON.stringify({
     file: fileId,
-    page: window.location.pathname,
+    page: currentPagePath(),
     referrer: document.referrer || 'direct',
     ua: navigator.userAgent,
   });

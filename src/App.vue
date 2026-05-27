@@ -1,30 +1,123 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
+  aboutInfo,
   appIcon,
+  changelogEntries,
   desktopScreens,
   downloads,
   heroDesktopImage,
+  heroFacts,
   mobileScreens,
   platformCards,
-  releaseNotes,
-  storyCards,
+  productMoments,
+  routes,
   supportedDevices,
+  telemetryWords,
 } from './content';
 import { fetchSummary, trackDownload, trackVisit } from './api';
 
+const routePath = ref('/');
 const summary = ref(null);
 const analyticsState = ref('loading');
 const activeDesktop = ref(heroDesktopImage);
 const activeMobile = ref(mobileScreens[0]);
 const copiedChecksum = ref('');
 const downloadStates = ref({});
+const detectedPlatform = ref('unknown');
+const selectedDownloadId = ref('');
+const hasStartedTracking = ref(false);
 
-const primaryDownload = computed(() => downloads[0]);
-const desktopDownloads = computed(() => downloads.slice(1));
+const routeMap = Object.fromEntries(routes.map((route) => [route.path, route]));
+const currentRoute = computed(() => routeMap[routePath.value] || routeMap['/']);
+const currentTitle = computed(() => `${currentRoute.value.title} / CPE Network Dashboard`);
 const downloadTotals = computed(() => summary.value?.downloadsByFile || {});
 const totalDownloads = computed(() => summary.value?.downloadsTotal ?? null);
 const totalVisits = computed(() => summary.value?.visits?.total ?? null);
+const desktopDownloads = computed(() => downloads.filter((download) => download.platform !== 'Android'));
+
+const platformAdvice = computed(() => {
+  const advice = {
+    android: {
+      device: 'Android 手机',
+      primaryId: 'android-3.1',
+      title: '检测到 Android，直接下载 APK。',
+      copy: '现场调试通常就是这个场景：手机在手边，CPE 也在旁边。',
+    },
+    macos: {
+      device: 'macOS 电脑',
+      primaryId: 'macos-3.0.0',
+      title: '检测到 macOS，推荐下载 DMG。',
+      copy: '适合坐下来长时间看信号、测速和 Ping 曲线。',
+    },
+    windows: {
+      device: 'Windows 电脑',
+      primaryId: 'windows-exe-3.0.0',
+      title: '检测到 Windows，推荐常规 EXE。',
+      copy: '如果是固定维护电脑，也可以改选 MSI；临时电脑可选 Portable。',
+    },
+    ios: {
+      device: 'iPhone / iPad',
+      primaryId: 'android-3.1',
+      title: '检测到 iOS，目前没有公开 iOS 包。',
+      copy: 'iOS 方向还在推进。现在可以在电脑上下载桌面版，或换 Android 设备安装 APK。',
+    },
+    linux: {
+      device: 'Linux / 其他桌面',
+      primaryId: 'android-3.1',
+      title: '暂时没有 Linux 桌面包。',
+      copy: '当前公开下载是 Android、macOS 和 Windows；Linux 用户建议先用 Android 或 Windows 便携版。',
+    },
+    unknown: {
+      device: '未知设备',
+      primaryId: 'android-3.1',
+      title: '没能判断你的设备，先给你 Android 版。',
+      copy: '下面也保留了 macOS 和 Windows 的全部安装包，可以手动选择。',
+    },
+  };
+
+  return advice[detectedPlatform.value] || advice.unknown;
+});
+
+const recommendedDownload = computed(() => {
+  const selected = downloads.find((download) => download.id === selectedDownloadId.value);
+  if (selected) return selected;
+  return downloads.find((download) => download.id === platformAdvice.value.primaryId) || downloads[0];
+});
+
+const otherDownloads = computed(() => downloads.filter((download) => download.id !== recommendedDownload.value.id));
+
+function routeHref(path) {
+  return `#${path}`;
+}
+
+function normalizeRoute() {
+  const hash = window.location.hash || '#/';
+  if (hash.startsWith('#/')) {
+    const path = hash.slice(1) || '/';
+    return routeMap[path] ? path : '/';
+  }
+
+  const path = window.location.pathname || '/';
+  return routeMap[path] ? path : '/';
+}
+
+function syncRoute() {
+  routePath.value = normalizeRoute();
+}
+
+function detectPlatform() {
+  const ua = navigator.userAgent || '';
+  const platform = navigator.platform || '';
+  const hasTouchMac = /Mac/i.test(platform) && navigator.maxTouchPoints > 1;
+
+  if (/Android/i.test(ua)) return 'android';
+  if (/iPhone|iPad|iPod/i.test(ua) || hasTouchMac) return 'ios';
+  if (/Windows/i.test(ua) || /Win/i.test(platform)) return 'windows';
+  if (/Macintosh|Mac OS X/i.test(ua) || /Mac/i.test(platform)) return 'macos';
+  if (/Linux|X11/i.test(ua)) return 'linux';
+  return 'unknown';
+}
 
 function valueOrPreview(value) {
   return Number.isFinite(value) ? value.toLocaleString('zh-CN') : '部署后统计';
@@ -32,12 +125,8 @@ function valueOrPreview(value) {
 
 function statForDownload(id) {
   const item = downloadTotals.value[id];
-  if (!item) return analyticsState.value === 'ready' ? '0 次' : '待统计';
-  return `${Number(item.total || 0).toLocaleString('zh-CN')} 次`;
-}
-
-function handleDownload(fileId) {
-  trackDownload(fileId);
+  if (!item) return analyticsState.value === 'ready' ? '0 次下载' : '下载统计加载中';
+  return `${Number(item.total || 0).toLocaleString('zh-CN')} 次下载`;
 }
 
 function setDownloadState(fileId, nextState) {
@@ -54,6 +143,10 @@ function getDownloadState(fileId) {
   return downloadStates.value[fileId] || {};
 }
 
+function isDownloadBusy(fileId) {
+  return ['downloading', 'assembling'].includes(getDownloadState(fileId).status);
+}
+
 function downloadButtonText(download) {
   const state = getDownloadState(download.id);
   if (state.status === 'downloading') return `正在下载 ${state.progress || 0}%`;
@@ -61,6 +154,11 @@ function downloadButtonText(download) {
   if (state.status === 'done') return '已开始保存';
   if (state.status === 'error') return '重试下载';
   return download.chunks?.length ? '下载并自动合并' : '下载';
+}
+
+function handleDownload(fileId) {
+  trackDownload(fileId);
+  window.setTimeout(loadSummary, 800);
 }
 
 function readChunkBlob(url) {
@@ -118,6 +216,7 @@ async function downloadChunkedFile(download) {
         setDownloadState(download.id, { status: 'idle', progress: 0 });
       }
     }, 2200);
+    window.setTimeout(loadSummary, 800);
   } catch {
     setDownloadState(download.id, { status: 'error', progress: 0 });
   }
@@ -144,16 +243,43 @@ async function loadSummary() {
   }
 }
 
+function selectDownload(downloadId) {
+  selectedDownloadId.value = downloadId;
+}
+
+watch(routePath, async (path) => {
+  document.title = currentTitle.value;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (!hasStartedTracking.value) return;
+  await Promise.allSettled([trackVisit(path), loadSummary()]);
+});
+
+watch(platformAdvice, (advice) => {
+  if (!selectedDownloadId.value) selectedDownloadId.value = advice.primaryId;
+});
+
 onMounted(async () => {
-  await Promise.allSettled([trackVisit(), loadSummary()]);
+  detectedPlatform.value = detectPlatform();
+  selectedDownloadId.value = platformAdvice.value.primaryId;
+  syncRoute();
+  window.addEventListener('hashchange', syncRoute);
+  window.addEventListener('popstate', syncRoute);
+  document.title = currentTitle.value;
+  hasStartedTracking.value = true;
+  await Promise.allSettled([trackVisit(routePath.value), loadSummary()]);
   window.setTimeout(loadSummary, 1200);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('hashchange', syncRoute);
+  window.removeEventListener('popstate', syncRoute);
 });
 </script>
 
 <template>
   <div class="site-shell">
     <header class="topbar">
-      <a class="brand-lockup" href="#top" aria-label="CPE 网络看板首页">
+      <a class="brand-lockup" :href="routeHref('/')" aria-label="CPE 网络看板首页">
         <img :src="appIcon" alt="" />
         <span>
           <strong>CPE 网络看板</strong>
@@ -161,266 +287,380 @@ onMounted(async () => {
         </span>
       </a>
       <nav class="nav-links" aria-label="主导航">
-        <a href="#scene">场景</a>
-        <a href="#desktop">电脑端</a>
-        <a href="#mobile">手机端</a>
-        <a href="#downloads">下载</a>
-        <a href="#release">更新</a>
+        <a
+          v-for="route in routes"
+          :key="route.path"
+          :href="routeHref(route.path)"
+          :class="{ active: routePath === route.path }"
+        >
+          {{ route.label }}
+        </a>
       </nav>
     </header>
 
-    <main id="top">
-      <section class="hero page">
+    <main>
+      <section v-if="routePath === '/'" class="page-view home-page">
         <div class="hero-copy">
-          <p class="eyebrow">For 4G / 5G CPE</p>
-          <h1>
-            <span>CPE 网速不对，</span>
-            <span>先别急着重启。</span>
-          </h1>
+          <div class="app-mark">
+            <img :src="appIcon" alt="" />
+            <span>Android 3.1 / macOS & Windows 3.0.0</span>
+          </div>
+          <h1>别先重启，先看 CPE。</h1>
           <p>
-            先看看它连在哪个小区、信号质量怎么样、测速和 Ping 走的是哪条链路。
-            CPE 网络看板做的事很简单：把这些原本分散在后台里的信息，放到你能直接判断的地方。
+            CPE 网络看板不是另一个路由器后台。它把信号、小区、锁定和测试结果放在一起，
+            让你少猜几次，也少重启几次。
           </p>
           <div class="hero-actions">
-            <a class="primary-action" href="#downloads">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 4v10m0 0 3.5-3.5M12 14l-3.5-3.5M5 20h14" />
-              </svg>
-              下载 Android 3.1
-            </a>
-            <a class="secondary-action" href="#scene">看看它能帮你省哪一步</a>
+            <a class="action primary" :href="routeHref('/download')">下载适合的版本</a>
+            <a class="action secondary" :href="routeHref('/product')">看看它怎么用</a>
           </div>
-          <div class="hero-points" aria-label="核心能力">
-            <span>信号质量</span>
-            <span>锁频锁小区</span>
-            <span>测速与 Ping</span>
+          <div class="fact-line" aria-label="核心指标">
+            <span v-for="fact in heroFacts" :key="fact.label">
+              <small>{{ fact.label }}</small>
+              <strong>{{ fact.value }}</strong>
+            </span>
           </div>
         </div>
 
-        <div class="hero-media" aria-label="电脑端界面预览">
-          <div class="desktop-frame hero-frame">
-            <div class="frame-bar">
+        <div class="hero-stage" aria-label="产品界面预览">
+          <div class="scan-line"></div>
+          <div class="desktop-window hero-desktop">
+            <div class="window-bar">
               <span></span>
               <span></span>
               <span></span>
-              <strong>电脑端界面</strong>
+              <strong>Desktop Dashboard</strong>
             </div>
             <img :src="heroDesktopImage" alt="CPE 网络看板电脑端截图" />
           </div>
-          <div class="product-tag">
-            <img :src="appIcon" alt="" />
-            <span>Android 3.1</span>
-            <strong>macOS / Windows 3.0.0</strong>
+          <div class="phone-shell hero-phone">
+            <img :src="mobileScreens[0]" alt="CPE 网络看板 Android 截图" />
+          </div>
+          <div class="live-card">
+            <span>Local CPE</span>
+            <strong>192.168.8.1</strong>
+            <small>signal / lock / test</small>
+          </div>
+        </div>
+
+        <div class="marquee" aria-hidden="true">
+          <div class="marquee-track">
+            <span v-for="(word, index) in [...telemetryWords, ...telemetryWords]" :key="`${word}-${index}`">
+              {{ word }}
+            </span>
           </div>
         </div>
       </section>
 
-      <section id="scene" class="page story-page">
-        <div class="section-copy story-intro">
-          <p class="eyebrow">When to use it</p>
-          <h2>多数时候，你缺的不是按钮，是依据。</h2>
-          <p>
-            设备后台能做的事很多，但现场排查真正需要的是顺序。先确认状态，再决定要不要锁频、锁小区，最后用测速和 Ping 验证。
-          </p>
-        </div>
-        <div class="story-grid">
-          <article v-for="card in storyCards" :key="card.title" class="story-card">
-            <span>{{ card.label }}</span>
-            <h3>{{ card.title }}</h3>
-            <p>{{ card.copy }}</p>
+      <section v-else-if="routePath === '/product'" class="page-view product-page">
+        <header class="page-heading">
+          <p>产品介绍</p>
+          <h1>先看清楚，再动手，再验证。</h1>
+          <span>
+            面向 4G/5G CPE 的日常排障、现场调试和设备巡检。手机负责快，电脑负责看得全。
+          </span>
+        </header>
+
+        <div class="flow-grid">
+          <article v-for="(moment, index) in productMoments" :key="moment.title" class="flow-item">
+            <span>{{ String(index + 1).padStart(2, '0') }} / {{ moment.label }}</span>
+            <h2>{{ moment.title }}</h2>
+            <p>{{ moment.copy }}</p>
+            <div>
+              <small v-for="point in moment.points" :key="point">{{ point }}</small>
+            </div>
           </article>
         </div>
-      </section>
 
-      <section id="desktop" class="page desktop-page">
-        <div class="section-copy">
-          <p class="eyebrow">Computer screenshots</p>
-          <h2>电脑端适合慢慢看。</h2>
-          <p>
-            坐在电脑前排查时，信息越集中越好。连接、锁频、测速和日志铺在同一个横向界面里，来回切后台的次数会少很多。
-          </p>
-        </div>
-        <div class="desktop-showcase">
-          <div class="desktop-frame">
-            <div class="frame-bar">
-              <span></span>
-              <span></span>
-              <span></span>
-              <strong>Desktop / macOS / Windows</strong>
+        <section class="showcase-section desktop-showcase">
+          <div class="section-copy">
+            <p>电脑端</p>
+            <h2>坐下来排查时，信息要铺开。</h2>
+            <span>
+              横向界面适合长时间看连接状态、锁定回读、测速和日志，少在几个后台之间来回切。
+            </span>
+          </div>
+          <div class="desktop-workbench">
+            <div class="desktop-window">
+              <div class="window-bar">
+                <span></span>
+                <span></span>
+                <span></span>
+                <strong>macOS / Windows</strong>
+              </div>
+              <img :src="activeDesktop" alt="CPE 网络看板电脑端截图" />
             </div>
-            <img :src="activeDesktop" alt="CPE 网络看板电脑端截图" />
-          </div>
-          <div class="desktop-thumbs" aria-label="切换电脑端截图">
-            <button
-              v-for="(screen, index) in desktopScreens"
-              :key="screen"
-              type="button"
-              :class="{ active: activeDesktop === screen }"
-              @click="activeDesktop = screen"
-            >
-              <img :src="screen" alt="" />
-              <span>{{ String(index + 1).padStart(2, '0') }}</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section id="mobile" class="page mobile-page">
-        <div class="mobile-gallery">
-          <div class="phone-frame phone-main">
-            <img :src="activeMobile" alt="CPE 网络看板 Android 手机截图" />
-          </div>
-          <div class="phone-strip" aria-label="切换 Android 手机截图">
-            <button
-              v-for="(screen, index) in mobileScreens.slice(0, 7)"
-              :key="screen"
-              type="button"
-              :class="{ active: activeMobile === screen }"
-              @click="activeMobile = screen"
-            >
-              <img :src="screen" alt="" />
-              <span>{{ String(index + 1).padStart(2, '0') }}</span>
-            </button>
-          </div>
-        </div>
-        <div class="section-copy mobile-copy">
-          <p class="eyebrow">Phone screenshots</p>
-          <h2>手机端适合现场动手。</h2>
-          <p>
-            CPE 放在窗边、弱电箱、机柜里时，手机更顺手。看一眼信号，扫一下邻区，必要时直接改锁定策略。
-          </p>
-          <div class="mobile-notes">
-            <span>现场调试</span>
-            <span>深色移动界面</span>
-            <span>Android 3.1 最新版</span>
-          </div>
-        </div>
-      </section>
-
-      <section id="platforms" class="page platforms-page">
-        <div class="section-copy">
-          <p class="eyebrow">Three ways to use</p>
-          <h2>手机和电脑，各做各的事。</h2>
-          <p>
-            手机负责快，电脑负责看得全。你在哪个场景里处理 CPE，就用哪个版本。
-          </p>
-        </div>
-        <div class="platform-list">
-          <article v-for="platform in platformCards" :key="platform.name" class="platform-row">
-            <span>{{ platform.name }} / {{ platform.version }}</span>
-            <h3>{{ platform.title }}</h3>
-            <p>{{ platform.copy }}</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="page device-page">
-        <div class="section-copy">
-          <p class="eyebrow">Device coverage</p>
-          <h2>不同设备，别当成一个后台来处理。</h2>
-          <p>
-            华为、烽火、鲲鹏、中兴的字段和接口都不太一样。看板按设备族处理显示、锁定和回读，少用一套通用说法糊弄过去。
-          </p>
-        </div>
-        <div class="device-table">
-          <div v-for="[brand, models] in supportedDevices" :key="brand" class="device-row">
-            <strong>{{ brand }}</strong>
-            <span>{{ models }}</span>
-          </div>
-        </div>
-      </section>
-
-      <section id="downloads" class="page downloads-page">
-        <div class="section-copy download-copy">
-          <p class="eyebrow">Downloads</p>
-          <h2>选你现在手边的设备。</h2>
-          <p>
-            Android 包直接下载；桌面安装包比较大，会自动分片取回再合成原文件。你不用手动拼接。
-          </p>
-        </div>
-        <div class="download-layout">
-          <article class="download-feature">
-            <div class="download-topline">
-              <span>{{ primaryDownload.label }}</span>
-              <small>{{ primaryDownload.platform }} {{ primaryDownload.version }}</small>
+            <div class="thumb-row desktop-thumbs" aria-label="切换电脑端截图">
+              <button
+                v-for="(screen, index) in desktopScreens"
+                :key="screen"
+                type="button"
+                :class="{ active: activeDesktop === screen }"
+                @click="activeDesktop = screen"
+              >
+                <img :src="screen" alt="" />
+                <span>{{ String(index + 1).padStart(2, '0') }}</span>
+              </button>
             </div>
-            <h3>{{ primaryDownload.title }}</h3>
-            <p>{{ primaryDownload.copy }}</p>
+          </div>
+        </section>
+
+        <section class="showcase-section mobile-showcase">
+          <div class="mobile-wall">
+            <div class="phone-shell phone-main">
+              <img :src="activeMobile" alt="CPE 网络看板 Android 手机截图" />
+            </div>
+            <div class="thumb-row phone-thumbs" aria-label="切换 Android 手机截图">
+              <button
+                v-for="(screen, index) in mobileScreens.slice(0, 9)"
+                :key="screen"
+                type="button"
+                :class="{ active: activeMobile === screen }"
+                @click="activeMobile = screen"
+              >
+                <img :src="screen" alt="" />
+                <span>{{ String(index + 1).padStart(2, '0') }}</span>
+              </button>
+            </div>
+          </div>
+          <div class="section-copy">
+            <p>手机端</p>
+            <h2>人在设备旁边，手机反而更专业。</h2>
+            <span>
+              弱电箱、窗边、机柜旁边，拿起手机看状态和改锁定会更顺手。
+            </span>
+          </div>
+        </section>
+
+        <section class="platform-section">
+          <div class="section-copy">
+            <p>平台</p>
+            <h2>不同场景，用不同版本。</h2>
+          </div>
+          <div class="platform-list">
+            <article v-for="platform in platformCards" :key="platform.name" class="platform-row">
+              <span>{{ platform.name }} / {{ platform.version }}</span>
+              <h3>{{ platform.title }}</h3>
+              <p>{{ platform.copy }}</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="device-section">
+          <div class="section-copy">
+            <p>设备覆盖</p>
+            <h2>不同设备族，按不同接口认真处理。</h2>
+            <span>
+              华为、烽火、鲲鹏、中兴的字段和接口都不一样，看板按设备族处理显示、锁定和回读。
+            </span>
+          </div>
+          <div class="device-table">
+            <div v-for="[brand, models] in supportedDevices" :key="brand" class="device-row">
+              <strong>{{ brand }}</strong>
+              <span>{{ models }}</span>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section v-else-if="routePath === '/download'" class="page-view download-page">
+        <header class="page-heading compact-heading">
+          <p>下载</p>
+          <h1>按当前设备，直接下对版本。</h1>
+          <span>
+            页面会自动识别 Android、macOS 或 Windows。桌面大包会按分片取回，并在浏览器里合成原文件。
+          </span>
+        </header>
+
+        <div class="download-grid">
+          <aside class="detect-panel">
+            <span>已识别当前设备</span>
+            <strong>{{ platformAdvice.device }}</strong>
+            <h2>{{ platformAdvice.title }}</h2>
+            <p>{{ platformAdvice.copy }}</p>
+            <div class="download-switcher" aria-label="手动选择下载项">
+              <button
+                v-for="download in downloads"
+                :key="download.id"
+                type="button"
+                :class="{ active: recommendedDownload.id === download.id }"
+                @click="selectDownload(download.id)"
+              >
+                {{ download.platform }}
+                <small>{{ download.title.replace(download.platform, '').trim() || download.version }}</small>
+              </button>
+            </div>
+          </aside>
+
+          <article class="download-card selected-download">
+            <div class="download-card-head">
+              <span>{{ recommendedDownload.label }}</span>
+              <small>{{ recommendedDownload.platform }} {{ recommendedDownload.version }}</small>
+            </div>
+            <h2>{{ recommendedDownload.title }}</h2>
+            <p>{{ recommendedDownload.copy }}</p>
             <div class="download-meta">
-              <span>{{ primaryDownload.size }}</span>
-              <span>{{ statForDownload(primaryDownload.id) }}</span>
+              <span>{{ recommendedDownload.size }}</span>
+              <span>{{ statForDownload(recommendedDownload.id) }}</span>
+              <span>SHA-256</span>
             </div>
             <div class="download-actions">
-              <a class="download-button" :href="primaryDownload.href" download @click="handleDownload(primaryDownload.id)">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 4v10m0 0 3.5-3.5M12 14l-3.5-3.5M5 20h14" />
-                </svg>
-                下载 APK
+              <a
+                v-if="!recommendedDownload.chunks"
+                class="action primary"
+                :href="recommendedDownload.href"
+                :download="recommendedDownload.fileName"
+                @click="handleDownload(recommendedDownload.id)"
+              >
+                {{ downloadButtonText(recommendedDownload) }}
               </a>
-              <button type="button" class="checksum-button" @click="copyChecksum(primaryDownload)">
-                {{ copiedChecksum === primaryDownload.id ? '已复制' : 'SHA-256' }}
+              <button
+                v-else
+                type="button"
+                class="action primary"
+                :disabled="isDownloadBusy(recommendedDownload.id)"
+                @click="downloadChunkedFile(recommendedDownload)"
+              >
+                {{ downloadButtonText(recommendedDownload) }}
+              </button>
+              <button type="button" class="action secondary" @click="copyChecksum(recommendedDownload)">
+                {{ copiedChecksum === recommendedDownload.id ? '已复制校验值' : '复制校验值' }}
+              </button>
+            </div>
+            <div v-if="getDownloadState(recommendedDownload.id).status === 'error'" class="download-error">
+              分片下载中断了，可以重试；已经下载的临时数据不会保存。
+            </div>
+          </article>
+        </div>
+
+        <div class="download-list">
+          <article v-for="download in otherDownloads" :key="download.id" class="download-row">
+            <div>
+              <span>{{ download.label }}</span>
+              <h3>{{ download.title }}</h3>
+              <p>{{ download.copy }}</p>
+            </div>
+            <div class="download-row-actions">
+              <small>{{ download.size }} / {{ statForDownload(download.id) }}</small>
+              <a
+                v-if="!download.chunks"
+                :href="download.href"
+                :download="download.fileName"
+                @click="handleDownload(download.id)"
+              >
+                下载
+              </a>
+              <button
+                v-else
+                type="button"
+                :disabled="isDownloadBusy(download.id)"
+                @click="downloadChunkedFile(download)"
+              >
+                {{ downloadButtonText(download) }}
+              </button>
+              <button type="button" @click="copyChecksum(download)">
+                {{ copiedChecksum === download.id ? '已复制' : 'SHA-256' }}
               </button>
             </div>
           </article>
-
-          <div class="desktop-downloads">
-            <article v-for="download in desktopDownloads" :key="download.id" class="download-row">
-              <div>
-                <span>{{ download.label }}</span>
-                <h3>{{ download.title }}</h3>
-                <p>{{ download.copy }}</p>
-              </div>
-              <div class="download-row-actions">
-                <small>{{ download.size }} / {{ statForDownload(download.id) }}</small>
-                <button
-                  type="button"
-                  :disabled="['downloading', 'assembling'].includes(getDownloadState(download.id).status)"
-                  @click="downloadChunkedFile(download)"
-                >
-                  {{ downloadButtonText(download) }}
-                </button>
-                <button type="button" @click="copyChecksum(download)">
-                  {{ copiedChecksum === download.id ? '已复制' : 'SHA-256' }}
-                </button>
-              </div>
-            </article>
-          </div>
         </div>
       </section>
 
-      <section id="release" class="page release-page">
-        <div class="section-copy">
-          <p class="eyebrow">Recent improvements</p>
-          <h2>这几版主要是把常见坑填掉。</h2>
-          <p>
-            完整记录放在仓库里。这里说人话：哪些设备更稳了，哪些显示更准了，哪些场景少闪退少误判。
-          </p>
-        </div>
-        <div class="release-list">
-          <article v-for="note in releaseNotes" :key="note.version">
-            <span>{{ note.date }} / {{ note.version }}</span>
-            <h3>{{ note.title }}</h3>
-            <p>{{ note.copy }}</p>
+      <section v-else-if="routePath === '/changelog'" class="page-view changelog-page">
+        <header class="page-heading">
+          <p>更新日志</p>
+          <h1>更新日志：哪些地方更稳了。</h1>
+          <span>
+            Android 3.1 是当前最新公开 Android 包；macOS 和 Windows 当前公开桌面包为 3.0.0。
+          </span>
+        </header>
+
+        <div class="timeline">
+          <article v-for="entry in changelogEntries" :key="entry.version" class="timeline-entry">
+            <div class="timeline-date">
+              <span>{{ entry.date }}</span>
+              <strong>{{ entry.version }}</strong>
+              <small>{{ entry.badge }}</small>
+            </div>
+            <div class="timeline-body">
+              <p>{{ entry.lead }}</p>
+              <section v-for="section in entry.sections" :key="section.title">
+                <h2>{{ section.title }}</h2>
+                <ul>
+                  <li v-for="item in section.items" :key="item">{{ item }}</li>
+                </ul>
+              </section>
+            </div>
           </article>
         </div>
       </section>
 
-      <section class="page privacy-page">
-        <div class="section-copy">
-          <p class="eyebrow">Privacy</p>
-          <h2>应用和 CPE 的通信，留在你的局域网里。</h2>
+      <section v-else-if="routePath === '/about'" class="page-view about-page">
+        <header class="about-hero">
+          <img :src="appIcon" alt="" />
+          <div>
+            <p>关于</p>
+            <h1>{{ aboutInfo.chineseName }}</h1>
+            <span>{{ aboutInfo.englishName }} / 版本 {{ aboutInfo.versionName }}</span>
+          </div>
+        </header>
+
+        <section class="about-intro">
+          <p>{{ aboutInfo.description }}</p>
+          <div class="about-stats">
+            <span>QQ群</span>
+            <strong>{{ aboutInfo.userGroup }}</strong>
+          </div>
+        </section>
+
+        <section class="about-section">
+          <div class="section-copy">
+            <p>制作者</p>
+            <h2>项目的制作者。</h2>
+          </div>
+          <div class="person-grid">
+            <article v-for="person in aboutInfo.makers" :key="person.name" class="person-card">
+              <h3>{{ person.name }}</h3>
+              <div class="person-links">
+                <a v-for="link in person.links" :key="link.href" :href="link.href" target="_blank" rel="noreferrer">
+                  {{ link.label }}
+                </a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="about-section">
+          <div class="section-copy">
+            <p>致谢</p>
+            <h2>这些帮助，也应该留在官网里。</h2>
+          </div>
+          <div class="thanks-list">
+            <article v-for="person in aboutInfo.thanks" :key="person.name" class="thanks-card">
+              <h3>{{ person.name }}</h3>
+              <p>{{ person.contribution }}</p>
+              <div v-if="person.links?.length" class="person-links">
+                <a v-for="link in person.links" :key="link.href" :href="link.href" target="_blank" rel="noreferrer">
+                  {{ link.label }}
+                </a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="privacy-strip">
+          <div>
+            <span>官网访问</span>
+            <strong>{{ valueOrPreview(totalVisits) }}</strong>
+          </div>
+          <div>
+            <span>累计下载</span>
+            <strong>{{ valueOrPreview(totalDownloads) }}</strong>
+          </div>
           <p>
-            CPE 登录、锁频、测速发生在你的设备和局域网 CPE 之间。官网只记录聚合访问量、下载量、
-            来源和设备类型，不公开完整 IP 或原始 User-Agent。
+            应用和 CPE 的通信留在你的局域网里。官网只记录聚合访问量、下载量、来源和设备类型，不公开完整 IP 或原始 User-Agent。
           </p>
-        </div>
-        <div class="counter-panel">
-          <span>官网访问</span>
-          <strong>{{ valueOrPreview(totalVisits) }}</strong>
-          <small>{{ analyticsState === 'ready' ? '来自 ESA EdgeKV 聚合' : '本地预览时不会写入线上统计' }}</small>
-          <span>累计下载</span>
-          <strong>{{ valueOrPreview(totalDownloads) }}</strong>
-        </div>
+        </section>
       </section>
     </main>
 
