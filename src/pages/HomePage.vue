@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import LazyImage from '@/components/LazyImage.vue'
+import FlowAnimation from '@/components/FlowAnimation.vue'
 import { appIcon, heroDesktopImage, heroFacts, mobileScreens, telemetryWords } from '@/content'
 
 const marqueeWords = [...telemetryWords, ...telemetryWords]
@@ -18,8 +19,8 @@ const marqueeWords = [...telemetryWords, ...telemetryWords]
         先看 CPE。
       </h1>
       <p>
-        久等了，各位。Android 3.1 已经放出，macOS 和 Windows 也有了 3.0.0
-        桌面包。我们想做的不是另一个后台，而是让你看清楚 CPE 现在到底发生了什么。
+        Android 3.1 已发布，macOS 和 Windows 也提供 3.0.0 桌面包。它不是另一个复杂后台，而是把 CPE
+        当前状态、锁定结果和链路测试放到同一个工作界面。
       </p>
       <p class="hero-note">
         信号、小区、锁定、测速、Ping
@@ -38,6 +39,7 @@ const marqueeWords = [...telemetryWords, ...telemetryWords]
     </div>
 
     <div class="hero-stage" aria-label="产品界面预览">
+      <FlowAnimation />
       <div class="scan-line"></div>
       <div class="signal-radar" aria-hidden="true">
         <span></span>

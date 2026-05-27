@@ -8,7 +8,26 @@
       content="CPE 网络看板是面向 4G/5G CPE 的管理工具，覆盖连接状态、锁频锁小区、测速、Ping 与路由测试，提供 Android、macOS 和 Windows 下载。"
     />
     <link rel="icon" href="/media/app-icon.png" />
-    <meta name="theme-color" content="#161816" />
+    <meta name="theme-color" content="#f5f4ee" />
+    <script>
+      ;(() => {
+        try {
+          const saved = localStorage.getItem('cpe-theme')
+          const theme =
+            saved === 'dark' || saved === 'light'
+              ? saved
+              : window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+          document.documentElement.dataset.theme = theme
+          document
+            .querySelector('meta[name="theme-color"]')
+            ?.setAttribute('content', theme === 'dark' ? '#101311' : '#f5f4ee')
+        } catch {
+          document.documentElement.dataset.theme = 'light'
+        }
+      })()
+    </script>
     <meta property="og:title" content="CPE 网络看板 / CPE Network Dashboard" />
     <meta
       property="og:description"
@@ -19,6 +38,6 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

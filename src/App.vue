@@ -3,10 +3,11 @@ import { RouterView, useRoute } from 'vue-router'
 import { computed, onMounted, watch } from 'vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import SiteHeader from '@/components/SiteHeader.vue'
+import FooterFlow from '@/components/FooterFlow.vue'
 import { useAnalytics } from '@/composables/useAnalytics'
 
 const route = useRoute()
-const { loadSummary, recordVisit } = useAnalytics()
+const { recordVisit } = useAnalytics()
 
 const pageKey = computed(() => route.fullPath)
 
@@ -21,7 +22,7 @@ watch(
 
 onMounted(async () => {
   document.title = `${String(route.meta.title || 'CPE 网络看板')} / CPE Network Dashboard`
-  await Promise.allSettled([recordVisit(route.path), loadSummary()])
+  await recordVisit(route.path)
 })
 </script>
 
@@ -42,6 +43,8 @@ onMounted(async () => {
         </Transition>
       </RouterView>
     </main>
-    <SiteFooter />
+    <FooterFlow>
+      <SiteFooter />
+    </FooterFlow>
   </div>
 </template>

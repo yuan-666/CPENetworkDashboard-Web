@@ -28,18 +28,17 @@ import { aboutInfo, appIcon } from '@/content'
     <section class="about-section makers-section">
       <div class="section-copy">
         <p>制作者</p>
-        <h2>这个项目，是两个人一起往前推的。</h2>
-        <span>当然是小原啦、叉子么是这个项目的并列开发者。这里不拆具体分工，放在一起。</span>
+        <h2>两个人写的，一起维护。</h2>
+        <span>当然是小原啦和叉子么共同开发了这个项目，从第一行代码到现在，一直在迭代。</span>
       </div>
       <div class="person-grid">
         <article
-          v-for="(person, index) in aboutInfo.makers"
+          v-for="person in aboutInfo.makers"
           :key="person.name"
           class="person-card maker-card"
         >
-          <div class="maker-index">{{ String(index + 1).padStart(2, '0') }}</div>
           <div>
-            <small>并列开发者</small>
+            <small>开发者</small>
             <h3>{{ person.name }}</h3>
           </div>
           <div class="person-links">

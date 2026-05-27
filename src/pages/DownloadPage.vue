@@ -29,10 +29,10 @@ onMounted(initDownloadRecommendation)
   <section class="page-view download-page">
     <header class="page-heading compact-heading">
       <p>下载</p>
-      <h1>按当前设备，直接下对版本。</h1>
+      <h1>按当前设备下载对应版本。</h1>
       <span>
         页面会自动识别 Android、macOS 或
-        Windows。桌面大包会按分片取回，下载过程中可以看到实时进度，最后在浏览器里合成原文件。
+        Windows。桌面大包会按分片下载，过程中可以看到实时进度，最后在浏览器里自动合并为完整安装包。
       </span>
     </header>
 
@@ -85,7 +85,7 @@ onMounted(initDownloadRecommendation)
           v-if="getDownloadState(recommendedDownload.id).status === 'error'"
           class="download-error"
         >
-          分片下载中断了，可以重试；已经下载的临时数据不会保存。
+          分片下载中断了，可以重试；已经下载的临时数据不会保留。
         </div>
       </article>
     </div>

@@ -58,17 +58,21 @@ export function trackDownload(fileId: string): boolean {
     token: API_TOKEN || undefined,
   })
 
-  if (navigator.sendBeacon) {
-    const blob = new Blob([payload], { type: 'application/json' })
-    return navigator.sendBeacon(apiUrl('/download'), blob)
+  const sendWithFetch = () => {
+    fetch(apiUrl('/download'), {
+      method: 'POST',
+      headers: writeHeaders(),
+      body: payload,
+      keepalive: true,
+    }).catch(() => {})
   }
 
-  fetch(apiUrl('/download'), {
-    method: 'POST',
-    headers: writeHeaders(),
-    body: payload,
-    keepalive: true,
-  }).catch(() => {})
+  if (navigator.sendBeacon) {
+    const blob = new Blob([payload], { type: 'application/json' })
+    if (navigator.sendBeacon(apiUrl('/download'), blob)) return true
+  }
+
+  sendWithFetch()
   return true
 }
 

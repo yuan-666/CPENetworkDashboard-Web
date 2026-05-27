@@ -30,7 +30,11 @@ export function useAnalytics() {
 
   function statForDownload(id: string): string {
     const item = downloadTotals.value[id]
-    if (!item) return analyticsState.value === 'ready' ? '0 次下载' : '下载统计加载中'
+    if (!item) {
+      if (analyticsState.value === 'ready') return '0 次下载'
+      if (analyticsState.value === 'offline') return '部署后统计'
+      return '下载统计加载中'
+    }
     return `${formatNumber(item.total, '0')} 次下载`
   }
 

@@ -1,17 +1,26 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import LazyImage from '@/components/LazyImage.vue'
+import ScrollImageSwitcher from '@/components/ScrollImageSwitcher.vue'
 import {
+  desktopScreenLabels,
   desktopScreens,
-  heroDesktopImage,
+  mobileScreenLabels,
   mobileScreens,
   platformCards,
   productMoments,
   supportedDevices,
 } from '@/content'
 
-const activeDesktop = ref(heroDesktopImage)
-const activeMobile = ref(mobileScreens[0])
+const desktopFeatures = [
+  ['01', '连接看板', '小区、射频、功率和链路状态集中呈现。'],
+  ['02', '锁定回读', '锁频、锁 ARFCN 和锁 PCI 都按结果验证。'],
+  ['03', '链路测试', '测速、Ping、路由测试分开看，不混在一起。'],
+]
+
+const mobileFeatures = [
+  ['01', '现场查看', '站在设备旁边也能看清关键指标。'],
+  ['02', '快速锁定', '频段、ARFCN、PCI 的入口更短。'],
+  ['03', '随手验证', '测完马上知道刚才的调整有没有效果。'],
+]
 </script>
 
 <template>
@@ -40,61 +49,77 @@ const activeMobile = ref(mobileScreens[0])
       </article>
     </div>
 
-    <section class="showcase-section desktop-showcase">
-      <div class="section-copy">
-        <p>电脑端</p>
-        <h2>坐下来排查时，信息要铺开。</h2>
-        <span>横向界面适合长时间看连接状态、锁定回读、测速和日志，少在几个后台之间来回切。</span>
-      </div>
-      <div class="desktop-workbench">
-        <div class="desktop-window">
-          <div class="window-bar">
-            <span></span>
-            <span></span>
-            <span></span>
-            <strong>macOS / Windows</strong>
-          </div>
-          <div class="desktop-screen-frame">
-            <LazyImage :src="activeDesktop" alt="CPE 网络看板电脑端截图" />
+    <section
+      class="showcase-section showcase-pin desktop-showcase"
+      data-scroll-sequence
+      :style="{ '--showcase-steps': desktopScreens.length }"
+    >
+      <div class="showcase-pin-stage">
+        <div class="section-copy">
+          <p>电脑端</p>
+          <h2>坐下来排查，信息要铺开。</h2>
+          <span
+            >横向界面适合长时间看连接状态、锁定回读、测速和日志，不用在几个后台之间来回切。</span
+          >
+          <div class="feature-list">
+            <div v-for="[index, title, copy] in desktopFeatures" :key="title" class="feature-item">
+              <span class="feature-index">{{ index }}</span>
+              <div>
+                <strong>{{ title }}</strong>
+                <p>{{ copy }}</p>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="thumb-row desktop-thumbs" aria-label="切换电脑端截图">
-          <button
-            v-for="(screen, index) in desktopScreens"
-            :key="screen"
-            type="button"
-            :class="{ active: activeDesktop === screen }"
-            @click="activeDesktop = screen"
-          >
-            <LazyImage :src="screen" alt="" />
-            <span>{{ String(index + 1).padStart(2, '0') }}</span>
-          </button>
+        <div class="showcase-image-area">
+          <div class="desktop-window glass-card">
+            <div class="window-bar">
+              <span></span>
+              <span></span>
+              <span></span>
+              <strong>macOS / Windows</strong>
+            </div>
+            <div class="desktop-screen-frame">
+              <ScrollImageSwitcher
+                :images="desktopScreens"
+                :labels="desktopScreenLabels"
+                alt="CPE 网络看板电脑端截图"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="showcase-section mobile-showcase">
-      <div class="mobile-wall">
-        <div class="phone-shell phone-main">
-          <LazyImage :src="activeMobile" alt="CPE 网络看板 Android 手机截图" />
+    <section
+      class="showcase-section showcase-pin mobile-showcase"
+      data-scroll-sequence
+      :style="{ '--showcase-steps': mobileScreens.length }"
+    >
+      <div class="showcase-pin-stage">
+        <div class="showcase-image-area mobile-image-area">
+          <div class="phone-shell phone-main glass-card">
+            <ScrollImageSwitcher
+              :images="mobileScreens"
+              :labels="mobileScreenLabels"
+              alt="CPE 网络看板 Android 手机截图"
+            />
+          </div>
         </div>
-        <div class="thumb-row phone-thumbs" aria-label="切换 Android 手机截图">
-          <button
-            v-for="(screen, index) in mobileScreens.slice(0, 9)"
-            :key="screen"
-            type="button"
-            :class="{ active: activeMobile === screen }"
-            @click="activeMobile = screen"
-          >
-            <LazyImage :src="screen" alt="" />
-            <span>{{ String(index + 1).padStart(2, '0') }}</span>
-          </button>
+        <div class="section-copy">
+          <p>手机端</p>
+          <h2>在设备旁边，手机更专业。</h2>
+          <span>弱电箱、窗边、机柜旁边，拿起手机看状态和改锁定更方便。</span>
+          <div class="feature-list">
+            <div v-for="[index, title, copy] in mobileFeatures" :key="title" class="feature-item">
+              <span class="feature-index">{{ index }}</span>
+              <div>
+                <strong>{{ title }}</strong>
+                <p>{{ copy }}</p>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="section-copy">
-        <p>手机端</p>
-        <h2>人在设备旁边，手机反而更专业。</h2>
-        <span>弱电箱、窗边、机柜旁边，拿起手机看状态和改锁定会更顺手。</span>
       </div>
     </section>
 
@@ -104,7 +129,11 @@ const activeMobile = ref(mobileScreens[0])
         <h2>不同场景，用不同版本。</h2>
       </div>
       <div class="platform-list">
-        <article v-for="platform in platformCards" :key="platform.name" class="platform-row">
+        <article
+          v-for="platform in platformCards"
+          :key="platform.name"
+          class="platform-row glass-card"
+        >
           <span>{{ platform.name }} / {{ platform.version }}</span>
           <h3>{{ platform.title }}</h3>
           <p>{{ platform.copy }}</p>
@@ -115,13 +144,10 @@ const activeMobile = ref(mobileScreens[0])
     <section class="device-section">
       <div class="section-copy">
         <p>设备覆盖</p>
-        <h2>写到哪台，就按哪台来。</h2>
-        <span>
-          华为、烽火、鲲鹏这些设备族会按各自接口处理。中兴目前只放 G5 Pro 和 U60
-          Pro，不把没有做过的机型写成全系支持。
-        </span>
+        <h2>按设备族分别适配。</h2>
+        <span>华为、烽火通信、鲲鹏无限会按各自接口处理；当前中兴通讯覆盖 G5 Pro / U60 Pro。</span>
       </div>
-      <div class="device-table">
+      <div class="device-table glass-card">
         <div v-for="[brand, models] in supportedDevices" :key="brand" class="device-row">
           <strong>{{ brand }}</strong>
           <span>{{ models }}</span>
