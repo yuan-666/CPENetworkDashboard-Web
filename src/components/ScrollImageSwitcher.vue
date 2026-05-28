@@ -21,6 +21,11 @@ let animationFrame = 0
 
 const totalSegments = computed(() => Math.max(props.images.length, 1))
 const maxIndex = computed(() => Math.max(props.images.length - 1, 0))
+const visibleProgress = computed(() => {
+  if (!props.images.length) return 0
+  if (maxIndex.value === 0) return 1
+  return Math.max(scrollProgress.value, currentIndex.value / maxIndex.value)
+})
 const visibleImageLayers = computed(() =>
   props.images
     .map((image, index) => ({ image, index }))
@@ -140,10 +145,10 @@ function getProgressSegmentStyle(index: number) {
   const segEnd = (index + 1) * segmentSize
 
   let fill = 0
-  if (scrollProgress.value >= segEnd) {
+  if (visibleProgress.value >= segEnd) {
     fill = 1
-  } else if (scrollProgress.value > segStart) {
-    fill = (scrollProgress.value - segStart) / segmentSize
+  } else if (visibleProgress.value > segStart) {
+    fill = (visibleProgress.value - segStart) / segmentSize
   }
 
   return {
@@ -200,7 +205,7 @@ onUnmounted(() => {
       <div
         class="progress-track"
         role="progressbar"
-        :aria-valuenow="Math.round(scrollProgress * 100)"
+        :aria-valuenow="Math.round(visibleProgress * 100)"
       >
         <div
           v-for="(_, index) in images"
@@ -337,9 +342,9 @@ onUnmounted(() => {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   color: rgba(255, 255, 255, 0.88);
-  font-family: var(--mono, monospace);
-  font-size: 11px;
-  font-weight: 600;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
   letter-spacing: 0;
   transition: opacity 0.3s ease;
 }
@@ -386,6 +391,11 @@ onUnmounted(() => {
     padding: 4px 6px;
   }
 
+  :global(.phone-main .progress-track) {
+    bottom: -29px;
+    width: min(244px, calc(100% - 20px));
+  }
+
   .progress-segment {
     min-width: 6px;
     max-width: 18px;
@@ -396,8 +406,8 @@ onUnmounted(() => {
   }
 
   .label-badge {
-    font-size: 10px;
-    height: 22px;
+    font-size: 12px;
+    height: 24px;
     padding: 0 9px;
   }
 }

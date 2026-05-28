@@ -167,15 +167,25 @@ function legacyKey(...parts) {
 }
 
 async function kvGetText(kv, key) {
-  let value
   try {
-    value = await kv.get(key, { type: 'text' })
+    const value = await kv.get(key, { type: 'text' })
+    if (!value || typeof value === 'string') return value || ''
+    if (typeof value.text === 'function') return value.text()
+    return String(value || '')
   } catch {
-    value = await kv.get(key)
+    try {
+      const value = await kv.get(key)
+      if (!value || typeof value === 'string') return value || ''
+      if (typeof value.text === 'function') return value.text()
+      return ''
+    } catch {
+      return ''
+    }
   }
-  if (!value || typeof value === 'string') return value || ''
-  if (typeof value.text === 'function') return value.text()
-  return String(value || '')
+}
+
+async function kvPutText(kv, key, value) {
+  await kv.put(key, String(value))
 }
 
 async function consumeRate(kv, key, limit, windowSeconds) {
@@ -184,7 +194,7 @@ async function consumeRate(kv, key, limit, windowSeconds) {
     const rateKey = kvKey('rate', key, windowSeconds, windowId)
     const current = parseInt((await kvGetText(kv, rateKey)) || '0', 10)
     if (current >= limit) return false
-    await kv.put(rateKey, String(current + 1))
+    await kvPutText(kv, rateKey, current + 1)
     return true
   } catch {
     return true
@@ -283,9 +293,9 @@ async function incrementCounter(kv, baseKey, todayKey) {
   const total = parseInt(totalStr || '0', 10) + 1
   const today = storedDate === todayKey ? parseInt(todayStr || '0', 10) + 1 : 1
   await Promise.all([
-    kv.put(kvKey(base, 'total'), String(total)),
-    kv.put(kvKey(base, 'today_date'), todayKey),
-    kv.put(kvKey(base, 'today_count'), String(today)),
+    kvPutText(kv, kvKey(base, 'total'), total),
+    kvPutText(kv, kvKey(base, 'today_date'), todayKey),
+    kvPutText(kv, kvKey(base, 'today_count'), today),
   ])
   return { total, today }
 }
@@ -348,7 +358,7 @@ async function appendDailyEvent(kv, event) {
   try {
     events.push(event)
     if (events.length > MAX_DAILY_EVENTS) events = events.slice(events.length - MAX_DAILY_EVENTS)
-    await kv.put(key, JSON.stringify(events))
+    await kvPutText(kv, key, JSON.stringify(events))
     return true
   } catch {
     return false

@@ -26,10 +26,12 @@ import { aboutInfo, appIcon } from '@/content'
     </section>
 
     <section class="about-section makers-section">
-      <div class="section-copy">
-        <p>制作者</p>
-        <h2>两个人写的，一起维护。</h2>
-        <span>当然是小原啦和叉子么共同开发了这个项目，从第一行代码到现在，一直在迭代。</span>
+      <div class="section-copy split-title-copy">
+        <p>开发者</p>
+        <h2>
+          <span>本项目开发者：</span>
+          <small>Project Developers</small>
+        </h2>
       </div>
       <div class="person-grid">
         <article
@@ -38,7 +40,7 @@ import { aboutInfo, appIcon } from '@/content'
           class="person-card maker-card"
         >
           <div>
-            <small>开发者</small>
+            <small>Developer</small>
             <h3>{{ person.name }}</h3>
           </div>
           <div class="person-links">
@@ -57,10 +59,12 @@ import { aboutInfo, appIcon } from '@/content'
     </section>
 
     <section class="about-section thanks-section">
-      <div class="section-copy">
+      <div class="section-copy split-title-copy">
         <p>致谢</p>
-        <h2>也感谢这些朋友。</h2>
-        <span>测试设备、接口帮助、宣传建议和 UI 开源方案，都实实在在推进了这个版本。</span>
+        <h2>
+          <span>特别致谢</span>
+          <small>Special Thanks</small>
+        </h2>
       </div>
       <div class="thanks-list">
         <article v-for="person in aboutInfo.thanks" :key="person.name" class="thanks-card">

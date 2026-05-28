@@ -43,7 +43,6 @@ export const mobileScreenItems = [
   { image: '/media/phone/mobile-display-settings.jpg', label: '显示设置' },
   { image: '/media/phone/mobile-device-settings.jpg', label: '设备设置' },
   { image: '/media/phone/mobile-status-dashboard-light.jpg', label: '浅色状态看板' },
-  { image: '/media/phone/mobile-status-dashboard-full.jpg', label: '完整状态看板' },
 ]
 
 export const desktopScreens = desktopScreenItems.map((item) => item.image)
