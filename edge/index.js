@@ -281,34 +281,47 @@ async function readCounter(kv, baseKey, todayKey) {
 }
 
 async function appendDailyEvent(kv, event) {
-  const key = `events:${getTodayKey()}`
-  const str = await kv.get(key)
-  let events = []
   try {
-    const parsed = str ? JSON.parse(str) : []
-    events = Array.isArray(parsed) ? parsed : []
-  } catch {
-    events = []
-  }
+    const key = `events:${getTodayKey()}`
+    const str = await kv.get(key)
+    let events = []
+    try {
+      const parsed = str ? JSON.parse(str) : []
+      events = Array.isArray(parsed) ? parsed : []
+    } catch {
+      events = []
+    }
 
-  events.push(event)
-  if (events.length > MAX_DAILY_EVENTS) events = events.slice(events.length - MAX_DAILY_EVENTS)
-  await kv.put(key, JSON.stringify(events))
+    events.push(event)
+    if (events.length > MAX_DAILY_EVENTS) events = events.slice(events.length - MAX_DAILY_EVENTS)
+    await kv.put(key, JSON.stringify(events))
+    return true
+  } catch {
+    return false
+  }
 }
 
 async function readRecentEvents(kv) {
   const events = []
   for (const date of recentDateKeys()) {
-    const str = await kv.get(`events:${date}`)
-    if (!str) continue
     try {
+      const str = await kv.get(`events:${date}`)
+      if (!str) continue
       const parsed = JSON.parse(str)
       if (Array.isArray(parsed)) events.push(...parsed)
     } catch {
-      /* ignore corrupt day */
+      /* ignore unavailable or corrupt day */
     }
   }
   return events.sort((a, b) => String(b.time || '').localeCompare(String(a.time || '')))
+}
+
+async function safeReadCounter(kv, baseKey, todayKey) {
+  try {
+    return await readCounter(kv, baseKey, todayKey)
+  } catch {
+    return { total: 0, today: 0 }
+  }
 }
 
 function topBreakdown(items, keyFn, limit = 8) {
@@ -380,8 +393,8 @@ async function handleTrack(request) {
       browser: ua.browser,
       os: ua.os,
     }
-    await appendDailyEvent(kv, event)
-    return json({ ok: true, visits })
+    const eventStored = await appendDailyEvent(kv, event)
+    return json({ ok: true, visits, eventStored })
   } catch {
     return json({ ok: false, error: 'Failed to track visit' }, 500)
   }
@@ -435,7 +448,7 @@ async function handleDownload(request) {
     const todayKey = getTodayKey()
     const counter = await incrementCounter(kv, `download:${fileId}`, todayKey)
     const ua = parseUserAgent(body.ua || request.headers.get('User-Agent') || '')
-    await appendDailyEvent(kv, {
+    const eventStored = await appendDailyEvent(kv, {
       kind: 'download',
       time: new Date().toISOString(),
       file: fileId,
@@ -451,7 +464,7 @@ async function handleDownload(request) {
       return Response.redirect(new URL(DOWNLOADS[fileId].href, request.url).toString(), 302)
     }
 
-    return json({ ok: true, file: fileId, ...counter })
+    return json({ ok: true, file: fileId, eventStored, ...counter })
   } catch {
     if (request.method === 'GET') {
       return Response.redirect(new URL(DOWNLOADS[fileId].href, request.url).toString(), 302)
@@ -470,28 +483,24 @@ async function handleDownloads() {
 }
 
 async function handleSummary() {
-  try {
-    const kv = edgeKv()
-    const todayKey = getTodayKey()
-    const [visits, downloads, events] = await Promise.all([
-      readCounter(kv, 'visits', todayKey),
-      readDownloads(kv, todayKey),
-      readRecentEvents(kv),
-    ])
-    return json({
-      visits,
-      ...downloads,
-      pages: topBreakdown(
-        events.filter((event) => event.kind === 'view'),
-        (event) => event.page
-      ),
-      referrers: topBreakdown(events, (event) => event.referrer),
-      devices: topBreakdown(events, (event) => event.device),
-      recent: events.slice(0, 18),
-    })
-  } catch {
-    return json(emptySummary())
-  }
+  const kv = edgeKv()
+  const todayKey = getTodayKey()
+  const [visits, downloads, events] = await Promise.all([
+    safeReadCounter(kv, 'visits', todayKey),
+    readDownloads(kv, todayKey).catch(() => ({ downloadsByFile: {}, downloadsTotal: 0 })),
+    readRecentEvents(kv).catch(() => []),
+  ])
+  return json({
+    visits,
+    ...downloads,
+    pages: topBreakdown(
+      events.filter((event) => event.kind === 'view'),
+      (event) => event.page
+    ),
+    referrers: topBreakdown(events, (event) => event.referrer),
+    devices: topBreakdown(events, (event) => event.device),
+    recent: events.slice(0, 18),
+  })
 }
 
 export default {

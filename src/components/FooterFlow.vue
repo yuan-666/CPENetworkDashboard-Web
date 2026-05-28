@@ -1,169 +1,198 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 
-const canvasRef = ref<HTMLCanvasElement | null>(null)
-const animationId = ref<number | null>(null)
-let resizeHandler: (() => void) | null = null
-const canvasSize = {
-  width: 0,
-  height: 0,
-}
-let themeObserver: MutationObserver | null = null
+const flowRef = ref<HTMLElement | null>(null)
+let animationFrame = 0
+let reduceMotion = false
 
-interface Wave {
-  y: number
-  length: number
-  amplitude: number
-  frequency: number
-  phase: number
-  speed: number
-  color: string
+function updateFooterMotion(): void {
+  animationFrame = 0
+  const element = flowRef.value
+  if (!element || reduceMotion) return
+
+  const rect = element.getBoundingClientRect()
+  const viewport = window.innerHeight || 1
+  const progress = Math.max(0, Math.min(1, (viewport - rect.top) / (viewport + rect.height)))
+  element.style.setProperty('--footer-shift', `${(progress - 0.5) * 140}px`)
+  element.style.setProperty('--footer-fade', String(0.22 + progress * 0.42))
 }
 
-const waves: Wave[] = []
-
-function isDarkTheme(): boolean {
-  const theme = document.documentElement.dataset.theme
-  if (theme === 'dark' || theme === 'light') return theme === 'dark'
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
-}
-
-function prefersReducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
-
-function initWaves() {
-  const isDark = isDarkTheme()
-  waves.length = 0
-
-  waves.push(
-    {
-      y: 0.7,
-      length: 0.012,
-      amplitude: 25,
-      frequency: 0.008,
-      phase: 0,
-      speed: 0.015,
-      color: isDark ? 'rgba(155, 199, 173, 0.12)' : 'rgba(35, 113, 100, 0.1)',
-    },
-    {
-      y: 0.75,
-      length: 0.015,
-      amplitude: 20,
-      frequency: 0.01,
-      phase: Math.PI * 0.5,
-      speed: 0.02,
-      color: isDark ? 'rgba(155, 199, 173, 0.08)' : 'rgba(35, 113, 100, 0.06)',
-    },
-    {
-      y: 0.8,
-      length: 0.018,
-      amplitude: 18,
-      frequency: 0.012,
-      phase: Math.PI,
-      speed: 0.025,
-      color: isDark ? 'rgba(246, 173, 85, 0.1)' : 'rgba(173, 115, 51, 0.08)',
-    }
-  )
-}
-
-function drawWaves(ctx: CanvasRenderingContext2D, width: number, height: number) {
-  ctx.clearRect(0, 0, width, height)
-
-  waves.forEach((wave) => {
-    ctx.beginPath()
-    ctx.moveTo(0, height)
-
-    for (let x = 0; x <= width; x++) {
-      const y =
-        height * wave.y +
-        Math.sin(x * wave.frequency + wave.phase) * wave.amplitude * Math.sin(x * wave.length)
-      ctx.lineTo(x, y)
-    }
-
-    ctx.lineTo(width, height)
-    ctx.closePath()
-    ctx.fillStyle = wave.color
-    ctx.fill()
-
-    wave.phase += wave.speed
-  })
-}
-
-function animate(ctx: CanvasRenderingContext2D) {
-  drawWaves(ctx, canvasSize.width, canvasSize.height)
-  animationId.value = requestAnimationFrame(() => animate(ctx))
+function scheduleFooterMotion(): void {
+  if (animationFrame) return
+  animationFrame = window.requestAnimationFrame(updateFooterMotion)
 }
 
 onMounted(() => {
-  const canvas = canvasRef.value
-  if (!canvas) return
-
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-
-  resizeHandler = () => {
-    const dpr = window.devicePixelRatio || 1
-    const rect = canvas.getBoundingClientRect()
-    canvasSize.width = Math.max(1, rect.width)
-    canvasSize.height = Math.max(1, rect.height)
-    canvas.width = Math.round(canvasSize.width * dpr)
-    canvas.height = Math.round(canvasSize.height * dpr)
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    initWaves()
-  }
-
-  resizeHandler()
-  window.addEventListener('resize', resizeHandler)
-  themeObserver = new MutationObserver(() => {
-    initWaves()
-    drawWaves(ctx, canvasSize.width, canvasSize.height)
-  })
-  themeObserver.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['data-theme'],
-  })
-
-  if (prefersReducedMotion()) {
-    drawWaves(ctx, canvasSize.width, canvasSize.height)
-    return
-  }
-
-  animate(ctx)
+  reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  updateFooterMotion()
+  window.addEventListener('scroll', scheduleFooterMotion, { passive: true })
+  window.addEventListener('resize', scheduleFooterMotion, { passive: true })
 })
 
 onUnmounted(() => {
-  if (resizeHandler) {
-    window.removeEventListener('resize', resizeHandler)
-    resizeHandler = null
-  }
-  if (animationId.value) {
-    cancelAnimationFrame(animationId.value)
-  }
-  themeObserver?.disconnect()
-  themeObserver = null
+  window.removeEventListener('scroll', scheduleFooterMotion)
+  window.removeEventListener('resize', scheduleFooterMotion)
+  if (animationFrame) window.cancelAnimationFrame(animationFrame)
 })
 </script>
 
 <template>
-  <div class="footer-flow">
-    <canvas ref="canvasRef" class="wave-canvas" aria-hidden="true" />
+  <section ref="flowRef" class="footer-flow">
+    <div class="footer-flow-brand" aria-hidden="true">
+      <span>CPE</span>
+      <span>NETWORK</span>
+      <span>DASHBOARD</span>
+    </div>
+    <div class="footer-flow-line footer-flow-line-a" aria-hidden="true">
+      <span>CPE NETWORK DASHBOARD</span>
+      <span>CPE NETWORK DASHBOARD</span>
+    </div>
+    <div class="footer-flow-line footer-flow-line-b" aria-hidden="true">
+      <span>SIGNAL LOCK TEST</span>
+      <span>SIGNAL LOCK TEST</span>
+    </div>
     <slot />
-  </div>
+  </section>
 </template>
 
 <style scoped>
 .footer-flow {
+  --footer-shift: 0px;
+  --footer-fade: 0.34;
   position: relative;
   overflow: hidden;
+  margin-top: clamp(48px, 8vw, 112px);
+  padding: clamp(56px, 9vw, 116px) 0 clamp(26px, 5vw, 48px);
+  border-top: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0), var(--paper-soft) 34%, var(--soft)), var(--soft);
 }
 
-.wave-canvas {
+.footer-flow::before {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 200px;
+  inset: 0;
+  content: '';
+  background:
+    linear-gradient(90deg, transparent, rgba(35, 113, 100, 0.08), transparent),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent calc(25% - 1px),
+      var(--line) 25%,
+      transparent calc(25% + 1px)
+    );
+  opacity: 0.65;
   pointer-events: none;
+}
+
+.footer-flow-brand {
+  position: absolute;
+  left: 50%;
+  bottom: -0.2em;
+  display: flex;
+  gap: 0.08em;
+  color: transparent;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Display', 'HarmonyOS Sans SC', MiSans,
+    'PingFang SC', sans-serif;
+  font-size: clamp(78px, 15vw, 250px);
+  font-weight: 800;
+  line-height: 0.76;
+  white-space: nowrap;
+  -webkit-text-stroke: 1px rgba(24, 27, 24, var(--footer-fade));
+  opacity: 0.42;
+  transform: translate3d(calc(-50% + var(--footer-shift)), 0, 0);
+  transition: opacity var(--transition-normal);
+  pointer-events: none;
+}
+
+.footer-flow-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  width: max-content;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.58;
+  transform: translate3d(calc(var(--footer-shift) * -0.32), 0, 0);
+  pointer-events: none;
+}
+
+.footer-flow-line span {
+  padding-right: 36px;
+}
+
+.footer-flow-line-a {
+  top: 26px;
+  animation: footer-line 36s linear infinite;
+}
+
+.footer-flow-line-b {
+  bottom: 32px;
+  opacity: 0.36;
+  animation: footer-line-reverse 42s linear infinite;
+}
+
+:global(:root[data-theme='dark']) .footer-flow {
+  background:
+    linear-gradient(180deg, rgba(16, 19, 17, 0), rgba(13, 16, 14, 0.98) 32%, #0d100e), #0d100e;
+}
+
+:global(:root[data-theme='dark']) .footer-flow::before {
+  background:
+    linear-gradient(90deg, transparent, rgba(155, 199, 173, 0.08), transparent),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent calc(25% - 1px),
+      rgba(244, 242, 234, 0.08) 25%,
+      transparent calc(25% + 1px)
+    );
+}
+
+:global(:root[data-theme='dark']) .footer-flow-brand {
+  -webkit-text-stroke-color: rgba(244, 242, 234, var(--footer-fade));
+  opacity: 0.34;
+}
+
+@keyframes footer-line {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: -50% 0;
+  }
+}
+
+@keyframes footer-line-reverse {
+  from {
+    translate: -50% 0;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .footer-flow {
+    margin-top: 48px;
+    padding-top: 72px;
+  }
+
+  .footer-flow-brand {
+    left: 0;
+    bottom: 12px;
+    transform: translate3d(calc(-14% + var(--footer-shift)), 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-flow-line {
+    animation: none;
+  }
 }
 </style>

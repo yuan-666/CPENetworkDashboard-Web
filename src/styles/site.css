@@ -354,6 +354,29 @@ p {
   transition: background var(--transition-normal);
 }
 
+.hero-title {
+  display: grid;
+  gap: 8px;
+}
+
+.hero-title-main,
+.hero-title-sub {
+  display: block;
+}
+
+.hero-title-main {
+  font-size: clamp(44px, 5.4vw, 68px);
+  line-height: 1.02;
+}
+
+.hero-title-sub {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: clamp(15px, 1.3vw, 19px);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
 .hero-copy p {
   max-width: 54ch;
   color: var(--muted);
@@ -612,7 +635,7 @@ p {
   justify-self: center;
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   background: var(--paper);
   box-shadow: 0 24px 70px rgba(25, 32, 27, 0.12);
   isolation: isolate;
@@ -672,16 +695,25 @@ p {
 
 .desktop-screen-frame {
   overflow: hidden;
-  border-radius: 0 0 15px 15px;
-  background: var(--paper);
+  border-radius: 0 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px);
+  background: #f6f8fb;
 }
 
 .desktop-screen-frame .scroll-image-container {
   min-height: 0;
   aspect-ratio: 244 / 152;
 }
+
+.desktop-screen-frame > img,
+.desktop-screen-frame .image-layer img {
+  width: calc(100% + 2px);
+  max-width: none;
+  margin: -1px;
+  clip-path: inset(1px round 0 0 calc(var(--radius-md) - 2px) calc(var(--radius-md) - 2px));
+}
+
 :root[data-theme='dark'] .desktop-screen-frame {
-  background: #1a1a1a;
+  background: #eef3f8;
 }
 
 .phone-shell {
@@ -802,13 +834,18 @@ p {
 .marquee-track {
   width: max-content;
   display: flex;
-  gap: 38px;
   padding: 18px 0;
   color: var(--muted);
   font-family: var(--mono);
   font-size: 12px;
   font-weight: 700;
   animation: marquee 28s linear infinite;
+}
+
+.marquee-group {
+  display: flex;
+  gap: 38px;
+  padding-right: 38px;
 }
 
 .page-heading {
@@ -2290,6 +2327,14 @@ p {
   .about-hero h1 {
     font-size: 36px;
     line-height: 1.1;
+  }
+
+  .hero-title-main {
+    font-size: 40px;
+  }
+
+  .hero-title-sub {
+    font-size: 14px;
   }
 
   .hero-copy p,

@@ -4,7 +4,7 @@ import LazyImage from '@/components/LazyImage.vue'
 import FlowAnimation from '@/components/FlowAnimation.vue'
 import { appIcon, heroDesktopImage, heroFacts, mobileScreens, telemetryWords } from '@/content'
 
-const marqueeWords = [...telemetryWords, ...telemetryWords]
+const marqueeGroups = [telemetryWords, telemetryWords]
 </script>
 
 <template>
@@ -14,9 +14,9 @@ const marqueeWords = [...telemetryWords, ...telemetryWords]
         <img :src="appIcon" alt="" loading="eager" decoding="async" fetchpriority="high" />
         <span>Android 3.1 / macOS & Windows 3.0.0</span>
       </div>
-      <h1>
-        别先重启，<br />
-        先看 CPE。
+      <h1 class="hero-title">
+        <span class="hero-title-main">CPE 网络看板</span>
+        <span class="hero-title-sub">CPE Network Dashboard</span>
       </h1>
       <p>
         Android 3.1 已发布，macOS 和 Windows 也提供 3.0.0 桌面包。它不是另一个复杂后台，而是把 CPE
@@ -75,7 +75,9 @@ const marqueeWords = [...telemetryWords, ...telemetryWords]
 
     <div class="marquee" aria-hidden="true">
       <div class="marquee-track">
-        <span v-for="(word, index) in marqueeWords" :key="`${word}-${index}`">{{ word }}</span>
+        <div v-for="(group, groupIndex) in marqueeGroups" :key="groupIndex" class="marquee-group">
+          <span v-for="word in group" :key="`${groupIndex}-${word}`">{{ word }}</span>
+        </div>
       </div>
     </div>
   </section>

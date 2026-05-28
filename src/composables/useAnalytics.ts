@@ -16,7 +16,8 @@ async function loadSummary(): Promise<void> {
 }
 
 async function recordVisit(page: string): Promise<void> {
-  await Promise.allSettled([trackVisit(page), loadSummary()])
+  await Promise.allSettled([trackVisit(page)])
+  await loadSummary()
 }
 
 export function useAnalytics() {

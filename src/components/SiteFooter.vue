@@ -8,7 +8,7 @@ const { totalDownloads, totalVisits, valueOrPreview } = useAnalytics()
   <footer class="footer">
     <div class="footer-main">
       <span>CPE 网络看板 / CPE Network Dashboard</span>
-      <small>Copyright © 2026 yuan-666 and contributors. Released under GPL-3.0-or-later.</small>
+      <small>Copyright © 2026 yuan-666, chazime and contributors. All rights reserved.</small>
     </div>
     <div class="footer-stats" aria-label="官网统计">
       <span>访问量 {{ valueOrPreview(totalVisits) }}</span>
