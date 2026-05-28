@@ -281,17 +281,24 @@ async function readCounter(kv, baseKey, todayKey) {
 }
 
 async function appendDailyEvent(kv, event) {
-  try {
-    const key = `events:${getTodayKey()}`
-    const str = await kv.get(key)
-    let events = []
-    try {
-      const parsed = str ? JSON.parse(str) : []
-      events = Array.isArray(parsed) ? parsed : []
-    } catch {
-      events = []
-    }
+  const key = `events:${getTodayKey()}`
+  let str = ''
 
+  try {
+    str = (await kv.get(key)) || ''
+  } catch {
+    str = ''
+  }
+
+  let events = []
+  try {
+    const parsed = str ? JSON.parse(str) : []
+    events = Array.isArray(parsed) ? parsed : []
+  } catch {
+    events = []
+  }
+
+  try {
     events.push(event)
     if (events.length > MAX_DAILY_EVENTS) events = events.slice(events.length - MAX_DAILY_EVENTS)
     await kv.put(key, JSON.stringify(events))
@@ -405,7 +412,7 @@ async function readDownloads(kv, todayKey) {
   let downloadsTotal = 0
   await Promise.all(
     Object.keys(DOWNLOADS).map(async (id) => {
-      const counter = await readCounter(kv, `download:${id}`, todayKey)
+      const counter = await safeReadCounter(kv, `download:${id}`, todayKey)
       downloadsByFile[id] = {
         ...counter,
         label: DOWNLOADS[id].label,

@@ -137,12 +137,12 @@ onUnmounted(() => {
   animation: footer-line-reverse 42s linear infinite;
 }
 
-:global(:root[data-theme='dark']) .footer-flow {
+:global(:root[data-theme='dark'] .footer-flow) {
   background:
     linear-gradient(180deg, rgba(16, 19, 17, 0), rgba(13, 16, 14, 0.98) 32%, #0d100e), #0d100e;
 }
 
-:global(:root[data-theme='dark']) .footer-flow::before {
+:global(:root[data-theme='dark'] .footer-flow::before) {
   background:
     linear-gradient(90deg, transparent, rgba(155, 199, 173, 0.08), transparent),
     repeating-linear-gradient(
@@ -154,7 +154,7 @@ onUnmounted(() => {
     );
 }
 
-:global(:root[data-theme='dark']) .footer-flow-brand {
+:global(:root[data-theme='dark'] .footer-flow-brand) {
   -webkit-text-stroke-color: rgba(244, 242, 234, var(--footer-fade));
   opacity: 0.34;
 }
