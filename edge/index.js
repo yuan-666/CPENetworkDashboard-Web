@@ -18,6 +18,8 @@
  */
 
 const KV_NAMESPACE = 'cpeweb'
+const EDGE_BUILD = '2026-05-28.2'
+const ANALYTICS_KEY = 'analytics'
 const MAX_JSON_BYTES = 24 * 1024
 const MAX_DAILY_EVENTS = 360
 const PUBLIC_DAYS = 7
@@ -414,6 +416,114 @@ function emptySummary() {
   }
 }
 
+function emptyAnalyticsStore() {
+  return {
+    version: 1,
+    updatedAt: '',
+    counters: {
+      visits: { total: 0, today: 0, todayKey: '' },
+      downloads: {},
+    },
+    events: [],
+  }
+}
+
+function normalizeStoredCounter(counter = {}, todayKey) {
+  return {
+    total: parseInt(counter.total || '0', 10) || 0,
+    today: counter.todayKey === todayKey ? parseInt(counter.today || '0', 10) || 0 : 0,
+    todayKey,
+  }
+}
+
+async function readAnalyticsStore(kv) {
+  const str = await kvGetText(kv, ANALYTICS_KEY)
+  if (!str) return emptyAnalyticsStore()
+  try {
+    const parsed = JSON.parse(str)
+    return {
+      ...emptyAnalyticsStore(),
+      ...parsed,
+      counters: {
+        visits: parsed?.counters?.visits || { total: 0, today: 0, todayKey: '' },
+        downloads: parsed?.counters?.downloads || {},
+      },
+      events: Array.isArray(parsed?.events) ? parsed.events : [],
+    }
+  } catch {
+    return emptyAnalyticsStore()
+  }
+}
+
+async function writeAnalyticsStore(kv, store) {
+  store.updatedAt = new Date().toISOString()
+  await kvPutText(kv, ANALYTICS_KEY, JSON.stringify(store))
+}
+
+function incrementStoredCounter(store, group, id, todayKey) {
+  if (group === 'visits') {
+    const current = normalizeStoredCounter(store.counters.visits, todayKey)
+    current.total += 1
+    current.today += 1
+    store.counters.visits = current
+    return { total: current.total, today: current.today }
+  }
+
+  const current = normalizeStoredCounter(store.counters.downloads[id], todayKey)
+  current.total += 1
+  current.today += 1
+  store.counters.downloads[id] = current
+  return { total: current.total, today: current.today }
+}
+
+function appendStoredEvent(store, event) {
+  store.events.push(event)
+  const maxEvents = Math.max(MAX_DAILY_EVENTS * PUBLIC_DAYS, MAX_DAILY_EVENTS)
+  if (store.events.length > maxEvents) {
+    store.events = store.events.slice(store.events.length - maxEvents)
+  }
+}
+
+async function trackInAnalyticsStore(kv, mutator) {
+  const store = await readAnalyticsStore(kv)
+  const result = mutator(store)
+  await writeAnalyticsStore(kv, store)
+  return result
+}
+
+function summaryFromStore(store, todayKey) {
+  const downloadsByFile = {}
+  let downloadsTotal = 0
+
+  for (const id of Object.keys(DOWNLOADS)) {
+    const counter = normalizeStoredCounter(store.counters.downloads[id], todayKey)
+    downloadsByFile[id] = {
+      total: counter.total,
+      today: counter.today,
+      label: DOWNLOADS[id].label,
+      href: DOWNLOADS[id].href,
+    }
+    downloadsTotal += counter.total
+  }
+
+  const events = [...store.events].sort((a, b) =>
+    String(b.time || '').localeCompare(String(a.time || ''))
+  )
+
+  return {
+    visits: normalizeStoredCounter(store.counters.visits, todayKey),
+    downloadsByFile,
+    downloadsTotal,
+    pages: topBreakdown(
+      events.filter((event) => event.kind === 'view'),
+      (event) => event.page
+    ),
+    referrers: topBreakdown(events, (event) => event.referrer),
+    devices: topBreakdown(events, (event) => event.device),
+    recent: events.slice(0, 18),
+  }
+}
+
 function routePath(url) {
   const path = url.pathname.replace(/^\/api(?=\/|$)/, '') || '/'
   return path === '' ? '/' : path
@@ -428,11 +538,16 @@ async function handleCounter(request) {
     if (!skip) {
       const allowed = await consumeRate(kv, `counter:${ipBucket(getClientIP(request))}`, 120, 3600)
       if (!allowed) return json({ error: 'Too many requests' }, 429)
-      return json(await incrementCounter(kv, 'visits', todayKey))
+      return json(
+        await trackInAnalyticsStore(kv, (store) =>
+          incrementStoredCounter(store, 'visits', 'visits', todayKey)
+        )
+      )
     }
-    return json(await readCounter(kv, 'visits', todayKey))
+    const store = await readAnalyticsStore(kv)
+    return json(normalizeStoredCounter(store.counters.visits, todayKey))
   } catch {
-    return json({ total: 0, today: 0 })
+    return json(await safeReadCounter(kv, 'visits', todayKey))
   }
 }
 
@@ -448,7 +563,6 @@ async function handleTrack(request) {
     if (!verifyWriteToken(request, body)) return json({ error: 'Invalid write token' }, 401)
     const ua = parseUserAgent(body.ua || request.headers.get('User-Agent') || '')
     const todayKey = getTodayKey()
-    const visits = await incrementCounter(kv, 'visits', todayKey)
     const page = normalizePage(body.page || '/')
     const event = {
       kind: 'view',
@@ -459,10 +573,14 @@ async function handleTrack(request) {
       browser: ua.browser,
       os: ua.os,
     }
-    const eventStored = await appendDailyEvent(kv, event)
-    return json({ ok: true, visits, eventStored })
-  } catch {
-    return json({ ok: false, error: 'Failed to track visit' }, 500)
+    const visits = await trackInAnalyticsStore(kv, (store) => {
+      const counter = incrementStoredCounter(store, 'visits', 'visits', todayKey)
+      appendStoredEvent(store, event)
+      return counter
+    })
+    return json({ ok: true, visits, eventStored: true, build: EDGE_BUILD })
+  } catch (error) {
+    return json({ ok: false, error: 'Failed to track visit', build: EDGE_BUILD }, 500)
   }
 }
 
@@ -512,9 +630,8 @@ async function handleDownload(request) {
 
   try {
     const todayKey = getTodayKey()
-    const counter = await incrementCounter(kv, `download:${fileId}`, todayKey)
     const ua = parseUserAgent(body.ua || request.headers.get('User-Agent') || '')
-    const eventStored = await appendDailyEvent(kv, {
+    const event = {
       kind: 'download',
       time: new Date().toISOString(),
       file: fileId,
@@ -524,33 +641,57 @@ async function handleDownload(request) {
       device: ua.device,
       browser: ua.browser,
       os: ua.os,
+    }
+    const counter = await trackInAnalyticsStore(kv, (store) => {
+      const next = incrementStoredCounter(store, 'downloads', fileId, todayKey)
+      appendStoredEvent(store, event)
+      return next
     })
 
     if (request.method === 'GET') {
       return Response.redirect(new URL(DOWNLOADS[fileId].href, request.url).toString(), 302)
     }
 
-    return json({ ok: true, file: fileId, eventStored, ...counter })
-  } catch {
+    return json({ ok: true, file: fileId, eventStored: true, ...counter, build: EDGE_BUILD })
+  } catch (error) {
     if (request.method === 'GET') {
       return Response.redirect(new URL(DOWNLOADS[fileId].href, request.url).toString(), 302)
     }
-    return json({ ok: false, error: 'Failed to track download' }, 500)
+    return json({ ok: false, error: 'Failed to track download', build: EDGE_BUILD }, 500)
   }
 }
 
 async function handleDownloads() {
   try {
     const kv = edgeKv()
-    return json(await readDownloads(kv, getTodayKey()))
+    const todayKey = getTodayKey()
+    const store = await readAnalyticsStore(kv)
+    const summary = summaryFromStore(store, todayKey)
+    if (summary.downloadsTotal > 0) {
+      return json({
+        downloadsByFile: summary.downloadsByFile,
+        downloadsTotal: summary.downloadsTotal,
+        build: EDGE_BUILD,
+      })
+    }
+    return json({ ...(await readDownloads(kv, todayKey)), build: EDGE_BUILD })
   } catch {
-    return json({ downloadsByFile: {}, downloadsTotal: 0 })
+    return json({ downloadsByFile: {}, downloadsTotal: 0, build: EDGE_BUILD })
   }
 }
 
 async function handleSummary() {
   const kv = edgeKv()
   const todayKey = getTodayKey()
+  const store = await readAnalyticsStore(kv)
+  const storeSummary = summaryFromStore(store, todayKey)
+  if (
+    storeSummary.visits.total > 0 ||
+    storeSummary.downloadsTotal > 0 ||
+    storeSummary.recent.length > 0
+  ) {
+    return json({ ...storeSummary, build: EDGE_BUILD })
+  }
   const [visits, downloads, events] = await Promise.all([
     safeReadCounter(kv, 'visits', todayKey),
     readDownloads(kv, todayKey).catch(() => ({ downloadsByFile: {}, downloadsTotal: 0 })),
@@ -566,6 +707,7 @@ async function handleSummary() {
     referrers: topBreakdown(events, (event) => event.referrer),
     devices: topBreakdown(events, (event) => event.device),
     recent: events.slice(0, 18),
+    build: EDGE_BUILD,
   })
 }
 
@@ -579,7 +721,12 @@ export default {
     const path = routePath(url)
 
     if (path === '/health') {
-      return json({ ok: true, service: 'cpe-network-dashboard-web', namespace: KV_NAMESPACE })
+      return json({
+        ok: true,
+        service: 'cpe-network-dashboard-web',
+        namespace: KV_NAMESPACE,
+        build: EDGE_BUILD,
+      })
     }
 
     if (path === '/counter') {

@@ -719,7 +719,7 @@ p {
 .desktop-screen-frame {
   overflow: hidden;
   border-radius: 0 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px);
-  background: #f6f8fb;
+  background: #111923;
   isolation: isolate;
 }
 
@@ -737,7 +737,7 @@ p {
 }
 
 :root[data-theme='dark'] .desktop-screen-frame {
-  background: #eef3f8;
+  background: #111923;
 }
 
 .phone-shell {
@@ -1047,10 +1047,16 @@ p {
   top: var(--showcase-sticky-top);
   min-height: calc(100dvh - var(--showcase-sticky-top) - 24px);
   display: grid;
-  grid-template-columns: minmax(340px, 0.36fr) minmax(640px, 1fr);
-  gap: 64px;
+  grid-template-columns: minmax(450px, 0.42fr) minmax(560px, 1fr);
+  gap: 42px;
   align-items: center;
   padding: 24px 0;
+}
+
+.desktop-showcase .section-copy h2 {
+  max-width: none;
+  font-size: clamp(28px, 2.2vw, 36px);
+  white-space: nowrap;
 }
 
 .mobile-showcase .showcase-pin-stage {
