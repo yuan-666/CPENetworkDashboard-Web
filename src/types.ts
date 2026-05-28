@@ -88,6 +88,12 @@ export interface DownloadStats extends DownloadCounter {
   href: string
 }
 
+export interface DownloadTrackResult extends DownloadCounter {
+  ok: boolean
+  file: string
+  eventStored?: boolean
+}
+
 export interface AnalyticsSummary {
   visits: DownloadCounter
   downloadsTotal: number

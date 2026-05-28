@@ -1,3 +1,7 @@
 {
-  "entry": "./edge/index.js"
+  "entry": "./edge/index.js",
+  "assets": {
+    "directory": "./dist",
+    "notFoundStrategy": "singlePageApplication"
+  }
 }

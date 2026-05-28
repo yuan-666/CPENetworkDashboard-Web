@@ -153,16 +153,36 @@ function ipBucket(ip) {
 function safeKey(value) {
   return (
     String(value || 'unknown')
-      .replace(/[^a-z0-9:_-]/gi, '_')
+      .replace(/[^a-z0-9_-]/gi, '_')
       .slice(0, 160) || 'unknown'
   )
+}
+
+function kvKey(...parts) {
+  return parts.map((part) => safeKey(part)).join('__')
+}
+
+function legacyKey(...parts) {
+  return parts.map((part) => String(part || 'unknown')).join(':')
+}
+
+async function kvGetText(kv, key) {
+  let value
+  try {
+    value = await kv.get(key, { type: 'text' })
+  } catch {
+    value = await kv.get(key)
+  }
+  if (!value || typeof value === 'string') return value || ''
+  if (typeof value.text === 'function') return value.text()
+  return String(value || '')
 }
 
 async function consumeRate(kv, key, limit, windowSeconds) {
   try {
     const windowId = Math.floor(Date.now() / 1000 / windowSeconds)
-    const rateKey = `rate:${safeKey(key)}:${windowSeconds}:${windowId}`
-    const current = parseInt((await kv.get(rateKey)) || '0', 10)
+    const rateKey = kvKey('rate', key, windowSeconds, windowId)
+    const current = parseInt((await kvGetText(kv, rateKey)) || '0', 10)
     if (current >= limit) return false
     await kv.put(rateKey, String(current + 1))
     return true
@@ -253,39 +273,66 @@ async function readJsonLimited(request) {
 }
 
 async function incrementCounter(kv, baseKey, todayKey) {
+  const current = await readCounter(kv, baseKey, todayKey)
+  const base = safeKey(baseKey)
   const [totalStr, storedDate, todayStr] = await Promise.all([
-    kv.get(`${baseKey}:total`),
-    kv.get(`${baseKey}:today_date`),
-    kv.get(`${baseKey}:today_count`),
+    Promise.resolve(String(current.total || 0)),
+    Promise.resolve(todayKey),
+    Promise.resolve(String(current.today || 0)),
   ])
   const total = parseInt(totalStr || '0', 10) + 1
   const today = storedDate === todayKey ? parseInt(todayStr || '0', 10) + 1 : 1
   await Promise.all([
-    kv.put(`${baseKey}:total`, String(total)),
-    kv.put(`${baseKey}:today_date`, todayKey),
-    kv.put(`${baseKey}:today_count`, String(today)),
+    kv.put(kvKey(base, 'total'), String(total)),
+    kv.put(kvKey(base, 'today_date'), todayKey),
+    kv.put(kvKey(base, 'today_count'), String(today)),
   ])
   return { total, today }
 }
 
+async function readCounterTotalOnly(kv, baseKey) {
+  const base = safeKey(baseKey)
+  const totalStr = await kvGetText(kv, kvKey(base, 'total'))
+  if (totalStr) return parseInt(totalStr, 10) || 0
+  return parseInt((await kvGetText(kv, legacyKey(baseKey, 'total'))) || '0', 10) || 0
+}
+
+async function readCounterTodayOnly(kv, baseKey, todayKey) {
+  const base = safeKey(baseKey)
+  const [storedDate, todayStr] = await Promise.all([
+    kvGetText(kv, kvKey(base, 'today_date')),
+    kvGetText(kv, kvKey(base, 'today_count')),
+  ])
+  if (storedDate || todayStr) {
+    return storedDate === todayKey ? parseInt(todayStr || '0', 10) || 0 : 0
+  }
+  const [legacyDate, legacyToday] = await Promise.all([
+    kvGetText(kv, legacyKey(baseKey, 'today_date')),
+    kvGetText(kv, legacyKey(baseKey, 'today_count')),
+  ])
+  return legacyDate === todayKey ? parseInt(legacyToday || '0', 10) || 0 : 0
+}
+
 async function readCounter(kv, baseKey, todayKey) {
-  const [totalStr, storedDate, todayStr] = await Promise.all([
-    kv.get(`${baseKey}:total`),
-    kv.get(`${baseKey}:today_date`),
-    kv.get(`${baseKey}:today_count`),
+  const [total, today] = await Promise.all([
+    readCounterTotalOnly(kv, baseKey),
+    readCounterTodayOnly(kv, baseKey, todayKey),
   ])
   return {
-    total: parseInt(totalStr || '0', 10) || 0,
-    today: storedDate === todayKey ? parseInt(todayStr || '0', 10) || 0 : 0,
+    total,
+    today,
   }
 }
 
 async function appendDailyEvent(kv, event) {
-  const key = `events:${getTodayKey()}`
+  const date = getTodayKey()
+  const key = kvKey('events', date)
+  const fallbackKey = legacyKey('events', date)
   let str = ''
 
   try {
-    str = (await kv.get(key)) || ''
+    str = (await kvGetText(kv, key)) || ''
+    if (!str) str = (await kvGetText(kv, fallbackKey)) || ''
   } catch {
     str = ''
   }
@@ -312,7 +359,9 @@ async function readRecentEvents(kv) {
   const events = []
   for (const date of recentDateKeys()) {
     try {
-      const str = await kv.get(`events:${date}`)
+      const str =
+        (await kvGetText(kv, kvKey('events', date))) ||
+        (await kvGetText(kv, legacyKey('events', date)))
       if (!str) continue
       const parsed = JSON.parse(str)
       if (Array.isArray(parsed)) events.push(...parsed)

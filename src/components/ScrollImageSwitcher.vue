@@ -52,7 +52,7 @@ function handleScroll() {
   const sequenceOffset = Number.isFinite(stickyTop) ? stickyTop : 0
   const scrolled = sequenceRoot ? -rect.top + sequenceOffset : viewportHeight - rect.top
   const totalScrollable = sequenceRoot
-    ? Math.max(containerHeight - viewportHeight, 1)
+    ? Math.max(containerHeight - viewportHeight + sequenceOffset, 1)
     : viewportHeight + containerHeight
   const rawProgress = scrolled / totalScrollable
 
@@ -60,7 +60,10 @@ function handleScroll() {
 
   if (!props.images.length) return
 
-  const newIndex = Math.min(Math.floor(scrollProgress.value * totalSegments.value), maxIndex.value)
+  const newIndex = Math.min(
+    Math.floor(scrollProgress.value * (maxIndex.value + 0.999)),
+    maxIndex.value
+  )
 
   if (newIndex !== currentIndex.value && newIndex >= 0) {
     currentIndex.value = newIndex
@@ -80,7 +83,7 @@ function setCurrentIndex(index: number) {
 
   const nextIndex = Math.max(0, Math.min(index, maxIndex.value))
   currentIndex.value = nextIndex
-  scrollProgress.value = nextIndex / totalSegments.value
+  scrollProgress.value = maxIndex.value > 0 ? nextIndex / maxIndex.value : 0
 }
 
 function handleKeydown(event: KeyboardEvent) {
@@ -297,7 +300,6 @@ onUnmounted(() => {
 .progress-segment {
   flex: 1 1 0;
   min-width: 8px;
-  max-width: 28px;
   height: 3px;
   border-radius: 999px;
   overflow: hidden;
@@ -307,7 +309,6 @@ onUnmounted(() => {
 
 .progress-segment.active {
   flex-grow: 1.75;
-  max-width: 44px;
 }
 
 .segment-fill {
@@ -341,6 +342,23 @@ onUnmounted(() => {
   font-weight: 600;
   letter-spacing: 0;
   transition: opacity 0.3s ease;
+}
+
+:global(.phone-main .scroll-viewport) {
+  overflow: visible;
+}
+
+:global(.phone-main .image-stack) {
+  overflow: hidden;
+  border-radius: var(--radius-xl, 24px);
+  background: #121a22;
+}
+
+:global(.phone-main .progress-track) {
+  bottom: -25px;
+  width: min(240px, calc(100% - 24px));
+  background: rgba(23, 29, 36, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 /* Screen reader only */

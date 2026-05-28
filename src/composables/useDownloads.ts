@@ -63,7 +63,7 @@ function saveBlob(blob: Blob, fileName: string): void {
 }
 
 export function useDownloads() {
-  const { loadSummary } = useAnalytics()
+  const { applyDownloadTrack, loadSummary } = useAnalytics()
 
   const platformAdvice = computed(() => platformAdviceMap[detectedPlatform.value])
 
@@ -119,15 +119,17 @@ export function useDownloads() {
     return ''
   }
 
-  function handleDownload(fileId: string): void {
-    trackDownload(fileId)
-    window.setTimeout(loadSummary, 800)
+  async function handleDownload(fileId: string): Promise<void> {
+    const result = await trackDownload(fileId)
+    applyDownloadTrack(result)
+    window.setTimeout(loadSummary, 1800)
   }
 
   async function downloadChunkedFile(download: Download): Promise<void> {
     if (!download.chunks?.length) return
 
-    trackDownload(download.id)
+    const result = await trackDownload(download.id)
+    applyDownloadTrack(result)
     const totalBytes = (download.chunkBytes || []).reduce((sum, value) => sum + value, 0)
     let loadedBefore = 0
     setDownloadState(download.id, {
@@ -190,7 +192,7 @@ export function useDownloads() {
           setDownloadState(download.id, { status: '', progress: 0 })
         }
       }, 2200)
-      window.setTimeout(loadSummary, 800)
+      window.setTimeout(loadSummary, 1800)
     } catch {
       setDownloadState(download.id, { status: 'error', progress: 0 })
     }

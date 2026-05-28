@@ -4,7 +4,7 @@ import LazyImage from '@/components/LazyImage.vue'
 import FlowAnimation from '@/components/FlowAnimation.vue'
 import { appIcon, heroDesktopImage, heroFacts, mobileScreens, telemetryWords } from '@/content'
 
-const marqueeGroups = [telemetryWords, telemetryWords]
+const marqueeGroups = [telemetryWords, telemetryWords, telemetryWords, telemetryWords]
 </script>
 
 <template>

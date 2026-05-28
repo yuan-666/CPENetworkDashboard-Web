@@ -1,4 +1,4 @@
-import type { AnalyticsSummary } from './types'
+import type { AnalyticsSummary, DownloadTrackResult } from './types'
 
 const API_BASE = (import.meta.env.VITE_API_BASE || '/api').replace(/\/+$/, '')
 const API_TOKEN = String(import.meta.env.VITE_API_TOKEN || '').trim()
@@ -49,7 +49,7 @@ export async function trackVisit(
   return readJson(response)
 }
 
-export function trackDownload(fileId: string): boolean {
+export async function trackDownload(fileId: string): Promise<DownloadTrackResult | null> {
   const payload = JSON.stringify({
     file: fileId,
     page: currentPagePath(),
@@ -58,22 +58,21 @@ export function trackDownload(fileId: string): boolean {
     token: API_TOKEN || undefined,
   })
 
-  const sendWithFetch = () => {
-    fetch(apiUrl('/download'), {
+  try {
+    const response = await fetch(apiUrl('/download'), {
       method: 'POST',
       headers: writeHeaders(),
       body: payload,
       keepalive: true,
-    }).catch(() => {})
+    })
+    return readJson<DownloadTrackResult>(response)
+  } catch {
+    if (navigator.sendBeacon) {
+      const blob = new Blob([payload], { type: 'application/json' })
+      navigator.sendBeacon(apiUrl('/download'), blob)
+    }
+    return null
   }
-
-  if (navigator.sendBeacon) {
-    const blob = new Blob([payload], { type: 'application/json' })
-    if (navigator.sendBeacon(apiUrl('/download'), blob)) return true
-  }
-
-  sendWithFetch()
-  return true
 }
 
 export { API_BASE }
