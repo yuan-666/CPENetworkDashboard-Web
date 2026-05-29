@@ -51,9 +51,10 @@ onMounted(initDownloadRecommendation)
             @click="selectDownload(download.id)"
           >
             {{ download.platform }}
-            <small>{{
-              download.title.replace(download.platform, '').trim() || download.version
-            }}</small>
+            <small>
+              <span v-if="download.beta" class="beta-tag">Beta</span>
+              {{ download.title.replace(download.platform, '').trim() || download.version }}
+            </small>
           </button>
         </div>
       </aside>
@@ -61,10 +62,16 @@ onMounted(initDownloadRecommendation)
       <article class="download-card selected-download">
         <div class="download-card-head">
           <span>{{ recommendedDownload.label }}</span>
-          <small>{{ recommendedDownload.platform }} {{ recommendedDownload.version }}</small>
+          <div class="download-version-info">
+            <span v-if="recommendedDownload.beta" class="beta-badge">Beta</span>
+            <small>{{ recommendedDownload.platform }} {{ recommendedDownload.version }}</small>
+          </div>
         </div>
         <h2>{{ recommendedDownload.title }}</h2>
         <p>{{ recommendedDownload.copy }}</p>
+        <div v-if="recommendedDownload.beta" class="beta-notice">
+          ⚠️ 此版本为测试版，可能存在不稳定或 Bug。建议普通用户继续使用正式版。
+        </div>
         <div class="download-meta">
           <span>{{ recommendedDownload.size }}</span>
           <span>{{ statForDownload(recommendedDownload.id) }}</span>

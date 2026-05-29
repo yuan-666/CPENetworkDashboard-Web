@@ -134,6 +134,19 @@ export const supportedDevices: Array<[string, string]> = [
 
 export const downloads: Download[] = [
   {
+    id: 'android-3.2-beta',
+    platform: 'Android',
+    version: '3.2 Beta',
+    title: 'Android APK (测试版)',
+    fileName: 'CPENetworkDashboard V3.2-Beta.apk',
+    href: '/downloads/CPENetworkDashboard V3.2-Beta.apk',
+    size: '12.8 MiB',
+    checksum: 'c2eafe556503f3974491728d8e2fff0d843d1785e8f5665a7276e14807ed3282',
+    label: 'Beta 测试版',
+    copy: '包含最新修复和功能，但可能存在不稳定。适合想体验新功能的用户。',
+    beta: true,
+  },
+  {
     id: 'android-3.1',
     platform: 'Android',
     version: '3.1',
@@ -142,7 +155,7 @@ export const downloads: Download[] = [
     href: '/downloads/CPE-Network-Dashboard-3.1-android.apk',
     size: '12.6 MiB',
     checksum: '9aed997cc91f34a0b17bf79c31230ca1f459064a9f797f49d78a9df0b547b790',
-    label: '现场调试首选',
+    label: '正式稳定版',
     copy: '人在 CPE 旁边，直接装 Android 版。看状态、扫邻区、调锁定、测个速，一步到位。',
   },
   {
@@ -204,6 +217,34 @@ export const downloads: Download[] = [
 ]
 
 export const changelogEntries: ChangelogEntry[] = [
+  {
+    version: 'Android 3.2 Beta',
+    date: '2026-05-30',
+    badge: 'Beta 测试版',
+    lead: '这版是 Android 3.2 的 Beta 测试版本，包含最新修复和功能，但可能存在不稳定或 Bug。建议想体验新功能的用户尝试，普通用户建议继续使用正式版 3.1。',
+    sections: [
+      {
+        title: '烽火设备优化',
+        items: [
+          '修复 4G 下 Trans.Mode 显示问题，更新接口逻辑。',
+          '烽火 Pro2 参数查看支持。',
+          '优化烽火 AMBR 显示逻辑。',
+        ],
+      },
+      {
+        title: '测速页改进',
+        items: [
+          '测速界面速率监控重新适配，减少数值溢出。',
+        ],
+      },
+      {
+        title: 'OPPO 系设备修复',
+        items: [
+          '修复 OPPO 系在烽火配置下闪屏问题。',
+        ],
+      },
+    ],
+  },
   {
     version: 'Android 3.1',
     date: '2026-05-26',

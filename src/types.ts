@@ -36,6 +36,7 @@ export interface Download {
   checksum: string
   label: string
   copy: string
+  beta?: boolean
 }
 
 export interface ChangelogSection {
