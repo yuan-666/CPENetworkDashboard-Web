@@ -25,6 +25,35 @@ import { aboutInfo, appIcon } from '@/content'
       </div>
     </section>
 
+    <section class="about-sponsor">
+      <div class="section-copy split-title-copy">
+        <p>赞助</p>
+        <h2>
+          <span>{{ aboutInfo.sponsor.title }}</span>
+          <small>Sponsor</small>
+        </h2>
+      </div>
+      <div class="sponsor-panel">
+        <p>{{ aboutInfo.sponsor.description }}</p>
+        <div class="sponsor-actions">
+          <a
+            class="action primary"
+            :href="aboutInfo.sponsor.ifdianUrl"
+            target="_blank"
+            rel="noreferrer"
+          >
+            打开爱发电主页
+          </a>
+        </div>
+        <div class="sponsor-qr-grid">
+          <article v-for="qr in aboutInfo.sponsor.qrs" :key="qr.image" class="sponsor-qr-card">
+            <LazyImage :src="qr.image" :alt="qr.alt" />
+            <strong>{{ qr.label }}</strong>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <section class="about-section makers-section">
       <div class="section-copy split-title-copy">
         <p>开发者</p>

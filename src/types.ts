@@ -68,6 +68,12 @@ export interface ThanksPerson {
   links?: PersonLink[]
 }
 
+export interface SponsorQr {
+  label: string
+  image: string
+  alt: string
+}
+
 export interface AboutInfo {
   chineseName: string
   englishName: string
@@ -75,6 +81,12 @@ export interface AboutInfo {
   userGroup: string
   description: string
   note: string
+  sponsor: {
+    title: string
+    description: string
+    ifdianUrl: string
+    qrs: SponsorQr[]
+  }
   makers: Maker[]
   thanks: ThanksPerson[]
 }

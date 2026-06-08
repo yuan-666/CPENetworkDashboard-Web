@@ -1039,6 +1039,7 @@ p {
 .showcase-section,
 .platform-section,
 .device-section,
+.about-sponsor,
 .about-section {
   display: grid;
   grid-template-columns: minmax(280px, 0.42fr) minmax(560px, 1fr);
@@ -1892,6 +1893,82 @@ p {
   background-clip: text;
 }
 
+.about-sponsor {
+  align-items: start;
+  padding-top: 38px;
+}
+
+.about-sponsor .section-copy {
+  position: sticky;
+  top: 110px;
+  align-self: start;
+}
+
+.sponsor-panel {
+  padding: 22px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow);
+}
+
+:root[data-theme='dark'] .sponsor-panel {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(26, 26, 26, 0.9);
+}
+
+.sponsor-panel p {
+  max-width: 64ch;
+  margin: 0;
+  color: var(--muted);
+}
+
+.sponsor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.sponsor-actions .action {
+  min-width: 0;
+}
+
+.sponsor-qr-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.sponsor-qr-card {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+}
+
+:root[data-theme='dark'] .sponsor-qr-card {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: #ffffff;
+}
+
+.sponsor-qr-card img {
+  width: min(100%, 230px);
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+}
+
+.sponsor-qr-card strong {
+  color: #181b18;
+  font-size: 15px;
+}
+
 .split-title-copy h2 {
   display: grid;
   gap: 8px;
@@ -2372,6 +2449,7 @@ p {
   .platform-section,
   .device-section,
   .download-grid,
+  .about-sponsor,
   .about-section,
   .about-intro,
   .privacy-strip {
@@ -2428,6 +2506,7 @@ p {
     align-items: start;
   }
 
+  .about-sponsor .section-copy,
   .makers-section .section-copy,
   .thanks-section .section-copy {
     position: static;
@@ -2518,7 +2597,8 @@ p {
 
   .fact-line,
   .download-switcher,
-  .person-grid {
+  .person-grid,
+  .sponsor-qr-grid {
     grid-template-columns: 1fr;
   }
 
@@ -2562,6 +2642,7 @@ p {
   .flow-item,
   .platform-row,
   .download-row,
+  .sponsor-panel,
   .person-card,
   .thanks-card {
     padding: 18px;

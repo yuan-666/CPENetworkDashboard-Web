@@ -450,6 +450,24 @@ export const aboutInfo: AboutInfo = {
   description:
     '面向 4G/5G CPE 的管理工具。覆盖连接状态、射频指标、SIM/AMBR、锁频锁小区、邻区扫描、测速、Ping 与路由测试。',
   note: '感谢所有参与和帮助过我们的朋友。CPE 网络看板能走到 3.0，不只是代码的事，也有测试设备、接口抓包、UI 方案、建议和很多次反馈的功劳。',
+  sponsor: {
+    title: '支持 CPE 网络看板继续维护',
+    description:
+      '赞助会用于服务器、下载流量、测试设备和多平台适配。你可以通过爱发电主页支持项目，也可以使用微信或支付宝二维码赞助。',
+    ifdianUrl: 'https://ifdian.net/a/CPENetworkDashboard',
+    qrs: [
+      {
+        label: '微信赞助',
+        image: '/media/donation-wechat.png',
+        alt: '微信赞助二维码',
+      },
+      {
+        label: '支付宝赞助',
+        image: '/media/donation-alipay.jpg',
+        alt: '支付宝赞助二维码',
+      },
+    ],
+  },
   makers: [
     {
       name: '叉子么',
