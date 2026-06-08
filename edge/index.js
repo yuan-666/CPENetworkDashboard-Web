@@ -499,6 +499,7 @@ const CN_CITY_NAME_ALIASES = {
   guyuan: '固原',
   zhongwei: '中卫',
   urumqi: '乌鲁木齐',
+  'ürümqi': '乌鲁木齐',
   wulumuqi: '乌鲁木齐',
   karamay: '克拉玛依',
   kelamayi: '克拉玛依',
@@ -579,6 +580,8 @@ function isPrivateIP(ip) {
 function normalizeTextKey(value) {
   return String(value || '')
     .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[().,]/g, ' ')
     .replace(/\s+/g, ' ')
@@ -1454,9 +1457,9 @@ function normalizeReferrer(value) {
 
 function parseUserAgent(ua = '') {
   const raw = String(ua).slice(0, 260)
-  if (!raw) return { device: 'Unknown', browser: '', os: '' }
+  if (!raw) return { device: '未知设备', browser: '', os: '' }
   if (/bot|spider|crawler|slurp|bingpreview/i.test(raw))
-    return { device: 'Bot', browser: 'Bot', os: '' }
+    return { device: '爬虫', browser: 'Bot', os: '' }
 
   let os = ''
   if (/Android/i.test(raw)) os = 'Android'
@@ -1472,9 +1475,9 @@ function parseUserAgent(ua = '') {
   else if (/Chrome\//.test(raw) || /CriOS\//.test(raw)) browser = 'Chrome'
   else if (/Safari\//.test(raw)) browser = 'Safari'
 
-  const form = /Mobile|Android|iPhone|iPad|iPod/i.test(raw) ? 'Mobile' : 'Desktop'
+  const form = /Mobile|Android|iPhone|iPad|iPod/i.test(raw) ? '移动端' : '桌面'
   return {
-    device: [browser || form, os].filter(Boolean).join(' on ') || 'Unknown',
+    device: [os, browser || form].filter(Boolean).join(' · ') || '未知设备',
     browser,
     os,
   }

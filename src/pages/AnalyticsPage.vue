@@ -38,41 +38,40 @@ function completeHourlyBars(data = summary.value?.hourly) {
   }))
 }
 
-const combinedHourlyMax = computed(() => {
-  const visitBars = completeHourlyBars(summary.value?.hourly)
-  const downloadBars = completeHourlyBars(summary.value?.downloadHourly)
-  return Math.max(
-    1,
-    ...visitBars.map((bar) => bar.count),
-    ...downloadBars.map((bar) => bar.count)
-  )
-})
+const visitHourlyMax = computed(() =>
+  Math.max(1, ...completeHourlyBars(summary.value?.hourly).map((bar) => bar.count))
+)
+
+const downloadHourlyMax = computed(() =>
+  Math.max(1, ...completeHourlyBars(summary.value?.downloadHourly).map((bar) => bar.count))
+)
 
 const hourlyBars = computed<HourlyBar[]>(() => {
   const hourly = summary.value?.hourly
   const downloadHourly = summary.value?.downloadHourly
   const visitBars = completeHourlyBars(hourly)
   const downloadBars = completeHourlyBars(downloadHourly)
-  const max = combinedHourlyMax.value
   const currentHour = hourly?.currentHour ?? downloadHourly?.currentHour
   return visitBars.map((bar, index) => ({
     hour: bar.hour,
     visits: bar.count,
     downloads: downloadBars[index]?.count || 0,
-    visitPct: Math.round((bar.count / max) * 100),
-    downloadPct: Math.round(((downloadBars[index]?.count || 0) / max) * 100),
+    visitPct: Math.round((bar.count / visitHourlyMax.value) * 100),
+    downloadPct: Math.round(((downloadBars[index]?.count || 0) / downloadHourlyMax.value) * 100),
     isCurrent: bar.hour === currentHour,
   }))
 })
 
 const hourlyTotal = computed(() => summary.value?.hourly?.total ?? 0)
 const downloadHourlyTotal = computed(() => summary.value?.downloadHourly?.total ?? 0)
-const hourlyMax = computed(() => combinedHourlyMax.value)
 
-const scaleLabels = computed(() => {
-  const m = hourlyMax.value || 1
+function makeScaleLabels(max: number) {
+  const m = max || 1
   return [m, Math.round(m * 0.75), Math.round(m * 0.5), Math.round(m * 0.25), 0]
-})
+}
+
+const visitScaleLabels = computed(() => makeScaleLabels(visitHourlyMax.value))
+const downloadScaleLabels = computed(() => makeScaleLabels(downloadHourlyMax.value))
 
 const downloadDistribution = computed(() =>
   hourlyBars.value
@@ -82,7 +81,7 @@ const downloadDistribution = computed(() =>
     .map((bar) => ({
       hour: `${String(bar.hour).padStart(2, '0')}:00`,
       count: bar.downloads,
-      pct: Math.max(6, Math.round((bar.downloads / (summary.value?.downloadHourly?.max || 1)) * 100)),
+      pct: Math.max(6, Math.round((bar.downloads / downloadHourlyMax.value) * 100)),
     }))
 )
 
@@ -188,6 +187,11 @@ const cityAliases: Record<string, string> = {
   "Xi'an": '西安',
   Xian: '西安',
   Zhengzhou: '郑州',
+  Urumqi: '乌鲁木齐',
+  urumqi: '乌鲁木齐',
+  'Ürümqi': '乌鲁木齐',
+  Wulumuqi: '乌鲁木齐',
+  wulumuqi: '乌鲁木齐',
   Taiwan: '台湾',
   台湾: '台湾',
   臺灣: '台湾',
@@ -214,6 +218,8 @@ function normalizeCountryName(value = ''): string {
 function normalizePlaceKey(value = ''): string {
   return value
     .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[().,]/g, ' ')
     .replace(/\s+/g, ' ')
@@ -263,6 +269,34 @@ function normalizeCityName(city = '', region = '', countryCode = ''): string {
   return value
 }
 
+function normalizeDeviceName(value = ''): string {
+  const raw = value.trim()
+  if (!raw || raw === 'Unknown') return '未知设备'
+  if (/bot|spider|crawler|爬虫/i.test(raw)) return '爬虫'
+  if (raw.includes('·')) return raw
+
+  const [left, right] = raw.split(/\s+on\s+/i).map((part) => part.trim())
+  const browserMap: Record<string, string> = {
+    Chrome: 'Chrome',
+    Safari: 'Safari',
+    Edge: 'Edge',
+    Firefox: 'Firefox',
+    Opera: 'Opera',
+    Mobile: '移动端',
+    Desktop: '桌面',
+  }
+  const osMap: Record<string, string> = {
+    Windows: 'Windows',
+    macOS: 'macOS',
+    Android: 'Android',
+    iOS: 'iOS',
+    Linux: 'Linux',
+  }
+  const browser = browserMap[left] || left
+  const os = osMap[right] || right
+  return [os, browser].filter(Boolean).join(' · ') || raw
+}
+
 const normalizedCountries = computed(() => {
   const map = new Map<string, number>()
   for (const item of summary.value?.geo?.countries || []) {
@@ -299,6 +333,17 @@ const normalizedCities = computed<CityStat[]>(() => {
   return Array.from(map.values()).sort((a, b) => b.count - a.count)
 })
 
+const normalizedDevices = computed(() => {
+  const map = new Map<string, number>()
+  for (const item of summary.value?.devices || []) {
+    const name = normalizeDeviceName(item.name)
+    map.set(name, (map.get(name) || 0) + item.count)
+  }
+  return Array.from(map.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+})
+
 const tabData = computed(() => {
   const s = summary.value
   if (!s) return []
@@ -315,7 +360,7 @@ const tabData = computed(() => {
         count: c.count,
       }))
     case 'devices':
-      return s.devices || []
+      return normalizedDevices.value
     default:
       return []
   }
@@ -462,7 +507,7 @@ watch(cities, () => {
     <!-- Header -->
     <header class="analytics-header">
       <h1>访问统计</h1>
-      <p>全站访问与下载数据概览</p>
+      <p>访问、下载、地区。</p>
     </header>
 
     <!-- KPI Cards -->
@@ -494,37 +539,63 @@ watch(cities, () => {
       <!-- 24h Bar Chart -->
       <section class="glass-panel bar-chart-panel">
         <div class="panel-title">
-          <span>今日 24 小时访问与下载</span>
-          <small>访问 {{ hourlyTotal }} / 下载 {{ downloadHourlyTotal }} / 峰值 {{ hourlyMax }}</small>
+          <span>今日 24 小时</span>
+          <small>访问 {{ hourlyTotal }} / 下载 {{ downloadHourlyTotal }}</small>
         </div>
-        <div class="bar-legend">
-          <span><i class="legend-dot visit" />访问</span>
-          <span><i class="legend-dot download" />下载</span>
-        </div>
-        <div class="bar-chart">
-          <div class="bar-scale">
-            <span v-for="(v, i) in scaleLabels" :key="i">{{ v }}</span>
-          </div>
-          <div class="bar-grid">
-            <div
-              v-for="bar in hourlyBars"
-              :key="bar.hour"
-              class="bar-col"
-              :class="{ current: bar.isCurrent }"
-            >
-              <div class="bar-track">
-                <div
-                  class="bar-fill visit"
-                  :title="`${bar.hour}:00 访问 ${bar.visits}`"
-                  :style="{ height: bar.visitPct + '%' }"
-                />
-                <div
-                  class="bar-fill download"
-                  :title="`${bar.hour}:00 下载 ${bar.downloads}`"
-                  :style="{ height: bar.downloadPct + '%' }"
-                />
+        <div class="dual-chart">
+          <div class="chart-row visit-row">
+            <div class="chart-row-head">
+              <strong>访问</strong>
+              <span>峰值 {{ visitHourlyMax }}</span>
+            </div>
+            <div class="bar-chart">
+              <div class="bar-scale">
+                <span v-for="(v, i) in visitScaleLabels" :key="i">{{ v }}</span>
               </div>
-              <span class="bar-hour">{{ bar.hour }}</span>
+              <div class="bar-grid">
+                <div
+                  v-for="bar in hourlyBars"
+                  :key="`visit-${bar.hour}`"
+                  class="bar-col"
+                  :class="{ current: bar.isCurrent }"
+                >
+                  <div class="bar-track">
+                    <div
+                      class="bar-fill visit"
+                      :title="`${bar.hour}:00 访问 ${bar.visits}`"
+                      :style="{ height: bar.visitPct + '%' }"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chart-row download-row">
+            <div class="chart-row-head">
+              <strong>下载</strong>
+              <span>峰值 {{ downloadHourlyMax }}</span>
+            </div>
+            <div class="bar-chart">
+              <div class="bar-scale">
+                <span v-for="(v, i) in downloadScaleLabels" :key="i">{{ v }}</span>
+              </div>
+              <div class="bar-grid with-hours">
+                <div
+                  v-for="bar in hourlyBars"
+                  :key="`download-${bar.hour}`"
+                  class="bar-col"
+                  :class="{ current: bar.isCurrent }"
+                >
+                  <div class="bar-track">
+                    <div
+                      class="bar-fill download"
+                      :title="`${bar.hour}:00 下载 ${bar.downloads}`"
+                      :style="{ height: bar.downloadPct + '%' }"
+                    />
+                  </div>
+                  <span class="bar-hour">{{ bar.hour }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -543,7 +614,7 @@ watch(cities, () => {
               <strong>{{ item.count }}</strong>
             </div>
           </div>
-          <span v-else class="distribution-empty">暂无今日下载</span>
+          <span v-else class="distribution-empty">今天还没有下载</span>
         </div>
       </section>
 
@@ -582,7 +653,7 @@ watch(cities, () => {
         <div class="tab-content">
           <!-- Table view for non-recent tabs -->
           <template v-if="activeTab !== 'recent'">
-            <div v-if="!tabData.length" class="empty-hint">暂无数据</div>
+            <div v-if="!tabData.length" class="empty-hint">还没有数据</div>
             <table v-else class="breakdown-table">
               <tbody>
                 <tr v-for="(item, i) in tabData" :key="i">
@@ -596,7 +667,7 @@ watch(cities, () => {
 
           <!-- Recent events -->
           <template v-else>
-            <div v-if="!recentEvents.length" class="empty-hint">暂无记录</div>
+            <div v-if="!recentEvents.length" class="empty-hint">还没有记录</div>
             <table v-else class="breakdown-table recent-table">
               <thead>
                 <tr>
@@ -615,7 +686,7 @@ watch(cities, () => {
                     </span>
                   </td>
                   <td class="page-cell">{{ ev.page || ev.fileLabel || ev.file || '-' }}</td>
-                  <td class="device-cell">{{ ev.device || '-' }}</td>
+                  <td class="device-cell">{{ normalizeDeviceName(ev.device || '') }}</td>
                 </tr>
               </tbody>
             </table>
@@ -629,7 +700,7 @@ watch(cities, () => {
           <span>下载排行</span>
           <small>{{ summary?.downloadsTotal ?? 0 }} 次下载</small>
         </div>
-        <div v-if="!downloadRanking.length" class="empty-hint">暂无下载数据</div>
+        <div v-if="!downloadRanking.length" class="empty-hint">还没有下载</div>
         <div v-else class="rank-list">
           <div
             v-for="(item, i) in downloadRanking"
@@ -649,10 +720,10 @@ watch(cities, () => {
     <!-- Loading / Offline states -->
     <div v-if="analyticsState === 'loading'" class="state-overlay">
       <div class="state-spinner" />
-      <span>加载统计数据…</span>
+      <span>正在加载</span>
     </div>
     <div v-else-if="analyticsState === 'offline'" class="state-overlay offline">
-      <span>统计数据暂时不可用</span>
+      <span>统计暂时不可用</span>
     </div>
   </div>
 </template>
@@ -794,48 +865,62 @@ watch(cities, () => {
 
 /* ── Bar Chart ────────────────────────────────────────── */
 
-.bar-legend {
+.dual-chart {
+  display: grid;
+  gap: 18px;
+}
+
+.chart-row {
+  display: grid;
+  gap: 8px;
+}
+
+.chart-row-head {
   display: flex;
-  justify-content: flex-end;
-  gap: 14px;
-  margin: -8px 0 10px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chart-row-head strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chart-row-head strong::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.download-row .chart-row-head strong::before {
+  background: var(--warm);
+}
+
+.chart-row-head span {
   color: var(--muted);
   font-family: var(--mono);
   font-size: 11px;
-}
-
-.bar-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-}
-
-.legend-dot.visit {
-  background: rgba(35, 113, 100, 0.64);
-}
-
-.legend-dot.download {
-  background: rgba(173, 115, 51, 0.74);
 }
 
 .bar-chart {
   display: grid;
   grid-template-columns: 36px 1fr;
   gap: 8px;
-  min-height: 176px;
+  min-height: 126px;
 }
 
 .bar-scale {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding-bottom: 22px;
+  padding-bottom: 0;
 }
 
 .bar-scale span {
@@ -848,11 +933,15 @@ watch(cities, () => {
 .bar-grid {
   display: grid;
   grid-template-columns: repeat(24, 1fr);
-  gap: 3px;
+  gap: 4px;
   align-items: end;
-  min-height: 176px;
+  min-height: 126px;
   border-bottom: 1px solid var(--line);
   padding-bottom: 0;
+}
+
+.bar-grid.with-hours {
+  padding-bottom: 20px;
 }
 
 .bar-col {
@@ -864,9 +953,13 @@ watch(cities, () => {
   justify-content: flex-end;
 }
 
-.bar-col.current .bar-fill.visit {
+.visit-row .bar-col.current .bar-fill {
   background: var(--accent);
   box-shadow: 0 0 8px rgba(35, 113, 100, 0.4);
+}
+
+.download-row .bar-col.current .bar-fill {
+  background: var(--warm);
 }
 
 .bar-track {
@@ -875,14 +968,13 @@ watch(cities, () => {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 2px;
   min-height: 0;
 }
 
 .bar-fill {
-  width: min(44%, 8px);
+  width: min(72%, 13px);
   min-height: 2px;
-  border-radius: 2px 2px 0 0;
+  border-radius: 3px 3px 0 0;
   transition: height 400ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -902,9 +994,14 @@ watch(cities, () => {
   background: rgba(246, 173, 85, 0.62);
 }
 
-:root[data-theme='dark'] .bar-col.current .bar-fill.visit {
+:root[data-theme='dark'] .visit-row .bar-col.current .bar-fill {
   background: var(--accent);
   box-shadow: 0 0 8px rgba(155, 199, 173, 0.3);
+}
+
+:root[data-theme='dark'] .download-row .bar-col.current .bar-fill {
+  background: var(--warm);
+  box-shadow: 0 0 8px rgba(246, 173, 85, 0.24);
 }
 
 .bar-hour {
@@ -913,6 +1010,7 @@ watch(cities, () => {
   font-size: 9px;
   line-height: 1;
   flex-shrink: 0;
+  margin-bottom: -20px;
 }
 
 .download-distribution {
@@ -1254,7 +1352,7 @@ watch(cities, () => {
   }
 
   .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .viz-row {
@@ -1273,32 +1371,78 @@ watch(cities, () => {
   }
 
   .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(138px, 42vw);
+    grid-template-columns: none;
     gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
   }
 
   .kpi-card {
     padding: 14px;
+    scroll-snap-align: start;
   }
 
   .kpi-value {
     font-size: 24px;
   }
 
+  .panel-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .dual-chart {
+    gap: 16px;
+  }
+
   .bar-chart {
-    min-height: 160px;
+    grid-template-columns: 30px 1fr;
+    min-height: 116px;
+  }
+
+  .bar-scale span {
+    font-size: 9px;
   }
 
   .bar-grid {
-    min-height: 140px;
+    gap: 2px;
+    min-height: 116px;
+  }
+
+  .bar-fill {
+    width: min(82%, 10px);
   }
 
   .bar-hour {
     font-size: 7px;
   }
 
+  .download-distribution {
+    grid-template-columns: 1fr;
+  }
+
+  .distribution-list {
+    grid-template-columns: 1fr;
+  }
+
   .map-container {
     height: 240px;
+  }
+
+  .city-strip {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .city-tag {
+    flex: 0 0 auto;
   }
 
   .tab-btn {
@@ -1306,8 +1450,42 @@ watch(cities, () => {
     font-size: 13px;
   }
 
+  .tab-content {
+    overflow-x: auto;
+  }
+
+  .breakdown-table {
+    min-width: 520px;
+  }
+
   .glass-panel {
     padding: 16px;
+  }
+}
+
+@media (max-width: 460px) {
+  .analytics-page {
+    width: min(100% - 18px, 420px);
+  }
+
+  .kpi-grid {
+    grid-auto-columns: minmax(132px, 58vw);
+  }
+
+  .bar-chart {
+    grid-template-columns: 26px 1fr;
+  }
+
+  .bar-grid {
+    gap: 1px;
+  }
+
+  .bar-fill {
+    width: min(88%, 8px);
+  }
+
+  .map-container {
+    height: 220px;
   }
 }
 
