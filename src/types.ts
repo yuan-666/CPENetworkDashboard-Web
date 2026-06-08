@@ -97,8 +97,11 @@ export interface DownloadCounter {
 }
 
 export interface DownloadStats extends DownloadCounter {
-  label: string
-  href: string
+  label?: string
+  href?: string
+  platform?: string
+  version?: string
+  channel?: string
 }
 
 export interface DownloadTrackResult extends DownloadCounter {
@@ -117,6 +120,7 @@ export interface AnalyticsSummary {
   recent: RecentEvent[]
   geo?: GeoData
   hourly?: HourlyData
+  downloadHourly?: HourlyData
 }
 
 export interface BreakdownItem {
@@ -178,6 +182,8 @@ export interface UpdateDownloadChunk {
   index: number
   href: string
   url: string
+  directUrl?: string
+  tracked?: boolean
   bytes: number
 }
 
@@ -190,6 +196,7 @@ export interface UpdateDownload {
   mode: 'single' | 'chunked'
   href: string
   url: string
+  directUrl?: string
   chunks: UpdateDownloadChunk[]
   chunkBytes: number[]
   size: string

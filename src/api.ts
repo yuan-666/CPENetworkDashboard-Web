@@ -30,11 +30,44 @@ function arrayOrEmpty<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : []
 }
 
+function normalizeDownloadsByFile(value: unknown): AnalyticsSummary['downloadsByFile'] {
+  if (!value || typeof value !== 'object') return {}
+  return Object.fromEntries(
+    Object.entries(value as Record<string, Partial<AnalyticsSummary['downloadsByFile'][string]>>)
+      .filter(([id]) => id)
+      .map(([id, item]) => [
+        id,
+        {
+          total: numberOrZero(item?.total),
+          today: numberOrZero(item?.today),
+          label: typeof item?.label === 'string' ? item.label : undefined,
+          href: typeof item?.href === 'string' ? item.href : undefined,
+          platform: typeof item?.platform === 'string' ? item.platform : undefined,
+          version: typeof item?.version === 'string' ? item.version : undefined,
+          channel: typeof item?.channel === 'string' ? item.channel : undefined,
+        },
+      ])
+  )
+}
+
+function normalizeHourlyData(value: AnalyticsSummary['hourly'] | null | undefined) {
+  if (!value) return undefined
+  const bars = arrayOrEmpty<{ hour?: unknown; count?: unknown }>(value.bars).map((bar) => ({
+    hour: numberOrZero(bar.hour),
+    count: numberOrZero(bar.count),
+  }))
+  const total = numberOrZero(value.total) || bars.reduce((sum, bar) => sum + bar.count, 0)
+  const max = Math.max(numberOrZero(value.max), ...bars.map((bar) => bar.count), 0)
+  return {
+    bars,
+    total,
+    max,
+    currentHour: numberOrZero(value.currentHour),
+  }
+}
+
 function normalizeSummary(value: Partial<AnalyticsSummary> | null | undefined): AnalyticsSummary {
-  const downloadsByFile =
-    value?.downloadsByFile && typeof value.downloadsByFile === 'object'
-      ? value.downloadsByFile
-      : {}
+  const downloadsByFile = normalizeDownloadsByFile(value?.downloadsByFile)
   const downloadsTotal = Object.values(downloadsByFile).reduce(
     (sum, item) => sum + numberOrZero(item?.total),
     0
@@ -55,14 +88,8 @@ function normalizeSummary(value: Partial<AnalyticsSummary> | null | undefined): 
       countries: arrayOrEmpty(value?.geo?.countries),
       cities: arrayOrEmpty(value?.geo?.cities),
     },
-    hourly: value?.hourly
-      ? {
-          bars: arrayOrEmpty(value.hourly.bars),
-          total: numberOrZero(value.hourly.total),
-          max: numberOrZero(value.hourly.max),
-          currentHour: numberOrZero(value.hourly.currentHour),
-        }
-      : undefined,
+    hourly: normalizeHourlyData(value?.hourly),
+    downloadHourly: normalizeHourlyData(value?.downloadHourly),
   }
 }
 

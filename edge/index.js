@@ -20,7 +20,7 @@
  */
 
 const KV_NAMESPACE = 'cpeweb'
-const EDGE_BUILD = '2026-06-08.1'
+const EDGE_BUILD = '2026-06-08.2'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
 const UPDATE_STORE_VERSION = 2
@@ -32,7 +32,13 @@ const ANALYTICS_FLUSH_INTERVAL_MS = 60 * 1000
 const ANALYTICS_FLUSH_EVENT_THRESHOLD = 24
 const GEO_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 const RATE_BUCKET_MAX_ENTRIES = 1000
+const DOWNLOAD_DEDUPE_TTL_MS = 60 * 60 * 1000
 const WRITE_TOKEN = readEnv('CPE_STATS_TOKEN') || readEnv('STATS_WRITE_TOKEN')
+const AMAP_WEB_SERVICE_KEY =
+  readEnv('AMAP_WEB_SERVICE_KEY') ||
+  readEnv('AMAP_WEB_KEY') ||
+  readEnv('VITE_AMAP_WEB_KEY') ||
+  readEnv('AMAP_KEY')
 
 function runtimeState() {
   const key = '__CPE_NETWORK_DASHBOARD_EDGE_RUNTIME__'
@@ -44,6 +50,7 @@ function runtimeState() {
       lastFlushAt: 0,
       mutationQueue: Promise.resolve(),
       rateBuckets: new Map(),
+      recentDownloadKeys: new Map(),
       geoCache: new Map(),
     }
   }
@@ -153,6 +160,35 @@ const REGION_BY_COUNTRY_CODE = {
 }
 
 const CN_CITY_NAME_ALIASES = {
+  anhui: '安徽',
+  fujian: '福建',
+  gansu: '甘肃',
+  guangdong: '广东',
+  guangxi: '广西',
+  guizhou: '贵州',
+  hainan: '海南',
+  hebei: '河北',
+  heilongjiang: '黑龙江',
+  henan: '河南',
+  hubei: '湖北',
+  hunan: '湖南',
+  jiangsu: '江苏',
+  jiangxi: '江西',
+  jilin: '吉林',
+  liaoning: '辽宁',
+  'inner mongolia': '内蒙古',
+  neimenggu: '内蒙古',
+  ningxia: '宁夏',
+  qinghai: '青海',
+  shaanxi: '陕西',
+  shanxi: '山西',
+  shandong: '山东',
+  sichuan: '四川',
+  xinjiang: '新疆',
+  tibet: '西藏',
+  xizang: '西藏',
+  yunnan: '云南',
+  zhejiang: '浙江',
   beijing: '北京',
   peking: '北京',
   shanghai: '上海',
@@ -167,6 +203,308 @@ const CN_CITY_NAME_ALIASES = {
   chengdu: '成都',
   xian: '西安',
   "xi'an": '西安',
+  shijiazhuang: '石家庄',
+  tangshan: '唐山',
+  qinhuangdao: '秦皇岛',
+  handan: '邯郸',
+  xingtai: '邢台',
+  baoding: '保定',
+  zhangjiakou: '张家口',
+  chengde: '承德',
+  cangzhou: '沧州',
+  langfang: '廊坊',
+  hengshui: '衡水',
+  taiyuan: '太原',
+  datong: '大同',
+  yangquan: '阳泉',
+  changzhi: '长治',
+  jincheng: '晋城',
+  shuozhou: '朔州',
+  jinzhong: '晋中',
+  yuncheng: '运城',
+  xinzhou: '忻州',
+  linfen: '临汾',
+  luliang: '吕梁',
+  hohhot: '呼和浩特',
+  huhehaote: '呼和浩特',
+  baotou: '包头',
+  wuhai: '乌海',
+  chifeng: '赤峰',
+  tongliao: '通辽',
+  ordos: '鄂尔多斯',
+  eerduosi: '鄂尔多斯',
+  hulunbuir: '呼伦贝尔',
+  hulunbeier: '呼伦贝尔',
+  bayannur: '巴彦淖尔',
+  bayannaoer: '巴彦淖尔',
+  ulanqab: '乌兰察布',
+  wulanchabu: '乌兰察布',
+  shenyang: '沈阳',
+  dalian: '大连',
+  anshan: '鞍山',
+  fushun: '抚顺',
+  benxi: '本溪',
+  dandong: '丹东',
+  jinzhou: '锦州',
+  yingkou: '营口',
+  fuxin: '阜新',
+  liaoyang: '辽阳',
+  panjin: '盘锦',
+  tieling: '铁岭',
+  chaoyang: '朝阳',
+  huludao: '葫芦岛',
+  changchun: '长春',
+  siping: '四平',
+  liaoyuan: '辽源',
+  tonghua: '通化',
+  baishan: '白山',
+  songyuan: '松原',
+  baicheng: '白城',
+  yanbian: '延边',
+  harbin: '哈尔滨',
+  qiqihar: '齐齐哈尔',
+  jixi: '鸡西',
+  hegang: '鹤岗',
+  shuangyashan: '双鸭山',
+  daqing: '大庆',
+  yichun: '伊春',
+  jiamusi: '佳木斯',
+  qitaihe: '七台河',
+  mudanjiang: '牡丹江',
+  heihe: '黑河',
+  suihua: '绥化',
+  wuxi: '无锡',
+  xuzhou: '徐州',
+  changzhou: '常州',
+  nantong: '南通',
+  lianyungang: '连云港',
+  huaian: '淮安',
+  'huai an': '淮安',
+  yancheng: '盐城',
+  yangzhou: '扬州',
+  zhenjiang: '镇江',
+  taizhou: '台州',
+  suqian: '宿迁',
+  ningbo: '宁波',
+  wenzhou: '温州',
+  jiaxing: '嘉兴',
+  huzhou: '湖州',
+  shaoxing: '绍兴',
+  jinhua: '金华',
+  quzhou: '衢州',
+  zhoushan: '舟山',
+  lishui: '丽水',
+  hefei: '合肥',
+  wuhu: '芜湖',
+  bengbu: '蚌埠',
+  huainan: '淮南',
+  maanshan: '马鞍山',
+  'ma anshan': '马鞍山',
+  huaibei: '淮北',
+  tongling: '铜陵',
+  anqing: '安庆',
+  huangshan: '黄山',
+  chuzhou: '滁州',
+  fuyang: '阜阳',
+  luan: '六安',
+  "lu'an": '六安',
+  bozhou: '亳州',
+  chizhou: '池州',
+  xuancheng: '宣城',
+  fuzhou: '福州',
+  xiamen: '厦门',
+  putian: '莆田',
+  sanming: '三明',
+  quanzhou: '泉州',
+  zhangzhou: '漳州',
+  nanping: '南平',
+  longyan: '龙岩',
+  ningde: '宁德',
+  nanchang: '南昌',
+  jingdezhen: '景德镇',
+  pingxiang: '萍乡',
+  jiujiang: '九江',
+  xinyu: '新余',
+  yingtan: '鹰潭',
+  ganzhou: '赣州',
+  jian: '吉安',
+  "ji'an": '吉安',
+  shangrao: '上饶',
+  jinan: '济南',
+  qingdao: '青岛',
+  zibo: '淄博',
+  zaozhuang: '枣庄',
+  dongying: '东营',
+  yantai: '烟台',
+  weifang: '潍坊',
+  jining: '济宁',
+  taian: '泰安',
+  "tai'an": '泰安',
+  weihai: '威海',
+  rizhao: '日照',
+  linyi: '临沂',
+  dezhou: '德州',
+  liaocheng: '聊城',
+  binzhou: '滨州',
+  heze: '菏泽',
+  zhengzhou: '郑州',
+  kaifeng: '开封',
+  luoyang: '洛阳',
+  pingdingshan: '平顶山',
+  anyang: '安阳',
+  hebi: '鹤壁',
+  xinxiang: '新乡',
+  jiaozuo: '焦作',
+  puyang: '濮阳',
+  xuchang: '许昌',
+  luohe: '漯河',
+  sanmenxia: '三门峡',
+  nanyang: '南阳',
+  shangqiu: '商丘',
+  xinyang: '信阳',
+  zhoukou: '周口',
+  zhumadian: '驻马店',
+  huangshi: '黄石',
+  shiyan: '十堰',
+  yichang: '宜昌',
+  xiangyang: '襄阳',
+  ezhou: '鄂州',
+  jingmen: '荆门',
+  xiaogan: '孝感',
+  jingzhou: '荆州',
+  huanggang: '黄冈',
+  xianning: '咸宁',
+  suizhou: '随州',
+  enshi: '恩施',
+  changsha: '长沙',
+  zhuzhou: '株洲',
+  xiangtan: '湘潭',
+  hengyang: '衡阳',
+  shaoyang: '邵阳',
+  yueyang: '岳阳',
+  changde: '常德',
+  zhangjiajie: '张家界',
+  yiyang: '益阳',
+  chenzhou: '郴州',
+  yongzhou: '永州',
+  huaihua: '怀化',
+  loudi: '娄底',
+  shaoguan: '韶关',
+  zhuhai: '珠海',
+  shantou: '汕头',
+  foshan: '佛山',
+  jiangmen: '江门',
+  zhanjiang: '湛江',
+  maoming: '茂名',
+  zhaoqing: '肇庆',
+  huizhou: '惠州',
+  meizhou: '梅州',
+  shanwei: '汕尾',
+  heyuan: '河源',
+  yangjiang: '阳江',
+  qingyuan: '清远',
+  dongguan: '东莞',
+  zhongshan: '中山',
+  chaozhou: '潮州',
+  jieyang: '揭阳',
+  yunfu: '云浮',
+  nanning: '南宁',
+  liuzhou: '柳州',
+  guilin: '桂林',
+  wuzhou: '梧州',
+  beihai: '北海',
+  fangchenggang: '防城港',
+  qinzhou: '钦州',
+  guigang: '贵港',
+  yulin: '玉林',
+  baise: '百色',
+  bose: '百色',
+  hezhou: '贺州',
+  hechi: '河池',
+  laibin: '来宾',
+  chongzuo: '崇左',
+  haikou: '海口',
+  sanya: '三亚',
+  sansha: '三沙',
+  danzhou: '儋州',
+  zigong: '自贡',
+  panzhihua: '攀枝花',
+  luzhou: '泸州',
+  deyang: '德阳',
+  mianyang: '绵阳',
+  guangyuan: '广元',
+  suining: '遂宁',
+  neijiang: '内江',
+  leshan: '乐山',
+  nanchong: '南充',
+  meishan: '眉山',
+  yibin: '宜宾',
+  guangan: '广安',
+  "guang'an": '广安',
+  dazhou: '达州',
+  yaan: '雅安',
+  "ya'an": '雅安',
+  bazhong: '巴中',
+  ziyang: '资阳',
+  guiyang: '贵阳',
+  liupanshui: '六盘水',
+  zunyi: '遵义',
+  anshun: '安顺',
+  bijie: '毕节',
+  tongren: '铜仁',
+  kunming: '昆明',
+  qujing: '曲靖',
+  yuxi: '玉溪',
+  baoshan: '保山',
+  zhaotong: '昭通',
+  lijiang: '丽江',
+  puer: '普洱',
+  "pu'er": '普洱',
+  lincang: '临沧',
+  lhasa: '拉萨',
+  rikaze: '日喀则',
+  shigatse: '日喀则',
+  changdu: '昌都',
+  qamdo: '昌都',
+  linzhi: '林芝',
+  nyingchi: '林芝',
+  shannan: '山南',
+  naqu: '那曲',
+  tongchuan: '铜川',
+  baoji: '宝鸡',
+  xianyang: '咸阳',
+  weinan: '渭南',
+  yanan: '延安',
+  "yan'an": '延安',
+  hanzhong: '汉中',
+  ankang: '安康',
+  shangluo: '商洛',
+  lanzhou: '兰州',
+  jiayuguan: '嘉峪关',
+  jinchang: '金昌',
+  baiyin: '白银',
+  tianshui: '天水',
+  wuwei: '武威',
+  zhangye: '张掖',
+  pingliang: '平凉',
+  jiuquan: '酒泉',
+  qingyang: '庆阳',
+  dingxi: '定西',
+  longnan: '陇南',
+  xining: '西宁',
+  haidong: '海东',
+  yinchuan: '银川',
+  shizuishan: '石嘴山',
+  wuzhong: '吴忠',
+  guyuan: '固原',
+  zhongwei: '中卫',
+  urumqi: '乌鲁木齐',
+  wulumuqi: '乌鲁木齐',
+  karamay: '克拉玛依',
+  kelamayi: '克拉玛依',
+  turpan: '吐鲁番',
+  tulufan: '吐鲁番',
+  hami: '哈密',
   xianggang: '香港',
   'hong kong': '香港',
   'hong kong sar': '香港',
@@ -194,6 +532,38 @@ const CN_CITY_NAME_ALIASES = {
   'keelung city': '基隆',
 }
 
+const CN_CITY_ALIAS_BY_REGION = {
+  安徽: {
+    suzhou: '宿州',
+  },
+  江苏: {
+    suzhou: '苏州',
+    taizhou: '泰州',
+  },
+  浙江: {
+    taizhou: '台州',
+  },
+  江西: {
+    fuzhou: '抚州',
+    yichun: '宜春',
+  },
+  福建: {
+    fuzhou: '福州',
+  },
+  吉林: {
+    jilin: '吉林',
+  },
+  陕西: {
+    yulin: '榆林',
+  },
+  广西: {
+    yulin: '玉林',
+  },
+  黑龙江: {
+    yichun: '伊春',
+  },
+}
+
 function isPrivateIP(ip) {
   return (
     !ip ||
@@ -212,6 +582,41 @@ function normalizeTextKey(value) {
     .toLowerCase()
     .replace(/[().,]/g, ' ')
     .replace(/\s+/g, ' ')
+}
+
+function stripChinaAdminSuffix(value) {
+  return String(value || '')
+    .trim()
+    .replace(/(土家族苗族|藏族羌族|哈尼族彝族|傣族景颇族|蒙古族藏族|柯尔克孜|哈萨克|蒙古|藏族|彝族|傣族|白族|苗族|回族|壮族)自治州$/, '')
+    .replace(/(维吾尔|壮族|回族|特别)?自治区$/, '')
+    .replace(/省$/, '')
+    .replace(/市$/, '')
+    .replace(/地区$/, '')
+    .replace(/盟$/, '')
+    .replace(/自治州$/, '')
+}
+
+function aliasChinaPlaceName(value, region = '') {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+
+  const key = normalizeTextKey(raw)
+  const regionName = stripChinaAdminSuffix(
+    CN_CITY_NAME_ALIASES[normalizeTextKey(region)] || region
+  )
+  const regionAliases = CN_CITY_ALIAS_BY_REGION[regionName] || {}
+  const candidates = [
+    key,
+    key.replace(/\s+(city|province|prefecture|region|municipality)$/i, ''),
+    key.replace(/\s+shi$/i, ''),
+  ].filter(Boolean)
+
+  for (const candidate of candidates) {
+    if (regionAliases[candidate]) return regionAliases[candidate]
+    if (CN_CITY_NAME_ALIASES[candidate]) return CN_CITY_NAME_ALIASES[candidate]
+  }
+
+  return stripChinaAdminSuffix(raw)
 }
 
 function normalizeChinaGeoFields(input = {}) {
@@ -244,8 +649,8 @@ function normalizeChinaGeoFields(input = {}) {
   if (countryCode === 'HK') region = '香港'
   if (countryCode === 'MO') region = '澳门'
 
-  region = CN_CITY_NAME_ALIASES[normalizeTextKey(region)] || region
-  city = CN_CITY_NAME_ALIASES[normalizeTextKey(city)] || city
+  region = aliasChinaPlaceName(region)
+  city = aliasChinaPlaceName(city, region)
 
   if (!region && REGION_BY_COUNTRY_CODE[countryCode]) region = REGION_BY_COUNTRY_CODE[countryCode]
   if (!city || city === '未知') city = region || '未知'
@@ -259,6 +664,75 @@ function normalizeChinaGeoFields(input = {}) {
     region,
     city,
   }
+}
+
+function stringFromGeoField(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item || '').trim()).find(Boolean) || ''
+  return String(value || '').trim()
+}
+
+function validCoordinate(lat, lon) {
+  const latitude = Number(lat)
+  const longitude = Number(lon)
+  return (
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180
+  )
+}
+
+async function fetchAmapReverseGeo(lat, lon) {
+  if (!AMAP_WEB_SERVICE_KEY || !validCoordinate(lat, lon)) return null
+
+  const latitude = Number(lat)
+  const longitude = Number(lon)
+  const url = new URL('https://restapi.amap.com/v3/geocode/regeo')
+  url.searchParams.set('key', AMAP_WEB_SERVICE_KEY)
+  url.searchParams.set('location', `${longitude.toFixed(6)},${latitude.toFixed(6)}`)
+  url.searchParams.set('extensions', 'base')
+  url.searchParams.set('output', 'json')
+
+  let timeout = 0
+  try {
+    const controller = new AbortController()
+    timeout = setTimeout(() => controller.abort(), 900)
+    const response = await fetch(url.toString(), {
+      signal: controller.signal,
+      headers: { 'User-Agent': 'cpe-network-dashboard/1.0' },
+    })
+    if (!response.ok) return null
+    const data = await response.json()
+    if (String(data?.status || '') !== '1') return null
+    const component = data?.regeocode?.addressComponent || {}
+    const province = stringFromGeoField(component.province)
+    const city = stringFromGeoField(component.city) || province
+    const district = stringFromGeoField(component.district)
+    if (!province && !city && !district) return null
+
+    return {
+      country: stringFromGeoField(component.country) || '中国',
+      countryCode: 'CN',
+      region: province || city,
+      city: city || province || district,
+      lat: latitude,
+      lon: longitude,
+    }
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+async function enrichChinaGeoWithAmap(geo) {
+  if (!geo || !AMAP_WEB_SERVICE_KEY || !validCoordinate(geo.lat, geo.lon)) return geo
+  const normalized = normalizeChinaGeoFields(geo)
+  if (normalized.country !== '中国') return geo
+  const amapGeo = await fetchAmapReverseGeo(geo.lat, geo.lon)
+  return amapGeo || geo
 }
 
 async function fetchGeo(ip) {
@@ -280,7 +754,7 @@ async function fetchGeo(ip) {
       if (!response.ok) continue
       const data = await response.json()
       if (!data || data.error || data.status === 'fail') continue
-      const geo = provider.parse(data)
+      const geo = await enrichChinaGeoWithAmap(provider.parse(data))
       if (geo.country || geo.city) {
         runtime.geoCache.set(ip, { value: geo, expiresAt: Date.now() + GEO_CACHE_TTL_MS })
         return geo
@@ -385,6 +859,98 @@ const DOWNLOADS = {
     checksum: '1587f5e4eea86718f7c1f3c6ada053a6d2c24b1608801667cd92dffb438ed549',
     channel: 'stable',
   },
+}
+
+const LEGACY_DOWNLOADS = {
+  'android-3.5.1': {
+    platform: 'android',
+    version: '3.5.1',
+    label: 'Android 3.5.1 APK',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'android-3.2-beta': {
+    platform: 'android',
+    version: '3.2 Beta',
+    label: 'Android 3.2 Beta APK',
+    href: '/#/download',
+    channel: 'beta',
+  },
+  'android-3.1': {
+    platform: 'android',
+    version: '3.1',
+    label: 'Android 3.1 APK',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'android-3.0': {
+    platform: 'android',
+    version: '3.0',
+    label: 'Android 3.0 APK',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'macos-3.0.0': {
+    platform: 'macos',
+    version: '3.0.0',
+    label: 'macOS 3.0.0 DMG',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'windows-exe-3.0.0': {
+    platform: 'windows',
+    version: '3.0.0',
+    label: 'Windows 3.0.0 EXE',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'windows-msi-3.0.0': {
+    platform: 'windows',
+    version: '3.0.0',
+    label: 'Windows 3.0.0 MSI',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'windows-portable-3.0.0': {
+    platform: 'windows',
+    version: '3.0.0',
+    label: 'Windows 3.0.0 Portable',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'desktop-macos-3.0.0': {
+    platform: 'macos',
+    version: '3.0.0',
+    label: 'macOS 3.0.0 DMG',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'desktop-windows-exe-3.0.0': {
+    platform: 'windows',
+    version: '3.0.0',
+    label: 'Windows 3.0.0 EXE',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'desktop-windows-msi-3.0.0': {
+    platform: 'windows',
+    version: '3.0.0',
+    label: 'Windows 3.0.0 MSI',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'desktop-windows-portable-3.0.0': {
+    platform: 'windows',
+    version: '3.0.0',
+    label: 'Windows 3.0.0 Portable',
+    href: '/#/download',
+    channel: 'stable',
+  },
+}
+
+const DOWNLOAD_META = {
+  ...LEGACY_DOWNLOADS,
+  ...DOWNLOADS,
 }
 
 function chunkedParts(folder, fileName, count) {
@@ -540,19 +1106,41 @@ function absoluteUrl(request, href) {
   }
 }
 
+function trackedDownloadUrl(request, fileId, options = {}) {
+  if (!fileId) return ''
+  const url = new URL('/api/download', request.url)
+  url.searchParams.set('file', fileId)
+  url.searchParams.set('source', options.source || 'app-update')
+  if (Number.isInteger(options.part)) url.searchParams.set('part', String(options.part))
+  return url.toString()
+}
+
+function trackedPrimaryDownloadUrl(request, download) {
+  if (!download?.fileId) return ''
+  return Array.isArray(download.chunks) && download.chunks.length
+    ? trackedDownloadUrl(request, download.fileId, { part: 0 })
+    : trackedDownloadUrl(request, download.fileId)
+}
+
 function withAbsoluteDownloadUrls(download, request) {
   if (!download) return null
   const chunks = Array.isArray(download.chunks)
     ? download.chunks.map((href, index) => ({
         index,
         href,
-        url: absoluteUrl(request, href),
+        url:
+          index === 0
+            ? trackedDownloadUrl(request, download.fileId, { part: index })
+            : absoluteUrl(request, href),
+        directUrl: absoluteUrl(request, href),
+        tracked: index === 0,
         bytes: Number(download.chunkBytes?.[index] || 0) || 0,
       }))
     : []
   return {
     ...download,
-    url: absoluteUrl(request, download.href),
+    url: trackedPrimaryDownloadUrl(request, download),
+    directUrl: absoluteUrl(request, download.href),
     chunks,
   }
 }
@@ -930,6 +1518,14 @@ function hasConfiguredWriteToken(request, body = {}) {
   return Boolean(WRITE_TOKEN) && verifyWriteToken(request, body)
 }
 
+function isUpdateDownloadRequest(request) {
+  if (request.method !== 'GET') return false
+  const url = new URL(request.url)
+  return ['app-update', 'update-check', 'updates'].includes(
+    String(url.searchParams.get('source') || '').toLowerCase()
+  )
+}
+
 function guardWriteRequest(request, body = {}) {
   const sameSite = sameSiteRequest(request)
   const hasToken = hasConfiguredWriteToken(request, body)
@@ -1072,6 +1668,8 @@ function emptySummary() {
     referrers: [],
     devices: [],
     recent: [],
+    hourly: buildHourlyBars([]),
+    downloadHourly: buildHourlyBars([]),
   }
 }
 
@@ -1094,6 +1692,77 @@ function normalizeStoredCounter(counter = {}, todayKey) {
     total: parseInt(counter.total || '0', 10) || 0,
     today: counter.todayKey === todayKey ? parseInt(counter.today || '0', 10) || 0 : 0,
     todayKey,
+  }
+}
+
+function humanizeDownloadId(id) {
+  return String(id || 'unknown')
+    .replace(/^download[:_-]?/i, '')
+    .split(/[-_:]+/)
+    .filter(Boolean)
+    .map((part) => {
+      const upper = part.toUpperCase()
+      if (['APK', 'DMG', 'EXE', 'MSI', 'ZIP'].includes(upper)) return upper
+      if (upper === 'MACOS') return 'macOS'
+      return part.charAt(0).toUpperCase() + part.slice(1)
+    })
+    .join(' ')
+}
+
+function downloadMetaForId(id) {
+  const item = DOWNLOAD_META[id]
+  if (item) return item
+  const key = String(id || '').toLowerCase()
+  const platform = key.includes('android')
+    ? 'android'
+    : key.includes('mac') || key.includes('dmg')
+      ? 'macos'
+      : key.includes('win') || key.includes('exe') || key.includes('msi')
+        ? 'windows'
+        : ''
+  const version = key.match(/(?:v)?(\d+(?:\.\d+){1,2}(?:[-_]?(?:beta|alpha|rc)\d*)?)/)?.[1] || ''
+  return {
+    platform,
+    version,
+    label: humanizeDownloadId(id),
+    href: '/#/download',
+    channel: key.includes('beta') ? 'beta' : 'stable',
+  }
+}
+
+function knownDownloadIds(extraIds = []) {
+  return Array.from(new Set([...Object.keys(DOWNLOAD_META), ...extraIds].filter(Boolean)))
+}
+
+function serializeDownloadCounter(id, counter) {
+  const item = downloadMetaForId(id)
+  return {
+    total: counter.total,
+    today: counter.today,
+    label: item.label || humanizeDownloadId(id),
+    href: item.href || '/#/download',
+    platform: item.platform || '',
+    version: item.version || '',
+    channel: item.channel || '',
+  }
+}
+
+function mergeDownloadSummaries(primary, fallback) {
+  const downloadsByFile = { ...(primary.downloadsByFile || {}) }
+  for (const [id, stats] of Object.entries(fallback.downloadsByFile || {})) {
+    const current = downloadsByFile[id]
+    if (!current || Number(stats.total || 0) > Number(current.total || 0)) {
+      downloadsByFile[id] = stats
+    } else if (Number(stats.today || 0) > Number(current.today || 0)) {
+      downloadsByFile[id] = { ...current, today: stats.today }
+    }
+  }
+  return {
+    downloadsByFile,
+    downloadsTotal: Object.values(downloadsByFile).reduce(
+      (sum, item) => sum + (Number(item.total) || 0),
+      0
+    ),
   }
 }
 
@@ -1303,17 +1972,12 @@ async function trackInAnalyticsStore(kv, mutator) {
 
 function summaryFromStore(store, todayKey) {
   const downloadsByFile = {}
-  let downloadsTotal = 0
+  const storedDownloadIds = Object.keys(store.counters?.downloads || {})
 
-  for (const id of Object.keys(DOWNLOADS)) {
+  for (const id of knownDownloadIds(storedDownloadIds)) {
     const counter = normalizeStoredCounter(store.counters.downloads[id], todayKey)
-    downloadsByFile[id] = {
-      total: counter.total,
-      today: counter.today,
-      label: DOWNLOADS[id].label,
-      href: DOWNLOADS[id].href,
-    }
-    downloadsTotal += counter.total
+    if (counter.total <= 0 && !DOWNLOADS[id]) continue
+    downloadsByFile[id] = serializeDownloadCounter(id, counter)
   }
 
   const events = [...(store.events || [])].sort((a, b) =>
@@ -1326,7 +1990,10 @@ function summaryFromStore(store, todayKey) {
   return {
     visits: normalizeStoredCounter(store.counters.visits, todayKey),
     downloadsByFile,
-    downloadsTotal,
+    downloadsTotal: Object.values(downloadsByFile).reduce(
+      (sum, item) => sum + (Number(item.total) || 0),
+      0
+    ),
     pages: topBreakdown(
       events.filter((event) => event.kind === 'view'),
       (event) => event.page
@@ -1336,6 +2003,7 @@ function summaryFromStore(store, todayKey) {
     recent: events.slice(0, 18),
     geo: geoFromStore(store),
     hourly: buildHourlyBars(dailyVisits),
+    downloadHourly: buildHourlyBars(events.filter((event) => event.kind === 'download')),
   }
 }
 
@@ -1344,8 +2012,23 @@ function routePath(url) {
   return path === '' ? '/' : path
 }
 
+function downloadRedirectHref(fileId, request) {
+  const url = new URL(request.url)
+  const item = DOWNLOADS[fileId]
+  const part = Number(url.searchParams.get('part'))
+  if (
+    Number.isInteger(part) &&
+    part >= 0 &&
+    Array.isArray(item?.chunks) &&
+    item.chunks[part]
+  ) {
+    return item.chunks[part]
+  }
+  return item?.href || '/#/download'
+}
+
 function redirectToDownload(request, fileId) {
-  return Response.redirect(new URL(DOWNLOADS[fileId].href, request.url).toString(), 302)
+  return Response.redirect(new URL(downloadRedirectHref(fileId, request), request.url).toString(), 302)
 }
 
 async function handleCounter(request) {
@@ -1379,6 +2062,19 @@ async function guardReadRequest(request, name, limit = 360, windowSeconds = 300)
   const allowed = await consumeRate(`${name}:${ipBucket(getClientIP(request))}`, limit, windowSeconds)
   if (!allowed) return json({ error: 'Too many requests', build: EDGE_BUILD }, 429)
   return null
+}
+
+function consumeRecentDownload(fileId, bucket) {
+  const runtime = runtimeState()
+  const now = Date.now()
+  const recent = runtime.recentDownloadKeys
+  for (const [key, expiresAt] of recent.entries()) {
+    if (expiresAt <= now || recent.size > RATE_BUCKET_MAX_ENTRIES) recent.delete(key)
+  }
+  const key = `${safeKey(fileId)}:${safeKey(bucket)}`
+  if (recent.has(key)) return false
+  recent.set(key, now + DOWNLOAD_DEDUPE_TTL_MS)
+  return true
 }
 
 async function handleTrack(request) {
@@ -1433,19 +2129,20 @@ async function handleTrack(request) {
 
 async function readDownloads(kv, todayKey) {
   const downloadsByFile = {}
-  let downloadsTotal = 0
   await Promise.all(
-    Object.keys(DOWNLOADS).map(async (id) => {
+    knownDownloadIds().map(async (id) => {
       const counter = await safeReadCounter(kv, `download:${id}`, todayKey)
-      downloadsByFile[id] = {
-        ...counter,
-        label: DOWNLOADS[id].label,
-        href: DOWNLOADS[id].href,
-      }
-      downloadsTotal += counter.total
+      if (counter.total <= 0 && !DOWNLOADS[id]) return
+      downloadsByFile[id] = serializeDownloadCounter(id, counter)
     })
   )
-  return { downloadsByFile, downloadsTotal }
+  return {
+    downloadsByFile,
+    downloadsTotal: Object.values(downloadsByFile).reduce(
+      (sum, item) => sum + (Number(item.total) || 0),
+      0
+    ),
+  }
 }
 
 async function handleDownload(request) {
@@ -1470,7 +2167,8 @@ async function handleDownload(request) {
   if (
     request.method === 'GET' &&
     !sameSiteRequest(request) &&
-    !hasConfiguredWriteToken(request)
+    !hasConfiguredWriteToken(request) &&
+    !isUpdateDownloadRequest(request)
   ) {
     return redirectToDownload(request, fileId)
   }
@@ -1480,6 +2178,23 @@ async function handleDownload(request) {
 
   try {
     const todayKey = getTodayKey()
+    const bucket = ipBucket(getClientIP(request))
+    if (!consumeRecentDownload(fileId, bucket)) {
+      if (request.method === 'GET') {
+        return redirectToDownload(request, fileId)
+      }
+      const store = await readAnalyticsStore(kv)
+      const counter = normalizeStoredCounter(store.counters.downloads[fileId], todayKey)
+      return json({
+        ok: true,
+        file: fileId,
+        eventStored: false,
+        duplicate: true,
+        ...counter,
+        build: EDGE_BUILD,
+      })
+    }
+
     const ua = parseUserAgent(body.ua || request.headers.get('User-Agent') || '')
     const event = {
       kind: 'download',
@@ -1520,14 +2235,11 @@ async function handleDownloads(request) {
     const todayKey = getTodayKey()
     const store = await readAnalyticsStore(kv)
     const summary = summaryFromStore(store, todayKey)
-    if (summary.downloadsTotal > 0) {
-      return json({
-        downloadsByFile: summary.downloadsByFile,
-        downloadsTotal: summary.downloadsTotal,
-        build: EDGE_BUILD,
-      })
-    }
-    return json({ ...(await readDownloads(kv, todayKey)), build: EDGE_BUILD })
+    const downloads = mergeDownloadSummaries(
+      { downloadsByFile: summary.downloadsByFile },
+      await readDownloads(kv, todayKey)
+    )
+    return json({ ...downloads, build: EDGE_BUILD })
   } catch {
     return json({ downloadsByFile: {}, downloadsTotal: 0, build: EDGE_BUILD })
   }
@@ -1693,17 +2405,24 @@ async function handleSummary(request) {
   const todayKey = getTodayKey()
   const store = await readAnalyticsStore(kv)
   const storeSummary = summaryFromStore(store, todayKey)
+  const legacyDownloads = await readDownloads(kv, todayKey).catch(() => ({
+    downloadsByFile: {},
+    downloadsTotal: 0,
+  }))
+  const downloads = mergeDownloadSummaries(
+    { downloadsByFile: storeSummary.downloadsByFile },
+    legacyDownloads
+  )
   if (
     storeSummary.visits.total > 0 ||
-    storeSummary.downloadsTotal > 0 ||
+    downloads.downloadsTotal > 0 ||
     storeSummary.recent.length > 0
   ) {
-    return json({ ...storeSummary, build: EDGE_BUILD })
+    return json({ ...storeSummary, ...downloads, build: EDGE_BUILD })
   }
 
-  const [visits, downloads, events] = await Promise.all([
+  const [visits, events] = await Promise.all([
     safeReadCounter(kv, 'visits', todayKey),
-    readDownloads(kv, todayKey).catch(() => ({ downloadsByFile: {}, downloadsTotal: 0 })),
     readRecentEvents(kv).catch(() => []),
   ])
   return json({
@@ -1717,7 +2436,8 @@ async function handleSummary(request) {
     devices: topBreakdown(events, (event) => event.device),
     recent: events.slice(0, 18),
     geo: storeSummary.geo,
-    hourly: storeSummary.hourly,
+    hourly: buildHourlyBars(events.filter((event) => event.kind === 'view')),
+    downloadHourly: buildHourlyBars(events.filter((event) => event.kind === 'download')),
     build: EDGE_BUILD,
   })
 }

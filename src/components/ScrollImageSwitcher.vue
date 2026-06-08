@@ -375,6 +375,8 @@ onUnmounted(() => {
 
 :global(.phone-main .scroll-viewport) {
   overflow: visible;
+  padding-bottom: 44px;
+  box-sizing: border-box;
 }
 
 :global(.phone-main .image-stack) {
@@ -384,9 +386,10 @@ onUnmounted(() => {
 }
 
 :global(.phone-main .progress-track) {
-  bottom: -25px;
-  width: min(240px, calc(100% - 24px));
-  background: rgba(23, 29, 36, 0.34);
+  bottom: 12px;
+  width: min(242px, calc(100% - 28px));
+  min-height: 18px;
+  background: rgba(23, 29, 36, 0.48);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
@@ -416,8 +419,8 @@ onUnmounted(() => {
   }
 
   :global(.phone-main .progress-track) {
-    bottom: -29px;
-    width: min(244px, calc(100% - 20px));
+    bottom: 10px;
+    width: min(230px, calc(100% - 22px));
   }
 
   .progress-segment {

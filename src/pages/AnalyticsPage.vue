@@ -5,11 +5,13 @@ import { downloads } from '@/content'
 import type { CityStat, CountryStat, RecentEvent } from '@/types'
 import { formatNumber } from '@/utils/format'
 
-const { summary, analyticsState, loadSummary, totalVisits } = useAnalytics()
+const { summary, analyticsState, loadSummary } = useAnalytics()
 
 /* ── KPI cards ───────────────────────────────────────────── */
 
 const todayVisits = computed(() => summary.value?.visits?.today ?? 0)
+const totalVisits = computed(() => summary.value?.visits?.total ?? 0)
+const totalDownloads = computed(() => summary.value?.downloadsTotal ?? 0)
 const countryCount = computed(() => summary.value?.geo?.countries?.length ?? 0)
 const cityCount = computed(() => summary.value?.geo?.cities?.length ?? 0)
 
@@ -17,37 +19,72 @@ const cityCount = computed(() => summary.value?.geo?.cities?.length ?? 0)
 
 interface HourlyBar {
   hour: number
-  count: number
-  pct: number
+  visits: number
+  downloads: number
+  visitPct: number
+  downloadPct: number
   isCurrent: boolean
 }
 
+function completeHourlyBars(data = summary.value?.hourly) {
+  const map = new Map<number, number>()
+  for (const bar of data?.bars || []) {
+    const hour = Math.max(0, Math.min(23, Math.trunc(Number(bar.hour) || 0)))
+    map.set(hour, (map.get(hour) || 0) + (Number(bar.count) || 0))
+  }
+  return Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    count: map.get(hour) || 0,
+  }))
+}
+
+const combinedHourlyMax = computed(() => {
+  const visitBars = completeHourlyBars(summary.value?.hourly)
+  const downloadBars = completeHourlyBars(summary.value?.downloadHourly)
+  return Math.max(
+    1,
+    ...visitBars.map((bar) => bar.count),
+    ...downloadBars.map((bar) => bar.count)
+  )
+})
+
 const hourlyBars = computed<HourlyBar[]>(() => {
   const hourly = summary.value?.hourly
-  if (!hourly?.bars?.length) {
-    return Array.from({ length: 24 }, (_, i) => ({
-      hour: i,
-      count: 0,
-      pct: 0,
-      isCurrent: false,
-    }))
-  }
-  const max = hourly.max || 1
-  return hourly.bars.map((bar) => ({
+  const downloadHourly = summary.value?.downloadHourly
+  const visitBars = completeHourlyBars(hourly)
+  const downloadBars = completeHourlyBars(downloadHourly)
+  const max = combinedHourlyMax.value
+  const currentHour = hourly?.currentHour ?? downloadHourly?.currentHour
+  return visitBars.map((bar, index) => ({
     hour: bar.hour,
-    count: bar.count,
-    pct: Math.round((bar.count / max) * 100),
-    isCurrent: bar.hour === hourly.currentHour,
+    visits: bar.count,
+    downloads: downloadBars[index]?.count || 0,
+    visitPct: Math.round((bar.count / max) * 100),
+    downloadPct: Math.round(((downloadBars[index]?.count || 0) / max) * 100),
+    isCurrent: bar.hour === currentHour,
   }))
 })
 
 const hourlyTotal = computed(() => summary.value?.hourly?.total ?? 0)
-const hourlyMax = computed(() => summary.value?.hourly?.max ?? 0)
+const downloadHourlyTotal = computed(() => summary.value?.downloadHourly?.total ?? 0)
+const hourlyMax = computed(() => combinedHourlyMax.value)
 
 const scaleLabels = computed(() => {
   const m = hourlyMax.value || 1
   return [m, Math.round(m * 0.75), Math.round(m * 0.5), Math.round(m * 0.25), 0]
 })
+
+const downloadDistribution = computed(() =>
+  hourlyBars.value
+    .filter((bar) => bar.downloads > 0)
+    .sort((a, b) => b.downloads - a.downloads)
+    .slice(0, 6)
+    .map((bar) => ({
+      hour: `${String(bar.hour).padStart(2, '0')}:00`,
+      count: bar.downloads,
+      pct: Math.max(6, Math.round((bar.downloads / (summary.value?.downloadHourly?.max || 1)) * 100)),
+    }))
+)
 
 /* ── Tabs ────────────────────────────────────────────────── */
 
@@ -67,18 +104,23 @@ const activeTab = ref<TabKey>('pages')
 const countryAliases: Record<string, string> = {
   CN: '中国',
   China: '中国',
+  china: '中国',
   中国: '中国',
   中國: '中国',
   TW: '中国',
   Taiwan: '中国',
+  taiwan: '中国',
   台湾: '中国',
   臺灣: '中国',
   HK: '中国',
   'Hong Kong': '中国',
+  'hong kong': '中国',
   香港: '中国',
   MO: '中国',
   Macao: '中国',
   Macau: '中国',
+  macao: '中国',
+  macau: '中国',
   澳门: '中国',
   澳門: '中国',
   中国台湾: '中国',
@@ -87,6 +129,65 @@ const countryAliases: Record<string, string> = {
 }
 
 const cityAliases: Record<string, string> = {
+  Anhui: '安徽',
+  Beijing: '北京',
+  Chongqing: '重庆',
+  Fujian: '福建',
+  Gansu: '甘肃',
+  Guangdong: '广东',
+  Guangxi: '广西',
+  Guizhou: '贵州',
+  Hainan: '海南',
+  Hebei: '河北',
+  Heilongjiang: '黑龙江',
+  Henan: '河南',
+  Hubei: '湖北',
+  Hunan: '湖南',
+  'Inner Mongolia': '内蒙古',
+  Jiangsu: '江苏',
+  Jiangxi: '江西',
+  Jilin: '吉林',
+  Liaoning: '辽宁',
+  Ningxia: '宁夏',
+  Qingdao: '青岛',
+  Qinghai: '青海',
+  Shaanxi: '陕西',
+  Shandong: '山东',
+  Shanghai: '上海',
+  Shanxi: '山西',
+  Sichuan: '四川',
+  Tianjin: '天津',
+  Xinjiang: '新疆',
+  Xizang: '西藏',
+  Yunnan: '云南',
+  Zhejiang: '浙江',
+  Baoding: '保定',
+  Changchun: '长春',
+  Changsha: '长沙',
+  Chengdu: '成都',
+  Dalian: '大连',
+  Dongguan: '东莞',
+  Foshan: '佛山',
+  Fuzhou: '福州',
+  Guangzhou: '广州',
+  Hangzhou: '杭州',
+  Harbin: '哈尔滨',
+  Hefei: '合肥',
+  Jinan: '济南',
+  Kunming: '昆明',
+  Nanjing: '南京',
+  Ningbo: '宁波',
+  Qingyuan: '清远',
+  Quanzhou: '泉州',
+  Shenzhen: '深圳',
+  Shenyang: '沈阳',
+  Suzhou: '苏州',
+  Wuhan: '武汉',
+  Wuxi: '无锡',
+  Xiamen: '厦门',
+  "Xi'an": '西安',
+  Xian: '西安',
+  Zhengzhou: '郑州',
   Taiwan: '台湾',
   台湾: '台湾',
   臺灣: '台湾',
@@ -106,13 +207,59 @@ const cityAliases: Record<string, string> = {
 }
 
 function normalizeCountryName(value = ''): string {
-  return countryAliases[value] || value || '未知'
+  const raw = value.trim()
+  return countryAliases[raw] || countryAliases[raw.toUpperCase()] || countryAliases[raw.toLowerCase()] || raw || '未知'
+}
+
+function normalizePlaceKey(value = ''): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[().,]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+(city|province|prefecture|region|municipality)$/, '')
+    .replace(/\s+shi$/, '')
+}
+
+const cityAliasLookup = Object.entries(cityAliases).reduce<Record<string, string>>(
+  (lookup, [key, value]) => {
+    lookup[key] = value
+    lookup[normalizePlaceKey(key)] = value
+    return lookup
+  },
+  {}
+)
+
+function normalizeChinaPlaceName(value = ''): string {
+  const raw = value.trim()
+  if (!raw) return ''
+  return (
+    cityAliasLookup[raw] ||
+    cityAliasLookup[normalizePlaceKey(raw)] ||
+    raw
+      .replace(/(土家族苗族|藏族羌族|哈尼族彝族|傣族景颇族|蒙古族藏族|柯尔克孜|哈萨克|蒙古|藏族|彝族|傣族|白族|苗族|回族|壮族)自治州$/, '')
+      .replace(/(维吾尔|壮族|回族|特别)?自治区$/, '')
+      .replace(/省$/, '')
+      .replace(/市$/, '')
+      .replace(/地区$/, '')
+      .replace(/盟$/, '')
+      .replace(/自治州$/, '')
+  )
 }
 
 function normalizeCityName(city = '', region = '', countryCode = ''): string {
   const code = countryCode.toUpperCase()
   const fallbackRegion = code === 'TW' ? '台湾' : code === 'HK' ? '香港' : code === 'MO' ? '澳门' : ''
-  const value = cityAliases[city] || cityAliases[region] || city || fallbackRegion || '未知'
+  const normalizedCity = normalizeChinaPlaceName(city)
+  const normalizedRegion = normalizeChinaPlaceName(region)
+  const cityValue = ['unknown', '未知', ''].includes(normalizedCity.toLowerCase())
+    ? ''
+    : normalizedCity
+  const value =
+    cityValue ||
+    fallbackRegion ||
+    normalizedRegion ||
+    '未知'
   return value
 }
 
@@ -188,12 +335,13 @@ function formatTime(iso: string): string {
 const downloadRanking = computed(() => {
   const byFile = summary.value?.downloadsByFile
   if (!byFile) return []
-  return downloads
-    .map((d) => ({
-      id: d.id,
-      label: d.title,
-      total: byFile[d.id]?.total ?? 0,
-      today: byFile[d.id]?.today ?? 0,
+  const localDownloads = new Map(downloads.map((d) => [d.id, d]))
+  return Object.entries(byFile)
+    .map(([id, stats]) => ({
+      id,
+      label: stats.label || localDownloads.get(id)?.title || id,
+      total: stats.total ?? 0,
+      today: stats.today ?? 0,
     }))
     .filter((d) => d.total > 0)
     .sort((a, b) => b.total - a.total)
@@ -324,6 +472,10 @@ watch(cities, () => {
         <strong class="kpi-value">{{ formatNumber(totalVisits) }}</strong>
       </div>
       <div class="kpi-card">
+        <span class="kpi-label">累计下载</span>
+        <strong class="kpi-value">{{ formatNumber(totalDownloads) }}</strong>
+      </div>
+      <div class="kpi-card">
         <span class="kpi-label">今日访问</span>
         <strong class="kpi-value">{{ formatNumber(todayVisits) }}</strong>
       </div>
@@ -342,8 +494,12 @@ watch(cities, () => {
       <!-- 24h Bar Chart -->
       <section class="glass-panel bar-chart-panel">
         <div class="panel-title">
-          <span>今日 24 小时访问</span>
-          <small>{{ hourlyTotal }} 次 / 峰值 {{ hourlyMax }}</small>
+          <span>今日 24 小时访问与下载</span>
+          <small>访问 {{ hourlyTotal }} / 下载 {{ downloadHourlyTotal }} / 峰值 {{ hourlyMax }}</small>
+        </div>
+        <div class="bar-legend">
+          <span><i class="legend-dot visit" />访问</span>
+          <span><i class="legend-dot download" />下载</span>
         </div>
         <div class="bar-chart">
           <div class="bar-scale">
@@ -358,13 +514,36 @@ watch(cities, () => {
             >
               <div class="bar-track">
                 <div
-                  class="bar-fill"
-                  :style="{ height: bar.pct + '%' }"
+                  class="bar-fill visit"
+                  :title="`${bar.hour}:00 访问 ${bar.visits}`"
+                  :style="{ height: bar.visitPct + '%' }"
+                />
+                <div
+                  class="bar-fill download"
+                  :title="`${bar.hour}:00 下载 ${bar.downloads}`"
+                  :style="{ height: bar.downloadPct + '%' }"
                 />
               </div>
               <span class="bar-hour">{{ bar.hour }}</span>
             </div>
           </div>
+        </div>
+        <div class="download-distribution">
+          <span class="distribution-title">下载时间分布</span>
+          <div v-if="downloadDistribution.length" class="distribution-list">
+            <div
+              v-for="item in downloadDistribution"
+              :key="item.hour"
+              class="distribution-row"
+            >
+              <span>{{ item.hour }}</span>
+              <div class="distribution-track">
+                <i :style="{ width: item.pct + '%' }" />
+              </div>
+              <strong>{{ item.count }}</strong>
+            </div>
+          </div>
+          <span v-else class="distribution-empty">暂无今日下载</span>
         </div>
       </section>
 
@@ -554,7 +733,7 @@ watch(cities, () => {
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 20px;
 }
@@ -615,11 +794,41 @@ watch(cities, () => {
 
 /* ── Bar Chart ────────────────────────────────────────── */
 
+.bar-legend {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin: -8px 0 10px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.bar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.legend-dot.visit {
+  background: rgba(35, 113, 100, 0.64);
+}
+
+.legend-dot.download {
+  background: rgba(173, 115, 51, 0.74);
+}
+
 .bar-chart {
   display: grid;
   grid-template-columns: 36px 1fr;
   gap: 8px;
-  min-height: 220px;
+  min-height: 176px;
 }
 
 .bar-scale {
@@ -641,7 +850,7 @@ watch(cities, () => {
   grid-template-columns: repeat(24, 1fr);
   gap: 3px;
   align-items: end;
-  min-height: 200px;
+  min-height: 176px;
   border-bottom: 1px solid var(--line);
   padding-bottom: 0;
 }
@@ -655,7 +864,7 @@ watch(cities, () => {
   justify-content: flex-end;
 }
 
-.bar-col.current .bar-fill {
+.bar-col.current .bar-fill.visit {
   background: var(--accent);
   box-shadow: 0 0 8px rgba(35, 113, 100, 0.4);
 }
@@ -665,22 +874,35 @@ watch(cities, () => {
   flex: 1;
   display: flex;
   align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
   min-height: 0;
 }
 
 .bar-fill {
-  width: 100%;
+  width: min(44%, 8px);
   min-height: 2px;
   border-radius: 2px 2px 0 0;
-  background: rgba(35, 113, 100, 0.45);
   transition: height 400ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-:root[data-theme='dark'] .bar-fill {
+.bar-fill.visit {
+  background: rgba(35, 113, 100, 0.5);
+}
+
+.bar-fill.download {
+  background: rgba(173, 115, 51, 0.72);
+}
+
+:root[data-theme='dark'] .bar-fill.visit {
   background: rgba(155, 199, 173, 0.4);
 }
 
-:root[data-theme='dark'] .bar-col.current .bar-fill {
+:root[data-theme='dark'] .bar-fill.download {
+  background: rgba(246, 173, 85, 0.62);
+}
+
+:root[data-theme='dark'] .bar-col.current .bar-fill.visit {
   background: var(--accent);
   box-shadow: 0 0 8px rgba(155, 199, 173, 0.3);
 }
@@ -691,6 +913,60 @@ watch(cities, () => {
   font-size: 9px;
   line-height: 1;
   flex-shrink: 0;
+}
+
+.download-distribution {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 12px;
+  align-items: start;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.distribution-title,
+.distribution-empty {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.distribution-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 12px;
+}
+
+.distribution-row {
+  display: grid;
+  grid-template-columns: 42px 1fr 28px;
+  gap: 7px;
+  align-items: center;
+  min-width: 0;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.distribution-row strong {
+  color: var(--warm);
+  font-size: 11px;
+  text-align: right;
+}
+
+.distribution-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--soft);
+}
+
+.distribution-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: rgba(173, 115, 51, 0.74);
 }
 
 /* ── Map ──────────────────────────────────────────────── */

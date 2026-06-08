@@ -756,7 +756,7 @@ p {
 }
 
 .phone-shell {
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   background: #121a22;
@@ -777,6 +777,7 @@ p {
   left: 42px;
   bottom: 46px;
   width: min(190px, 32%);
+  overflow: hidden;
   animation: drift-phone 7s ease-in-out infinite;
 }
 
@@ -1198,7 +1199,7 @@ p {
   max-width: 100%;
   justify-self: center;
   overflow: visible;
-  padding-bottom: 32px;
+  padding: 0 0 42px;
 }
 
 @media (max-height: 760px) and (min-width: 1081px) {
@@ -1254,7 +1255,7 @@ p {
 }
 
 .phone-main .progress-track {
-  bottom: -25px;
+  bottom: 12px;
   width: min(240px, calc(100% - 24px));
   background: rgba(23, 29, 36, 0.34);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);

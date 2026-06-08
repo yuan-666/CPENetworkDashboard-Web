@@ -67,8 +67,6 @@ function applyDownloadTrack(result: DownloadTrackResult | null): void {
   if (!result?.ok || !result.file) return
 
   const download = downloads.find((item) => item.id === result.file)
-  if (!download) return
-
   const previousSummary = summary.value || emptyAnalyticsSummary()
   const previousFile = previousSummary.downloadsByFile[result.file]
   const previousTotal = previousFile?.total || 0
@@ -82,8 +80,8 @@ function applyDownloadTrack(result: DownloadTrackResult | null): void {
       [result.file]: {
         total: result.total || 0,
         today: result.today || 0,
-        label: previousFile?.label || download.title,
-        href: previousFile?.href || download.href || '/#/download',
+        label: previousFile?.label || download?.title || result.file,
+        href: previousFile?.href || download?.href || '/#/download',
       },
     },
   }
