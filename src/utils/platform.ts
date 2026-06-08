@@ -3,7 +3,7 @@ import type { Platform, PlatformAdvice } from '@/types'
 export const platformAdviceMap: Record<Platform, PlatformAdvice> = {
   android: {
     device: 'Android 手机',
-    primaryId: 'android-3.1',
+    primaryId: 'android-3.5',
     title: '检测到 Android，直接下载 APK。',
     copy: '现场调试通常就是这个场景：手机在手边，CPE 也在旁边。',
   },
@@ -21,19 +21,19 @@ export const platformAdviceMap: Record<Platform, PlatformAdvice> = {
   },
   ios: {
     device: 'iPhone / iPad',
-    primaryId: 'android-3.1',
+    primaryId: 'android-3.5',
     title: '检测到 iOS，目前没有公开 iOS 包。',
     copy: 'iOS 方向还在推进。现在可以在电脑上下载桌面版，或换 Android 设备安装 APK。',
   },
   linux: {
     device: 'Linux / 其他桌面',
-    primaryId: 'android-3.1',
+    primaryId: 'android-3.5',
     title: '暂时没有 Linux 桌面包。',
     copy: '当前公开下载是 Android、macOS 和 Windows；Linux 用户建议先用 Android 或 Windows 便携版。',
   },
   unknown: {
     device: '未知设备',
-    primaryId: 'android-3.1',
+    primaryId: 'android-3.5',
     title: '没能判断你的设备，先给你 Android 版。',
     copy: '下面也保留了 macOS 和 Windows 的全部安装包，可以手动选择。',
   },

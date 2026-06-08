@@ -162,6 +162,58 @@ export interface HourlyData {
   currentHour: number
 }
 
+export interface UpdateDownloadChunk {
+  index: number
+  href: string
+  url: string
+  bytes: number
+}
+
+export interface UpdateDownload {
+  fileId: string
+  platform: string
+  version: string
+  label: string
+  fileName: string
+  mode: 'single' | 'chunked'
+  href: string
+  url: string
+  chunks: UpdateDownloadChunk[]
+  chunkBytes: number[]
+  size: string
+  checksum: string
+}
+
+export interface UpdateRelease {
+  platform: string
+  channel: string
+  version: string
+  versionCode: number
+  title: string
+  notes: string
+  releaseDate: string
+  publishedAt: string
+  mandatory: boolean
+  minSupportedVersion: string
+  download: UpdateDownload | null
+  alternatives: UpdateDownload[]
+}
+
+export interface UpdateCheckResult {
+  ok: boolean
+  platform: string
+  channel: string
+  current: {
+    version: string
+    versionCode: number
+  }
+  updateAvailable: boolean
+  mandatory: boolean
+  latest: UpdateRelease | null
+  updatedAt?: string
+  build?: string
+}
+
 export interface DownloadState {
   status: '' | 'downloading' | 'assembling' | 'done' | 'error'
   progress?: number

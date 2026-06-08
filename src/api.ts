@@ -1,4 +1,4 @@
-import type { AnalyticsSummary, DownloadTrackResult } from './types'
+import type { AnalyticsSummary, DownloadTrackResult, UpdateCheckResult } from './types'
 
 const API_BASE = (import.meta.env.VITE_API_BASE || '/api').replace(/\/+$/, '')
 const API_TOKEN = String(import.meta.env.VITE_API_TOKEN || '').trim()
@@ -118,6 +118,25 @@ export async function trackDownload(fileId: string): Promise<DownloadTrackResult
     }
     return null
   }
+}
+
+export async function checkAppUpdate(options: {
+  platform: 'android' | 'windows' | 'macos' | 'ios'
+  version: string
+  versionCode?: number
+  channel?: string
+}): Promise<UpdateCheckResult> {
+  const response = await fetch(apiUrl('/updates/check'), {
+    method: 'POST',
+    headers: writeHeaders(),
+    body: JSON.stringify({
+      platform: options.platform,
+      version: options.version,
+      versionCode: options.versionCode,
+      channel: options.channel || 'stable',
+    }),
+  })
+  return readJson<UpdateCheckResult>(response)
 }
 
 export { API_BASE }

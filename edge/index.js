@@ -7,6 +7,8 @@
  *   /api/track
  *   /api/download
  *   /api/downloads
+ *   /api/updates/check
+ *   /api/updates/publish
  *   /api/analytics/summary
  *
  * Storage:
@@ -20,6 +22,8 @@
 const KV_NAMESPACE = 'cpeweb'
 const EDGE_BUILD = '2026-06-08.1'
 const ANALYTICS_KEY = 'analytics'
+const UPDATES_KEY = 'updates'
+const UPDATE_STORE_VERSION = 1
 const MAX_JSON_BYTES = 24 * 1024
 const MAX_DAILY_EVENTS = 360
 const PUBLIC_DAYS = 7
@@ -112,6 +116,84 @@ const CN_CITY_ALIASES = {
   亦庄: '北京',
 }
 
+const COUNTRY_ALIASES = {
+  cn: '中国',
+  china: '中国',
+  'people s republic of china': '中国',
+  'people republic of china': '中国',
+  中国: '中国',
+  中國: '中国',
+  tw: '中国',
+  taiwan: '中国',
+  'taiwan province of china': '中国',
+  台湾: '中国',
+  臺灣: '中国',
+  hk: '中国',
+  'hong kong': '中国',
+  'hong kong sar': '中国',
+  香港: '中国',
+  mo: '中国',
+  macau: '中国',
+  macao: '中国',
+  'macao sar': '中国',
+  澳门: '中国',
+  澳門: '中国',
+  中国台湾: '中国',
+  中國台灣: '中国',
+  中国香港: '中国',
+  中國香港: '中国',
+  中国澳门: '中国',
+  中國澳門: '中国',
+}
+
+const REGION_BY_COUNTRY_CODE = {
+  TW: '台湾',
+  HK: '香港',
+  MO: '澳门',
+}
+
+const CN_CITY_NAME_ALIASES = {
+  beijing: '北京',
+  peking: '北京',
+  shanghai: '上海',
+  tianjin: '天津',
+  chongqing: '重庆',
+  shenzhen: '深圳',
+  guangzhou: '广州',
+  suzhou: '苏州',
+  hangzhou: '杭州',
+  nanjing: '南京',
+  wuhan: '武汉',
+  chengdu: '成都',
+  xian: '西安',
+  "xi'an": '西安',
+  xianggang: '香港',
+  'hong kong': '香港',
+  'hong kong sar': '香港',
+  hk: '香港',
+  macau: '澳门',
+  macao: '澳门',
+  'macao sar': '澳门',
+  mo: '澳门',
+  taiwan: '台湾',
+  taipei: '台北',
+  'taipei city': '台北',
+  'new taipei': '新北',
+  'new taipei city': '新北',
+  taoyuan: '桃园',
+  'taoyuan city': '桃园',
+  taichung: '台中',
+  'taichung city': '台中',
+  tainan: '台南',
+  'tainan city': '台南',
+  kaohsiung: '高雄',
+  'kaohsiung city': '高雄',
+  hsinchu: '新竹',
+  'hsinchu city': '新竹',
+  keelung: '基隆',
+  'keelung city': '基隆',
+}
+
 function isPrivateIP(ip) {
   return (
     !ip ||
@@ -122,6 +204,61 @@ function isPrivateIP(ip) {
     ip.startsWith('192.168.') ||
     /^172\.(1[6-9]|2\d|3[0-1])\./.test(ip)
   )
+}
+
+function normalizeTextKey(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[().,]/g, ' ')
+    .replace(/\s+/g, ' ')
+}
+
+function normalizeChinaGeoFields(input = {}) {
+  const countryCode = String(input.countryCode || input.country_code || '').toUpperCase()
+  let country = String(input.country || '').trim()
+  let region = String(input.region || '').trim()
+  let city = String(input.city || '').trim()
+
+  const countryKey = normalizeTextKey(country)
+  const regionKey = normalizeTextKey(region)
+  const cityKey = normalizeTextKey(city)
+  const isChinaRegionCode = ['CN', 'TW', 'HK', 'MO'].includes(countryCode)
+  const isChinaRegion =
+    isChinaRegionCode ||
+    COUNTRY_ALIASES[countryKey] === '中国' ||
+    ['taiwan', 'hk', 'hong kong', 'macau', 'macao'].includes(regionKey) ||
+    ['taiwan', 'hk', 'hong kong', 'macau', 'macao'].includes(cityKey)
+
+  if (!isChinaRegion) {
+    return {
+      country: country || '未知',
+      countryCode,
+      region,
+      city: city || '未知',
+    }
+  }
+
+  country = '中国'
+  if (countryCode === 'TW') region = '台湾'
+  if (countryCode === 'HK') region = '香港'
+  if (countryCode === 'MO') region = '澳门'
+
+  region = CN_CITY_NAME_ALIASES[normalizeTextKey(region)] || region
+  city = CN_CITY_NAME_ALIASES[normalizeTextKey(city)] || city
+
+  if (!region && REGION_BY_COUNTRY_CODE[countryCode]) region = REGION_BY_COUNTRY_CODE[countryCode]
+  if (!city || city === '未知') city = region || '未知'
+  if (CN_CITY_ALIASES[city]) city = CN_CITY_ALIASES[city]
+  if (['北京', '上海', '天津', '重庆', '香港', '澳门'].includes(city)) region = city
+  if (city === '台湾') region = '台湾'
+
+  return {
+    country,
+    countryCode: countryCode === 'TW' || countryCode === 'HK' || countryCode === 'MO' ? 'CN' : countryCode,
+    region,
+    city,
+  }
 }
 
 async function fetchGeo(ip) {
@@ -161,54 +298,361 @@ async function fetchGeo(ip) {
 
 function normalizeGeo(geo, ip) {
   if (!geo) return { ip: ipBucket(ip) }
-  let { country, countryCode, region, city, lat, lon } = geo
-  country = country || '未知'
-  countryCode = String(countryCode || '').toUpperCase()
-  city = city || '未知'
-  region = region || ''
-
-  if (countryCode === 'TW') country = '中国台湾'
-  if (countryCode === 'HK') country = '中国香港'
-  if (countryCode === 'MO') country = '中国澳门'
-  if (CN_CITY_ALIASES[city]) city = CN_CITY_ALIASES[city]
-  if (['北京', '上海', '天津', '重庆'].includes(city)) region = city
+  const { lat, lon } = geo
+  const normalized = normalizeChinaGeoFields(geo)
 
   return {
     ip: ipBucket(ip),
-    country,
-    countryCode,
-    region,
-    city,
+    country: normalized.country,
+    countryCode: normalized.countryCode,
+    region: normalized.region,
+    city: normalized.city,
     lat: typeof lat === 'number' ? lat : parseFloat(lat) || 0,
     lon: typeof lon === 'number' ? lon : parseFloat(lon) || 0,
   }
 }
 
 const DOWNLOADS = {
-  'android-3.2-beta': {
-    label: 'Android 3.2 Beta APK',
-    href: '/downloads/CPENetworkDashboard V3.2-Beta.apk',
+  'android-3.5': {
+    platform: 'android',
+    version: '3.5',
+    label: 'Android 3.5 Release APK',
+    fileName: 'CPENetworkDashboard V3.5-Release.apk',
+    href: '/downloads/CPENetworkDashboard V3.5-Release.apk',
+    size: '13.3 MiB',
+    checksum: '9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700',
+    channel: 'stable',
   },
   'android-3.1': {
+    platform: 'android',
+    version: '3.1',
     label: 'Android 3.1 APK',
+    fileName: 'CPE-Network-Dashboard-3.1-android.apk',
     href: '/downloads/CPE-Network-Dashboard-3.1-android.apk',
+    size: '12.6 MiB',
+    checksum: '9aed997cc91f34a0b17bf79c31230ca1f459064a9f797f49d78a9df0b547b790',
+    channel: 'stable',
   },
   'macos-3.0.0': {
+    platform: 'macos',
+    version: '3.0.0',
     label: 'macOS 3.0.0 DMG',
+    fileName: 'CPE-Network-Dashboard-3.0.0-macos.dmg',
     href: '/#/download',
+    chunks: chunkedParts('macos-3.0.0', 'CPE-Network-Dashboard-3.0.0-macos.dmg', 5),
+    chunkBytes: [20971520, 20971520, 20971520, 20971520, 5976951],
+    size: '85.7 MiB',
+    checksum: '35ae5e36c5c72723e520c7240a7ff39263a51567f48936815b9973478d5de952',
+    channel: 'stable',
   },
   'windows-exe-3.0.0': {
+    platform: 'windows',
+    version: '3.0.0',
     label: 'Windows 3.0.0 EXE',
+    fileName: 'CPE-Network-Dashboard-3.0.0-windows-x64.exe',
     href: '/#/download',
+    chunks: chunkedParts('windows-exe-3.0.0', 'CPE-Network-Dashboard-3.0.0-windows-x64.exe', 5),
+    chunkBytes: [20971520, 20971520, 20971520, 20971520, 20507136],
+    size: '99.6 MiB',
+    checksum: '0d613ea043d0f38f17d52334ad3c42fddb4beeb80877eda0aa87c6165d466803',
+    channel: 'stable',
   },
   'windows-msi-3.0.0': {
+    platform: 'windows',
+    version: '3.0.0',
     label: 'Windows 3.0.0 MSI',
+    fileName: 'CPE-Network-Dashboard-3.0.0-windows-x64.msi',
     href: '/#/download',
+    chunks: chunkedParts('windows-msi-3.0.0', 'CPE-Network-Dashboard-3.0.0-windows-x64.msi', 5),
+    chunkBytes: [20971520, 20971520, 20971520, 20971520, 19799576],
+    size: '98.9 MiB',
+    checksum: '9e738a7cedfe93ffdaa2c8a73a8689d31d9118ccf4c5b757664d6a4e7039f7cf',
+    channel: 'stable',
   },
   'windows-portable-3.0.0': {
+    platform: 'windows',
+    version: '3.0.0',
     label: 'Windows 3.0.0 Portable',
+    fileName: 'CPE-Network-Dashboard-3.0.0-protected-portable-windows-x64.zip',
     href: '/#/download',
+    chunks: chunkedParts(
+      'windows-portable-3.0.0',
+      'CPE-Network-Dashboard-3.0.0-protected-portable-windows-x64.zip',
+      5
+    ),
+    chunkBytes: [20971520, 20971520, 20971520, 20971520, 18346522],
+    size: '97.5 MiB',
+    checksum: 'a359d9eff066173efd7431687b804d6fa7a63a511aa477f21440f06fecb9983a',
+    channel: 'stable',
   },
+}
+
+function chunkedParts(folder, fileName, count) {
+  return Array.from(
+    { length: count },
+    (_, index) => `/downloads/chunks/${folder}/${fileName}.part${String(index).padStart(2, '0')}`
+  )
+}
+
+const UPDATE_PLATFORM_ALIASES = {
+  android: 'android',
+  apk: 'android',
+  windows: 'windows',
+  win: 'windows',
+  win32: 'windows',
+  mac: 'macos',
+  macos: 'macos',
+  darwin: 'macos',
+  ios: 'ios',
+  iphone: 'ios',
+  ipad: 'ios',
+}
+
+const DEFAULT_UPDATE_CHANNEL = 'stable'
+
+const DEFAULT_RELEASES = {
+  android: {
+    stable: releaseFromDownload('android-3.5', {
+      notes: 'Android 3.5 正式版：新增通则设备适配和华为 E6898-886 适配，重构测速页，并修复 AMBR、流量单位、锁频提示等问题。',
+    }),
+  },
+  windows: {
+    stable: releaseFromDownload('windows-exe-3.0.0', {
+      notes: '当前 Windows 桌面版。',
+      alternatives: ['windows-msi-3.0.0', 'windows-portable-3.0.0'].map((id) =>
+        releaseDownloadPayload(id)
+      ),
+    }),
+  },
+  macos: {
+    stable: releaseFromDownload('macos-3.0.0', {
+      notes: '当前 macOS 桌面版。',
+    }),
+  },
+  ios: {},
+}
+
+function normalizeUpdatePlatform(value) {
+  const key = String(value || '')
+    .trim()
+    .toLowerCase()
+  return UPDATE_PLATFORM_ALIASES[key] || ''
+}
+
+function normalizeUpdateChannel(value) {
+  const key =
+    String(value || DEFAULT_UPDATE_CHANNEL)
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, '') || DEFAULT_UPDATE_CHANNEL
+  return key.slice(0, 32)
+}
+
+function splitVersion(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/^v/, '')
+    .split(/[^0-9a-z]+/)
+    .filter(Boolean)
+}
+
+function compareVersions(a, b) {
+  const left = splitVersion(a)
+  const right = splitVersion(b)
+  const length = Math.max(left.length, right.length)
+  for (let i = 0; i < length; i += 1) {
+    const l = left[i] || '0'
+    const r = right[i] || '0'
+    const ln = /^\d+$/.test(l) ? Number(l) : NaN
+    const rn = /^\d+$/.test(r) ? Number(r) : NaN
+    if (Number.isFinite(ln) && Number.isFinite(rn)) {
+      if (ln !== rn) return ln > rn ? 1 : -1
+      continue
+    }
+    if (l !== r) return l > r ? 1 : -1
+  }
+  return 0
+}
+
+function releaseDownloadPayload(fileId) {
+  const item = DOWNLOADS[fileId]
+  if (!item) return null
+  return {
+    fileId,
+    platform: item.platform || '',
+    version: item.version || '',
+    label: item.label || '',
+    fileName: item.fileName || '',
+    mode: item.chunks?.length ? 'chunked' : 'single',
+    href: item.href || '',
+    chunks: Array.isArray(item.chunks) ? item.chunks : [],
+    chunkBytes: Array.isArray(item.chunkBytes) ? item.chunkBytes : [],
+    size: item.size || '',
+    checksum: item.checksum || '',
+  }
+}
+
+function releaseFromDownload(fileId, extra = {}) {
+  const item = DOWNLOADS[fileId] || {}
+  return {
+    platform: item.platform || '',
+    channel: extra.channel || item.channel || DEFAULT_UPDATE_CHANNEL,
+    version: extra.version || item.version || '',
+    versionCode: Number(extra.versionCode || 0) || 0,
+    title: extra.title || item.label || '',
+    notes: extra.notes || '',
+    releaseDate: extra.releaseDate || '',
+    publishedAt: extra.publishedAt || '',
+    mandatory: Boolean(extra.mandatory),
+    minSupportedVersion: extra.minSupportedVersion || '',
+    download: releaseDownloadPayload(fileId),
+    alternatives: Array.isArray(extra.alternatives) ? extra.alternatives.filter(Boolean) : [],
+  }
+}
+
+function absoluteUrl(request, href) {
+  if (!href) return ''
+  try {
+    return new URL(href, request.url).toString()
+  } catch {
+    return href
+  }
+}
+
+function withAbsoluteDownloadUrls(download, request) {
+  if (!download) return null
+  const chunks = Array.isArray(download.chunks)
+    ? download.chunks.map((href, index) => ({
+        index,
+        href,
+        url: absoluteUrl(request, href),
+        bytes: Number(download.chunkBytes?.[index] || 0) || 0,
+      }))
+    : []
+  return {
+    ...download,
+    url: absoluteUrl(request, download.href),
+    chunks,
+  }
+}
+
+function serializeRelease(release, request) {
+  if (!release) return null
+  return {
+    platform: release.platform || '',
+    channel: release.channel || DEFAULT_UPDATE_CHANNEL,
+    version: release.version || '',
+    versionCode: Number(release.versionCode || 0) || 0,
+    title: release.title || '',
+    notes: release.notes || '',
+    releaseDate: release.releaseDate || '',
+    publishedAt: release.publishedAt || '',
+    mandatory: Boolean(release.mandatory),
+    minSupportedVersion: release.minSupportedVersion || '',
+    download: withAbsoluteDownloadUrls(release.download, request),
+    alternatives: Array.isArray(release.alternatives)
+      ? release.alternatives.map((item) => withAbsoluteDownloadUrls(item, request)).filter(Boolean)
+      : [],
+  }
+}
+
+function emptyUpdateStore() {
+  return {
+    version: UPDATE_STORE_VERSION,
+    updatedAt: '',
+    releases: JSON.parse(JSON.stringify(DEFAULT_RELEASES)),
+  }
+}
+
+async function readUpdateStore(kv) {
+  const defaults = emptyUpdateStore()
+  const str = await kvGetText(kv, UPDATES_KEY)
+  if (!str) return defaults
+  try {
+    const parsed = JSON.parse(str)
+    const releases = { ...defaults.releases }
+    for (const [platform, channels] of Object.entries(parsed?.releases || {})) {
+      const normalizedPlatform = normalizeUpdatePlatform(platform)
+      if (!normalizedPlatform || !channels || typeof channels !== 'object') continue
+      releases[normalizedPlatform] = {
+        ...(releases[normalizedPlatform] || {}),
+        ...channels,
+      }
+    }
+    return {
+      version: UPDATE_STORE_VERSION,
+      updatedAt: parsed?.updatedAt || '',
+      releases,
+    }
+  } catch {
+    return defaults
+  }
+}
+
+async function writeUpdateStore(kv, store) {
+  store.version = UPDATE_STORE_VERSION
+  store.updatedAt = new Date().toISOString()
+  await kvPutText(kv, UPDATES_KEY, JSON.stringify(store))
+}
+
+function normalizePublishedRelease(body) {
+  const platform = normalizeUpdatePlatform(body.platform)
+  const channel = normalizeUpdateChannel(body.channel)
+  if (!platform) return { error: 'Unknown platform' }
+
+  const fileId = String(body.fileId || body.downloadId || body.file || '').trim()
+  const knownDownload = fileId ? releaseDownloadPayload(fileId) : null
+  const customDownload =
+    body.download && typeof body.download === 'object'
+      ? {
+          fileId: String(body.download.fileId || fileId || '').trim(),
+          platform,
+          version: String(body.download.version || body.version || '').trim(),
+          label: String(body.download.label || body.title || '').trim(),
+          fileName: String(body.download.fileName || '').trim(),
+          mode: Array.isArray(body.download.chunks) && body.download.chunks.length ? 'chunked' : 'single',
+          href: String(body.download.href || '').trim(),
+          chunks: Array.isArray(body.download.chunks) ? body.download.chunks.map(String) : [],
+          chunkBytes: Array.isArray(body.download.chunkBytes)
+            ? body.download.chunkBytes.map((value) => Number(value) || 0)
+            : [],
+          size: String(body.download.size || '').trim(),
+          checksum: String(body.download.checksum || '').trim(),
+        }
+      : null
+  const download = customDownload || knownDownload
+  const version = String(body.version || download?.version || '').trim()
+  if (!version) return { error: 'Missing version' }
+
+  const alternatives = Array.isArray(body.alternatives)
+    ? body.alternatives
+        .map((item) => {
+          if (typeof item === 'string') return releaseDownloadPayload(item)
+          if (item && typeof item === 'object') {
+            const altId = String(item.fileId || item.downloadId || '').trim()
+            return releaseDownloadPayload(altId) || item
+          }
+          return null
+        })
+        .filter(Boolean)
+    : []
+
+  return {
+    release: {
+      platform,
+      channel,
+      version,
+      versionCode: Number(body.versionCode || 0) || 0,
+      title: String(body.title || download?.label || `${platform} ${version}`).trim(),
+      notes: body.notes || '',
+      releaseDate: String(body.releaseDate || '').trim(),
+      publishedAt: new Date().toISOString(),
+      mandatory: Boolean(body.mandatory || body.force),
+      minSupportedVersion: String(body.minSupportedVersion || body.minimumVersion || '').trim(),
+      download,
+      alternatives,
+    },
+  }
 }
 
 function corsHeaders() {
@@ -744,20 +1188,49 @@ function incrementStoredGeo(store, geo) {
 }
 
 function geoFromStore(store) {
+  const countryCounts = new Map()
+  const cityCountryCounts = new Map()
+  const cityCounts = new Map()
+
+  for (const [name, data] of Object.entries(store.geo?.countries || {})) {
+    const normalized = normalizeChinaGeoFields({ country: name })
+    countryCounts.set(
+      normalized.country,
+      (countryCounts.get(normalized.country) || 0) + (Number(data.count) || 0)
+    )
+  }
+
+  for (const data of Object.values(store.geo?.cities || {})) {
+    const normalized = normalizeChinaGeoFields(data)
+    const key = `${normalized.country}|${normalized.region}|${normalized.city}`
+    const current = cityCounts.get(key) || {
+      country: normalized.country,
+      countryCode: normalized.countryCode,
+      city: normalized.city,
+      region: normalized.region,
+      lat: data.lat || 0,
+      lon: data.lon || 0,
+      count: 0,
+    }
+    current.count += Number(data.count) || 0
+    if (!current.lat && data.lat) current.lat = data.lat
+    if (!current.lon && data.lon) current.lon = data.lon
+    cityCounts.set(key, current)
+    cityCountryCounts.set(
+      normalized.country,
+      (cityCountryCounts.get(normalized.country) || 0) + (Number(data.count) || 0)
+    )
+  }
+
+  for (const [name, count] of cityCountryCounts.entries()) {
+    if (!countryCounts.get(name)) countryCounts.set(name, count)
+  }
+
   return {
-    countries: Object.entries(store.geo?.countries || {})
-      .map(([name, data]) => ({ name, count: data.count || 0 }))
+    countries: Array.from(countryCounts.entries())
+      .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count),
-    cities: Object.values(store.geo?.cities || {})
-      .map((data) => ({
-        country: data.country || '',
-        countryCode: data.countryCode || '',
-        city: data.city || '',
-        region: data.region || '',
-        lat: data.lat || 0,
-        lon: data.lon || 0,
-        count: data.count || 0,
-      }))
+    cities: Array.from(cityCounts.values())
       .sort((a, b) => b.count - a.count),
   }
 }
@@ -1038,6 +1511,158 @@ async function handleDownloads(request) {
   }
 }
 
+async function handleUpdateLatest(request) {
+  const blocked = await guardReadRequest(request, 'updates-latest', 240, 300)
+  if (blocked) return blocked
+
+  const url = new URL(request.url)
+  const platform = normalizeUpdatePlatform(url.searchParams.get('platform'))
+  const requestedChannel = url.searchParams.has('channel')
+  const channel = normalizeUpdateChannel(url.searchParams.get('channel'))
+  const kv = edgeKv()
+  const store = await readUpdateStore(kv)
+
+  if (platform) {
+    const release =
+      store.releases?.[platform]?.[channel] ||
+      (!requestedChannel
+        ? store.releases?.[platform]?.[DEFAULT_UPDATE_CHANNEL] ||
+          Object.values(store.releases?.[platform] || {})[0]
+        : null) ||
+      null
+    return json({
+      ok: true,
+      platform,
+      channel,
+      latest: serializeRelease(release, request),
+      updatedAt: store.updatedAt,
+      build: EDGE_BUILD,
+    })
+  }
+
+  const releases = {}
+  for (const [platformName, channels] of Object.entries(store.releases || {})) {
+    releases[platformName] = {}
+    for (const [channelName, release] of Object.entries(channels || {})) {
+      releases[platformName][channelName] = serializeRelease(release, request)
+    }
+  }
+
+  return json({
+    ok: true,
+    releases,
+    updatedAt: store.updatedAt,
+    build: EDGE_BUILD,
+  })
+}
+
+async function handleUpdateCheck(request) {
+  const blocked = await guardReadRequest(request, 'updates-check', 360, 300)
+  if (blocked) return blocked
+
+  let body = {}
+  if (request.method === 'POST') {
+    try {
+      body = await readJsonLimited(request)
+    } catch {
+      return json({ ok: false, error: 'Invalid JSON' }, 400)
+    }
+  }
+
+  const url = new URL(request.url)
+  const platform = normalizeUpdatePlatform(
+    body.platform || url.searchParams.get('platform') || url.searchParams.get('os')
+  )
+  if (!platform) return json({ ok: false, error: 'Unknown platform', build: EDGE_BUILD }, 400)
+
+  const requestedChannel =
+    Object.prototype.hasOwnProperty.call(body, 'channel') || url.searchParams.has('channel')
+  const channel = normalizeUpdateChannel(body.channel || url.searchParams.get('channel'))
+  const currentVersion = String(
+    body.currentVersion ||
+      body.version ||
+      url.searchParams.get('currentVersion') ||
+      url.searchParams.get('version') ||
+      ''
+  ).trim()
+  const currentVersionCode =
+    Number(body.currentVersionCode || body.versionCode || url.searchParams.get('versionCode') || 0) ||
+    0
+
+  const kv = edgeKv()
+  const store = await readUpdateStore(kv)
+  const release =
+    store.releases?.[platform]?.[channel] ||
+    (!requestedChannel
+      ? store.releases?.[platform]?.[DEFAULT_UPDATE_CHANNEL] ||
+        Object.values(store.releases?.[platform] || {})[0]
+      : null) ||
+    null
+  const latest = serializeRelease(release, request)
+  const versionUpdate =
+    latest && currentVersion
+      ? compareVersions(latest.version, currentVersion) > 0
+      : false
+  const codeUpdate =
+    latest && latest.versionCode && currentVersionCode
+      ? latest.versionCode > currentVersionCode
+      : false
+  const belowMin =
+    latest?.minSupportedVersion && currentVersion
+      ? compareVersions(currentVersion, latest.minSupportedVersion) < 0
+      : false
+
+  return json({
+    ok: true,
+    platform,
+    channel,
+    current: {
+      version: currentVersion,
+      versionCode: currentVersionCode,
+    },
+    updateAvailable: Boolean(latest && (codeUpdate || versionUpdate || belowMin)),
+    mandatory: Boolean(latest?.mandatory || belowMin),
+    latest,
+    updatedAt: store.updatedAt,
+    build: EDGE_BUILD,
+  })
+}
+
+async function handleUpdatePublish(request) {
+  if (!WRITE_TOKEN) return json({ ok: false, error: 'Publish token is not configured' }, 403)
+
+  let body = {}
+  try {
+    body = await readJsonLimited(request)
+  } catch {
+    return json({ ok: false, error: 'Invalid JSON' }, 400)
+  }
+
+  if (!verifyWriteToken(request, body)) return json({ ok: false, error: 'Access denied' }, 403)
+
+  const allowed = await consumeRate(`updates-publish:${ipBucket(getClientIP(request))}`, 30, 3600)
+  if (!allowed) return json({ error: 'Too many requests', build: EDGE_BUILD }, 429)
+
+  const normalized = normalizePublishedRelease(body)
+  if (normalized.error) return json({ ok: false, error: normalized.error, build: EDGE_BUILD }, 400)
+
+  const kv = edgeKv()
+  const store = await readUpdateStore(kv)
+  const { platform, channel } = normalized.release
+  store.releases[platform] = store.releases[platform] || {}
+  store.releases[platform][channel] = normalized.release
+  await writeUpdateStore(kv, store)
+
+  return json({
+    ok: true,
+    platform,
+    channel,
+    latest: serializeRelease(normalized.release, request),
+    updatedAt: store.updatedAt,
+    build: EDGE_BUILD,
+  })
+}
+
 async function handleSummary(request) {
   const blocked = await guardReadRequest(request, 'summary-read')
   if (blocked) return blocked
@@ -1111,6 +1736,21 @@ export default {
     if (path === '/downloads') {
       if (request.method !== 'GET') return json({ error: 'Use GET' }, 405)
       return handleDownloads(request)
+    }
+
+    if (path === '/updates/latest') {
+      if (request.method !== 'GET') return json({ error: 'Use GET' }, 405)
+      return handleUpdateLatest(request)
+    }
+
+    if (path === '/updates/check') {
+      if (!['GET', 'POST'].includes(request.method)) return json({ error: 'Use GET or POST' }, 405)
+      return handleUpdateCheck(request)
+    }
+
+    if (path === '/updates/publish') {
+      if (request.method !== 'POST') return json({ error: 'Use POST' }, 405)
+      return handleUpdatePublish(request)
     }
 
     if (path === '/analytics/summary') {

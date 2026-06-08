@@ -5,11 +5,13 @@ interface Props {
   images: string[]
   alt?: string
   labels?: string[]
+  imageTones?: Array<'light' | 'dark'>
 }
 
 const props = withDefaults(defineProps<Props>(), {
   alt: '产品截图',
   labels: () => [],
+  imageTones: () => [],
 })
 
 const containerRef = ref<HTMLElement | null>(null)
@@ -39,6 +41,8 @@ const currentLabel = computed(() => {
   }
   return `${currentIndex.value + 1} / ${props.images.length}`
 })
+
+const currentTone = computed(() => props.imageTones[currentIndex.value] || 'dark')
 
 function handleScroll() {
   if (!containerRef.value) return
@@ -175,6 +179,7 @@ onUnmounted(() => {
   <div
     ref="containerRef"
     class="scroll-image-container"
+    :data-image-tone="currentTone"
     tabindex="0"
     role="region"
     :aria-label="`${alt} - 滚动浏览`"
@@ -298,6 +303,16 @@ onUnmounted(() => {
   -webkit-backdrop-filter: blur(16px);
 }
 
+.scroll-image-container[data-image-tone='light'] .progress-track {
+  background: rgba(32, 43, 52, 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.scroll-image-container[data-image-tone='dark'] .progress-track {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
 :global(:root[data-theme='dark']) .progress-track {
   background: rgba(255, 255, 255, 0.1);
 }
@@ -347,6 +362,15 @@ onUnmounted(() => {
   font-weight: 700;
   letter-spacing: 0;
   transition: opacity 0.3s ease;
+}
+
+.scroll-image-container[data-image-tone='light'] .label-badge {
+  background: rgba(32, 43, 52, 0.34);
+}
+
+.scroll-image-container[data-image-tone='dark'] .label-badge {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.92);
 }
 
 :global(.phone-main .scroll-viewport) {

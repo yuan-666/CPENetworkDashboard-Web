@@ -3,6 +3,7 @@ import ScrollImageSwitcher from '@/components/ScrollImageSwitcher.vue'
 import {
   desktopScreenLabels,
   desktopScreens,
+  desktopScreenTones,
   mobileScreenLabels,
   mobileScreens,
   platformCards,
@@ -83,6 +84,7 @@ const mobileFeatures = [
               <ScrollImageSwitcher
                 :images="desktopScreens"
                 :labels="desktopScreenLabels"
+                :image-tones="desktopScreenTones"
                 alt="CPE 网络看板电脑端截图"
               />
             </div>

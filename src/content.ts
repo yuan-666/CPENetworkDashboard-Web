@@ -21,14 +21,18 @@ export const routes: Route[] = [
 
 export const heroDesktopImage = '/media/computer/desktop-signal-dashboard.png'
 
-export const desktopScreenItems = [
-  { image: '/media/computer/desktop-signal-dashboard.png', label: '信号质量监控' },
-  { image: '/media/computer/desktop-frequency-lock.png', label: '频段锁定管理' },
-  { image: '/media/computer/desktop-speed-test.png', label: '测速页面' },
-  { image: '/media/computer/desktop-ping-test.png', label: 'Ping 测试' },
-  { image: '/media/computer/desktop-route-test.png', label: '路由追踪' },
-  { image: '/media/computer/desktop-display-settings.png', label: '显示设置' },
-  { image: '/media/computer/desktop-login-config.png', label: '登录配置' },
+export const desktopScreenItems: Array<{
+  image: string
+  label: string
+  tone: 'light' | 'dark'
+}> = [
+  { image: '/media/computer/desktop-signal-dashboard.png', label: '信号质量监控', tone: 'dark' },
+  { image: '/media/computer/desktop-frequency-lock.png', label: '频段锁定管理', tone: 'light' },
+  { image: '/media/computer/desktop-speed-test.png', label: '测速页面', tone: 'light' },
+  { image: '/media/computer/desktop-ping-test.png', label: 'Ping 测试', tone: 'light' },
+  { image: '/media/computer/desktop-route-test.png', label: '路由追踪', tone: 'light' },
+  { image: '/media/computer/desktop-display-settings.png', label: '显示设置', tone: 'light' },
+  { image: '/media/computer/desktop-login-config.png', label: '登录配置', tone: 'light' },
 ]
 
 export const mobileScreenItems = [
@@ -48,6 +52,7 @@ export const mobileScreenItems = [
 
 export const desktopScreens = desktopScreenItems.map((item) => item.image)
 export const desktopScreenLabels = desktopScreenItems.map((item) => item.label)
+export const desktopScreenTones = desktopScreenItems.map((item) => item.tone)
 export const mobileScreens = mobileScreenItems.map((item) => item.image)
 export const mobileScreenLabels = mobileScreenItems.map((item) => item.label)
 
@@ -108,7 +113,7 @@ export const productMoments: ProductMoment[] = [
 export const platformCards: PlatformCard[] = [
   {
     name: 'Android',
-    version: '3.1',
+    version: '3.5',
     title: '在设备旁边，手机最方便。',
     copy: '打开、看信号、扫邻区、改锁定。弱电箱、窗边、机柜旁边，用手机比搬电脑省事多了。',
   },
@@ -135,17 +140,16 @@ export const supportedDevices: Array<[string, string]> = [
 
 export const downloads: Download[] = [
   {
-    id: 'android-3.2-beta',
+    id: 'android-3.5',
     platform: 'Android',
-    version: '3.2 Beta',
-    title: 'Android APK (测试版)',
-    fileName: 'CPENetworkDashboard V3.2-Beta.apk',
-    href: '/downloads/CPENetworkDashboard V3.2-Beta.apk',
-    size: '12.8 MiB',
-    checksum: 'c2eafe556503f3974491728d8e2fff0d843d1785e8f5665a7276e14807ed3282',
-    label: 'Beta 测试版',
-    copy: '包含最新修复和功能，但可能存在不稳定。适合想体验新功能的用户。',
-    beta: true,
+    version: '3.5',
+    title: 'Android APK',
+    fileName: 'CPENetworkDashboard V3.5-Release.apk',
+    href: '/downloads/CPENetworkDashboard V3.5-Release.apk',
+    size: '13.3 MiB',
+    checksum: '9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700',
+    label: '正式版',
+    copy: '当前 Android 正式发布版。人在 CPE 旁边，直接装 Android 版看状态、扫邻区、调锁定和测速。',
   },
   {
     id: 'android-3.1',
@@ -156,8 +160,8 @@ export const downloads: Download[] = [
     href: '/downloads/CPE-Network-Dashboard-3.1-android.apk',
     size: '12.6 MiB',
     checksum: '9aed997cc91f34a0b17bf79c31230ca1f459064a9f797f49d78a9df0b547b790',
-    label: '正式稳定版',
-    copy: '人在 CPE 旁边，直接装 Android 版。看状态、扫邻区、调锁定、测个速，一步到位。',
+    label: '历史正式版',
+    copy: '保留给需要旧版本的用户。当前正式版建议下载 Android 3.5。',
   },
   {
     id: 'macos-3.0.0',
@@ -218,6 +222,67 @@ export const downloads: Download[] = [
 ]
 
 export const changelogEntries: ChangelogEntry[] = [
+  {
+    version: 'Android 3.5',
+    date: '2026-06-08',
+    badge: '当前 Android 正式版',
+    lead: 'Android 3.5 正式版已经作为当前公开 APK 发布。本次重点新增通则设备适配、华为 E6898-886 专项适配，并重构测速页面。当前没有 Android Beta 版本，后续测试版会单独进入 Beta 通道。',
+    sections: [
+      {
+        title: '新增功能',
+        items: [
+          '新增通则（新）设备适配。',
+          '新增通则登录、刷新、网络首选、锁 Band、锁小区等接口逻辑。',
+          '新增通则连接页面，支持连接情况、系统状态、当前小区、射频质量、上下行链路、设备信息、邻区显示和载波聚合显示。',
+          '新增通则频段能力读取。',
+          '通则登录成功后自动读取频段能力，避免进入锁小区页面时没有 Band 可选。',
+          '通则锁 Band、锁小区增加读取后台已保存状态、开关状态和一键恢复默认。',
+          '新增华为 E6898-886 专项适配。',
+          '当设备型号为 E6898-886 时，自动保持 diag 和 telnet/AT TCP 开启。',
+          '新增华为连接页“载波聚合”卡片：仅当存在 Type=S 条目时显示。原“邻区显示”继续完整显示 P/S/D，并保留点击条目锁频功能。',
+          '新增华为 SIM 卡 AMBR 获取辅助逻辑：支持缓存状态下的 AMBR 展示。强化开 telnet/diag、关闭移动数据、等待后重新打开移动数据并获取 AMBR 的流程。',
+          '新增设置页“捐赠”入口：新增捐赠说明页，新增微信和支付宝捐赠二维码卡片。',
+          '测速页面重构。',
+        ],
+      },
+      {
+        title: '修复问题',
+        items: [
+          '修复烽火 AMBR 显示错误，按数值特征选择合适换算方式。',
+          '修复烽火 PUCCH 显示逻辑和 4G 下 Trans.Mode 显示问题。',
+          '修复烽火、华为、中兴、鲲鹏无限等配置下流量统计单位换算，统一按 1024 进制处理并支持 TB 显示。',
+          '修复通则邻区显示下面重复出现载波聚合页面的问题。',
+          '修复通则设备信息里“当前下载 / 当前上传”命名不符合语义的问题。',
+          '修复通则设备信息在线时间来源不准确的问题。',
+          '修复华为当前小区 DL/UL 被拆分或显示异常的问题，保持 DL/UL 作为完整卡片名。',
+          '修复华为当前小区 ARFCN 在 5G CA 场景下取值不稳定的问题。',
+          '修复华为 AMBR 获取后移动数据恢复不稳定的问题。',
+          '修复华为锁 Band、锁 ARFCN、锁 PCI 下发后缺少结果提示的问题。',
+          '修复测速停止后重新开始时柱状图未清空的问题。',
+        ],
+      },
+      {
+        title: '界面和交互调整',
+        items: [
+          '通则锁 Band 页面选中频段左侧增加 √，提升辨识度。',
+          '登录页密码输入框增加小眼睛，方便查看密码。',
+          '测速页面在线程数位置改为“普通模式 / 极速模式”二选一。',
+          '测速页面点击下载、上传、双向后隐藏三按钮，仅显示一个红色停止按钮。',
+          '速率监控改为柱状图样式，并优化从右向左推进动效。',
+          '删除带宽上限、下载流量、上传流量、运行时长等冗余展示。',
+          '新增“总消耗流量”长卡片。',
+          '支持配置多条下载 URL 和上传 URL，方便多线程打流。',
+        ],
+      },
+      {
+        title: '发布包',
+        items: [
+          '安装包：CPENetworkDashboard V3.5-Release.apk。',
+          'SHA-256：9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700。',
+        ],
+      },
+    ],
+  },
   {
     version: 'Android 3.2 Beta',
     date: '2026-05-30',

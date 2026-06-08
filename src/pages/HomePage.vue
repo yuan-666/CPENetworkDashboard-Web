@@ -12,14 +12,14 @@ const marqueeGroups = [telemetryWords, telemetryWords, telemetryWords, telemetry
     <div class="hero-copy">
       <div class="app-mark">
         <img :src="appIcon" alt="" loading="eager" decoding="async" fetchpriority="high" />
-        <span>Android 3.1 / macOS & Windows 3.0.0</span>
+        <span>Android 3.5 / macOS & Windows 3.0.0</span>
       </div>
       <h1 class="hero-title">
         <span class="hero-title-main">CPE 网络看板</span>
         <span class="hero-title-sub">CPE Network Dashboard</span>
       </h1>
       <p>
-        Android 3.1 已发布，macOS 和 Windows 也提供 3.0.0 桌面包。它不是另一个复杂后台，而是把 CPE
+        Android 3.5 正式版已发布，macOS 和 Windows 也提供 3.0.0 桌面包。它不是另一个复杂后台，而是把 CPE
         当前状态、锁定结果和链路测试放到同一个工作界面。
       </p>
       <p class="hero-note">

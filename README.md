@@ -28,7 +28,7 @@ ESA 静态构建产物单文件限制为 25MB。当前发布方式是：
 | 首页     | `#/`          | 应用图标、核心产品表达、电脑/手机界面动效和指标滚动条                                      |
 | 产品介绍 | `#/product`   | 排障流程、电脑端截图、手机端截图、平台说明和设备覆盖                                       |
 | 下载     | `#/download`  | 自动识别当前设备并推荐 Android APK、macOS DMG 或 Windows EXE，保留 MSI / Portable 手动选择 |
-| 更新日志 | `#/changelog` | 按用户场景展开 Android 3.1、Desktop 3.0.0、Cross-platform 3.0、Upstream 2.7 / 2.6          |
+| 更新日志 | `#/changelog` | 按用户场景展开 Android 3.5、Desktop 3.0.0、Cross-platform 3.0、Upstream 2.7 / 2.6          |
 | 关于     | `#/about`     | 同步应用内部 About：软件名、版本、QQ群、制作者和完整致谢名单                               |
 
 截图展示规则：
@@ -43,7 +43,7 @@ ESA 静态构建产物单文件限制为 25MB。当前发布方式是：
 
 | 文件                                                             | 平台        | 版本  | 大小     |
 | ---------------------------------------------------------------- | ----------- | ----- | -------- |
-| `CPE-Network-Dashboard-3.1-android.apk`                          | Android     | 3.1   | 12.6 MiB |
+| `CPENetworkDashboard V3.5-Release.apk`                           | Android     | 3.5   | 13.3 MiB |
 | `CPE-Network-Dashboard-3.0.0-macos.dmg`                          | macOS       | 3.0.0 | 85.7 MiB |
 | `CPE-Network-Dashboard-3.0.0-windows-x64.exe`                    | Windows x64 | 3.0.0 | 99.6 MiB |
 | `CPE-Network-Dashboard-3.0.0-windows-x64.msi`                    | Windows x64 | 3.0.0 | 98.9 MiB |
@@ -93,6 +93,9 @@ cpeweb
 | `/api/download`           | POST | 写入下载点击事件                       |
 | `/api/download?file=<id>` | GET  | 统计后跳转；大文件请使用页面内分片下载 |
 | `/api/downloads`          | GET  | 读取下载计数                           |
+| `/api/updates/latest`     | GET  | 读取当前公开最新版本                    |
+| `/api/updates/check`      | GET/POST | 按平台和当前版本检测是否需要更新     |
+| `/api/updates/publish`    | POST | 使用写入 token 发布云端最新版本         |
 | `/api/analytics/summary`  | GET  | 公开聚合统计                           |
 
 前端默认 API 前缀为 `/api`，需要改路径时设置：
@@ -118,6 +121,6 @@ VITE_API_TOKEN=your-token npm run build
 
 ## 内容来源
 
-- Android 3.1 更新记录来自本次官网需求。
+- Android 3.5 更新记录来自本次官网需求。
 - 桌面 3.0.0、跨平台 3.0 记录整理自当前产品仓库的 `README.md`、`VERSION.md` 和 `RELEASE_NOTES_V3.0.0.md`。
 - 官网 `CHANGELOG.md` 保留更完整的公开发布记录，产品页只保留适合用户阅读的更新摘要。

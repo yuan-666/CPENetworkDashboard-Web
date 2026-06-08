@@ -56,13 +56,101 @@ type TabKey = 'pages' | 'referrers' | 'countries' | 'cities' | 'devices' | 'rece
 const tabs: { key: TabKey; label: string }[] = [
   { key: 'pages', label: '页面' },
   { key: 'referrers', label: '来源' },
-  { key: 'countries', label: '国家' },
+  { key: 'countries', label: '国家/地区' },
   { key: 'cities', label: '城市' },
   { key: 'devices', label: '设备' },
   { key: 'recent', label: '最近' },
 ]
 
 const activeTab = ref<TabKey>('pages')
+
+const countryAliases: Record<string, string> = {
+  CN: '中国',
+  China: '中国',
+  中国: '中国',
+  中國: '中国',
+  TW: '中国',
+  Taiwan: '中国',
+  台湾: '中国',
+  臺灣: '中国',
+  HK: '中国',
+  'Hong Kong': '中国',
+  香港: '中国',
+  MO: '中国',
+  Macao: '中国',
+  Macau: '中国',
+  澳门: '中国',
+  澳門: '中国',
+  中国台湾: '中国',
+  中国香港: '中国',
+  中国澳门: '中国',
+}
+
+const cityAliases: Record<string, string> = {
+  Taiwan: '台湾',
+  台湾: '台湾',
+  臺灣: '台湾',
+  Taipei: '台北',
+  'Taipei City': '台北',
+  'New Taipei': '新北',
+  'New Taipei City': '新北',
+  Taoyuan: '桃园',
+  Taichung: '台中',
+  Tainan: '台南',
+  Kaohsiung: '高雄',
+  'Hong Kong': '香港',
+  HK: '香港',
+  Macao: '澳门',
+  Macau: '澳门',
+  MO: '澳门',
+}
+
+function normalizeCountryName(value = ''): string {
+  return countryAliases[value] || value || '未知'
+}
+
+function normalizeCityName(city = '', region = '', countryCode = ''): string {
+  const code = countryCode.toUpperCase()
+  const fallbackRegion = code === 'TW' ? '台湾' : code === 'HK' ? '香港' : code === 'MO' ? '澳门' : ''
+  const value = cityAliases[city] || cityAliases[region] || city || fallbackRegion || '未知'
+  return value
+}
+
+const normalizedCountries = computed(() => {
+  const map = new Map<string, number>()
+  for (const item of summary.value?.geo?.countries || []) {
+    const name = normalizeCountryName(item.name)
+    map.set(name, (map.get(name) || 0) + item.count)
+  }
+  return Array.from(map.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+})
+
+const normalizedCities = computed<CityStat[]>(() => {
+  const map = new Map<string, CityStat>()
+  for (const item of summary.value?.geo?.cities || []) {
+    const country = normalizeCountryName(item.country || item.countryCode)
+    const city = normalizeCityName(item.city, item.region, item.countryCode)
+    const region = normalizeCityName(item.region || city, item.region, item.countryCode)
+    const key = `${country}|${region}|${city}`
+    const current =
+      map.get(key) ||
+      ({
+        ...item,
+        country,
+        countryCode: country === '中国' ? 'CN' : item.countryCode,
+        region,
+        city,
+        count: 0,
+      } as CityStat)
+    current.count += item.count
+    if (!current.lat && item.lat) current.lat = item.lat
+    if (!current.lon && item.lon) current.lon = item.lon
+    map.set(key, current)
+  }
+  return Array.from(map.values()).sort((a, b) => b.count - a.count)
+})
 
 const tabData = computed(() => {
   const s = summary.value
@@ -73,9 +161,9 @@ const tabData = computed(() => {
     case 'referrers':
       return s.referrers || []
     case 'countries':
-      return (s.geo?.countries || []).map((c: CountryStat) => ({ name: c.name, count: c.count }))
+      return normalizedCountries.value.map((c: CountryStat) => ({ name: c.name, count: c.count }))
     case 'cities':
-      return (s.geo?.cities || []).map((c: CityStat) => ({
+      return normalizedCities.value.map((c: CityStat) => ({
         name: c.city === c.country ? c.city : `${c.city}`,
         count: c.count,
       }))
@@ -118,7 +206,7 @@ let mapInstance: any = null
 let mapObserver: IntersectionObserver | null = null
 const mapLoaded = ref(false)
 
-const cities = computed(() => summary.value?.geo?.cities || [])
+const cities = computed(() => normalizedCities.value)
 
 function initMap() {
   if (mapInstance || !mapContainer.value || !cities.value.length) return
