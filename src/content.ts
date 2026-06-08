@@ -64,10 +64,10 @@ function chunkedParts(folder: string, fileName: string, count: number): string[]
 }
 
 const chunkBytes: Record<string, number[]> = {
-  'macos-3.0.0': [20971520, 20971520, 20971520, 20971520, 5976951],
-  'windows-exe-3.0.0': [20971520, 20971520, 20971520, 20971520, 20507136],
-  'windows-msi-3.0.0': [20971520, 20971520, 20971520, 20971520, 19799576],
-  'windows-portable-3.0.0': [20971520, 20971520, 20971520, 20971520, 18346522],
+  'macos-3.5.2': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 1794421],
+  'windows-exe-3.5.2': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 14713072],
+  'windows-msi-3.5.2': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 14004224],
+  'windows-portable-3.5.2': [20971520, 20971520, 20971520, 20971520, 20971520, 14572374],
 }
 
 export const heroFacts: HeroFact[] = [
@@ -113,21 +113,27 @@ export const productMoments: ProductMoment[] = [
 export const platformCards: PlatformCard[] = [
   {
     name: 'Android',
-    version: '3.5',
+    version: '3.5.2',
     title: '在设备旁边，手机最方便。',
     copy: '打开、看信号、扫邻区、改锁定。弱电箱、窗边、机柜旁边，用手机比搬电脑省事多了。',
   },
   {
     name: 'macOS',
-    version: '3.0.0',
+    version: '3.5.2',
     title: '坐下来排查，Mac 看得更全。',
     copy: '连接、锁定、测试和日志能铺开，边调边记，也能把结果放到大屏上对比。',
   },
   {
     name: 'Windows',
-    version: '3.0.0',
+    version: '3.5.2',
     title: '维护电脑、临时电脑，都能用。',
-    copy: '常规 EXE、固定环境 MSI、免安装 Portable 都有。能装就装，不能装也能带走。',
+    copy: '默认推荐免安装 Portable，常规 EXE 和固定环境 MSI 也都保留。',
+  },
+  {
+    name: 'iOS',
+    version: '敬请期待',
+    title: 'iOS 版本正在路上。',
+    copy: 'iOS 方向已经在推进，预计很快就能和大家见面。',
   },
 ]
 
@@ -140,6 +146,74 @@ export const supportedDevices: Array<[string, string]> = [
 
 export const downloads: Download[] = [
   {
+    id: 'android-3.5.2',
+    platform: 'Android',
+    version: '3.5.2',
+    title: 'Android APK',
+    fileName: 'CPENetworkDashboard-v3.5.2.apk',
+    href: '/downloads/CPENetworkDashboard-v3.5.2.apk',
+    size: '13.3 MiB',
+    checksum: '302ceb8f1c145b8e41eac55aa33067bcc5eb9e5b19354a9bf09cd985211fc1b6',
+    label: '最新正式版',
+    copy: '当前 Android 最新正式版。修复烽火 / FiberHome 登录后连接页反复闪烁的问题，并接入应用内检查更新。',
+  },
+  {
+    id: 'macos-3.5.2',
+    platform: 'macOS',
+    version: '3.5.2',
+    title: 'macOS DMG',
+    fileName: 'CPE-Network-Dashboard-3.5.2-macos-arm64.dmg',
+    chunks: chunkedParts('macos-3.5.2', 'CPE-Network-Dashboard-3.5.2-macos-arm64.dmg', 7),
+    chunkBytes: chunkBytes['macos-3.5.2'],
+    size: '121.7 MiB',
+    checksum: 'cf03bf8ae81ef106acce2b24fb69b868b8445c456cd01468b37d62cb24086288',
+    label: 'Mac 桌面版',
+    copy: '当前 macOS arm64 最新桌面版。同步烽火后台重登录修复，并保留桌面端近期更新检测、设备保存和紧凑看板等改进。',
+  },
+  {
+    id: 'windows-portable-3.5.2',
+    platform: 'Windows',
+    version: '3.5.2',
+    title: 'Windows Portable',
+    fileName: 'CPE-Network-Dashboard-3.5.2-protected-portable-windows-x64.zip',
+    chunks: chunkedParts(
+      'windows-portable-3.5.2',
+      'CPE-Network-Dashboard-3.5.2-protected-portable-windows-x64.zip',
+      6
+    ),
+    chunkBytes: chunkBytes['windows-portable-3.5.2'],
+    size: '113.9 MiB',
+    checksum: '1587f5e4eea86718f7c1f3c6ada053a6d2c24b1608801667cd92dffb438ed549',
+    label: 'Windows 免安装（推荐）',
+    copy: '当前 Windows 默认推荐版本。适合临时电脑、U 盘携带和没有安装权限的环境。',
+  },
+  {
+    id: 'windows-exe-3.5.2',
+    platform: 'Windows',
+    version: '3.5.2',
+    title: 'Windows EXE',
+    fileName: 'CPE-Network-Dashboard-3.5.2-windows-x64.exe',
+    chunks: chunkedParts('windows-exe-3.5.2', 'CPE-Network-Dashboard-3.5.2-windows-x64.exe', 7),
+    chunkBytes: chunkBytes['windows-exe-3.5.2'],
+    size: '134.0 MiB',
+    checksum: '51ff1548a340b643fa0c9b1bc6640d1324b1a21cdf89bf75c2827cd82c1df3e5',
+    label: 'Windows 常规安装',
+    copy: '适合固定使用的维护电脑。安装后可以像普通桌面应用一样使用。',
+  },
+  {
+    id: 'windows-msi-3.5.2',
+    platform: 'Windows',
+    version: '3.5.2',
+    title: 'Windows MSI',
+    fileName: 'CPE-Network-Dashboard-3.5.2-windows-x64.msi',
+    chunks: chunkedParts('windows-msi-3.5.2', 'CPE-Network-Dashboard-3.5.2-windows-x64.msi', 7),
+    chunkBytes: chunkBytes['windows-msi-3.5.2'],
+    size: '133.4 MiB',
+    checksum: '32ec9c0b3bc1de358ac8da89c902243874f0ed311a4d55234d4fd51c6d9e3362',
+    label: 'Windows 固定部署',
+    copy: '适合固定部署、统一安装或更偏企业维护习惯的 Windows 环境。',
+  },
+  {
     id: 'android-3.5',
     platform: 'Android',
     version: '3.5',
@@ -148,85 +222,61 @@ export const downloads: Download[] = [
     href: '/downloads/CPENetworkDashboard V3.5-Release.apk',
     size: '13.3 MiB',
     checksum: '9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700',
-    label: '正式版',
-    copy: '当前 Android 正式发布版。人在 CPE 旁边，直接装 Android 版看状态、扫邻区、调锁定和测速。',
-  },
-  {
-    id: 'android-3.1',
-    platform: 'Android',
-    version: '3.1',
-    title: 'Android APK',
-    fileName: 'CPE-Network-Dashboard-3.1-android.apk',
-    href: '/downloads/CPE-Network-Dashboard-3.1-android.apk',
-    size: '12.6 MiB',
-    checksum: '9aed997cc91f34a0b17bf79c31230ca1f459064a9f797f49d78a9df0b547b790',
-    label: '历史正式版',
-    copy: '保留给需要旧版本的用户。当前正式版建议下载 Android 3.5。',
-  },
-  {
-    id: 'macos-3.0.0',
-    platform: 'macOS',
-    version: '3.0.0',
-    title: 'macOS DMG',
-    fileName: 'CPE-Network-Dashboard-3.0.0-macos.dmg',
-    chunks: chunkedParts('macos-3.0.0', 'CPE-Network-Dashboard-3.0.0-macos.dmg', 5),
-    chunkBytes: chunkBytes['macos-3.0.0'],
-    size: '85.7 MiB',
-    checksum: '35ae5e36c5c72723e520c7240a7ff39263a51567f48936815b9973478d5de952',
-    label: 'Mac 桌面版',
-    copy: '在桌面上长时间观察，边看信号边做 Ping、测速和锁定回读。',
-  },
-  {
-    id: 'windows-exe-3.0.0',
-    platform: 'Windows',
-    version: '3.0.0',
-    title: 'Windows EXE',
-    fileName: 'CPE-Network-Dashboard-3.0.0-windows-x64.exe',
-    chunks: chunkedParts('windows-exe-3.0.0', 'CPE-Network-Dashboard-3.0.0-windows-x64.exe', 5),
-    chunkBytes: chunkBytes['windows-exe-3.0.0'],
-    size: '99.6 MiB',
-    checksum: '0d613ea043d0f38f17d52334ad3c42fddb4beeb80877eda0aa87c6165d466803',
-    label: 'Windows 常规安装',
-    copy: '这台电脑以后还要维护 CPE，选 EXE 最省事。',
-  },
-  {
-    id: 'windows-msi-3.0.0',
-    platform: 'Windows',
-    version: '3.0.0',
-    title: 'Windows MSI',
-    fileName: 'CPE-Network-Dashboard-3.0.0-windows-x64.msi',
-    chunks: chunkedParts('windows-msi-3.0.0', 'CPE-Network-Dashboard-3.0.0-windows-x64.msi', 5),
-    chunkBytes: chunkBytes['windows-msi-3.0.0'],
-    size: '98.9 MiB',
-    checksum: '9e738a7cedfe93ffdaa2c8a73a8689d31d9118ccf4c5b757664d6a4e7039f7cf',
-    label: 'Windows 固定部署',
-    copy: '维护机、办公电脑或者固定安装的环境，用 MSI 更合适。',
-  },
-  {
-    id: 'windows-portable-3.0.0',
-    platform: 'Windows',
-    version: '3.0.0',
-    title: 'Windows Portable',
-    fileName: 'CPE-Network-Dashboard-3.0.0-protected-portable-windows-x64.zip',
-    chunks: chunkedParts(
-      'windows-portable-3.0.0',
-      'CPE-Network-Dashboard-3.0.0-protected-portable-windows-x64.zip',
-      5
-    ),
-    chunkBytes: chunkBytes['windows-portable-3.0.0'],
-    size: '97.5 MiB',
-    checksum: 'a359d9eff066173efd7431687b804d6fa7a63a511aa477f21440f06fecb9983a',
-    label: 'Windows 免安装',
-    copy: '临时电脑、U 盘携带、没权限安装的时候，用这个。',
+    label: '旧版 Android 3.5',
+    copy: '这是旧版本，仅保留给暂时需要回退的 Android 用户。新用户建议下载 3.5.2。',
   },
 ]
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: '3.5.2',
+    date: '2026-06-08',
+    badge: 'Android / macOS / Windows 最新正式版',
+    lead:
+      '3.5.2 已经同步发布 Android、macOS 和 Windows。这个版本重点修复烽火 / FiberHome 登录后连接页反复闪烁的问题，并把 Android 应用内检查更新和桌面端近期改进一起纳入当前公开版本。',
+    sections: [
+      {
+        title: '修复问题',
+        items: [
+          '修复烽火 / FiberHome 登录后连接页闪烁的问题：后台重登录时保留当前可见连接状态，不再在自动刷新过程中反复退回登录页。',
+          '烽火后台重登录失败时不再强制清空连接页状态，减少自动刷新时的页面跳动和重复闪屏。',
+          '桌面端同步 Android 分支的烽火后台重登录逻辑，保留旧的有效连接数据，同时在后台继续重试。',
+        ],
+      },
+      {
+        title: '更新能力',
+        items: [
+          'Android 新增应用内检查更新，支持手动检查、下载进度、SHA-256 校验和系统安装器交接。',
+          '应用更新接口支持单 APK 下载，也支持按分片索引下载、按顺序合并并校验后安装，继续沿用官网低成本分片下载方式。',
+          '关于页和设置页版本号改为读取构建信息，App 内显示会和实际安装包版本一致。',
+        ],
+      },
+      {
+        title: '桌面端同步',
+        items: [
+          'macOS 和 Windows 桌面端版本同步到 3.5.2，继续保留更新检测、已保存设备、测试页面、AMBR/QCI 和紧凑看板等近期改进。',
+          'Windows 继续保留受保护便携版打包流程，并在官网下载页默认推荐 Portable 免安装包。',
+          'Windows 新增固定签名辅助脚本，便于后续统一处理安装包签名。',
+        ],
+      },
+      {
+        title: '发布包',
+        items: [
+          'Android：CPENetworkDashboard-v3.5.2.apk，SHA-256：302ceb8f1c145b8e41eac55aa33067bcc5eb9e5b19354a9bf09cd985211fc1b6。',
+          'macOS：CPE-Network-Dashboard-3.5.2-macos-arm64.dmg，SHA-256：cf03bf8ae81ef106acce2b24fb69b868b8445c456cd01468b37d62cb24086288。',
+          'Windows Portable：CPE-Network-Dashboard-3.5.2-protected-portable-windows-x64.zip，SHA-256：1587f5e4eea86718f7c1f3c6ada053a6d2c24b1608801667cd92dffb438ed549。',
+          'Windows EXE：CPE-Network-Dashboard-3.5.2-windows-x64.exe，SHA-256：51ff1548a340b643fa0c9b1bc6640d1324b1a21cdf89bf75c2827cd82c1df3e5。',
+          'Windows MSI：CPE-Network-Dashboard-3.5.2-windows-x64.msi，SHA-256：32ec9c0b3bc1de358ac8da89c902243874f0ed311a4d55234d4fd51c6d9e3362。',
+        ],
+      },
+    ],
+  },
+  {
     version: 'Android 3.5',
     date: '2026-06-08',
-    badge: '当前 Android 正式版',
-    lead: 'Android 3.5 正式版已经作为当前公开 APK 发布。本次重点新增通则设备适配、华为 E6898-886 专项适配，并重构测速页面。当前没有 Android Beta 版本，后续测试版会单独进入 Beta 通道。',
+    badge: '旧版 Android 正式版',
+    lead:
+      'Android 3.5 是当前保留的旧版 Android 包，主要用于需要回退的用户。新用户建议下载 3.5.2。',
     sections: [
       {
         title: '新增功能',
@@ -445,7 +495,7 @@ export const changelogEntries: ChangelogEntry[] = [
 export const aboutInfo: AboutInfo = {
   chineseName: 'CPE网络看板',
   englishName: 'CPE Network Dashboard',
-  versionName: '3.0.0',
+  versionName: '3.5.2',
   userGroup: '955206409',
   description:
     '面向 4G/5G CPE 的管理工具。覆盖连接状态、射频指标、SIM/AMBR、锁频锁小区、邻区扫描、测速、Ping 与路由测试。',

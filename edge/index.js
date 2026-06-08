@@ -23,7 +23,7 @@ const KV_NAMESPACE = 'cpeweb'
 const EDGE_BUILD = '2026-06-08.1'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
-const UPDATE_STORE_VERSION = 1
+const UPDATE_STORE_VERSION = 2
 const MAX_JSON_BYTES = 24 * 1024
 const MAX_DAILY_EVENTS = 360
 const PUBLIC_DAYS = 7
@@ -313,76 +313,76 @@ function normalizeGeo(geo, ip) {
 }
 
 const DOWNLOADS = {
+  'android-3.5.2': {
+    platform: 'android',
+    version: '3.5.2',
+    label: 'Android 3.5.2 Release APK',
+    fileName: 'CPENetworkDashboard-v3.5.2.apk',
+    href: '/downloads/CPENetworkDashboard-v3.5.2.apk',
+    size: '13.3 MiB',
+    checksum: '302ceb8f1c145b8e41eac55aa33067bcc5eb9e5b19354a9bf09cd985211fc1b6',
+    channel: 'stable',
+  },
   'android-3.5': {
     platform: 'android',
     version: '3.5',
-    label: 'Android 3.5 Release APK',
+    label: 'Android 3.5 Legacy APK',
     fileName: 'CPENetworkDashboard V3.5-Release.apk',
     href: '/downloads/CPENetworkDashboard V3.5-Release.apk',
     size: '13.3 MiB',
     checksum: '9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700',
     channel: 'stable',
   },
-  'android-3.1': {
-    platform: 'android',
-    version: '3.1',
-    label: 'Android 3.1 APK',
-    fileName: 'CPE-Network-Dashboard-3.1-android.apk',
-    href: '/downloads/CPE-Network-Dashboard-3.1-android.apk',
-    size: '12.6 MiB',
-    checksum: '9aed997cc91f34a0b17bf79c31230ca1f459064a9f797f49d78a9df0b547b790',
-    channel: 'stable',
-  },
-  'macos-3.0.0': {
+  'macos-3.5.2': {
     platform: 'macos',
-    version: '3.0.0',
-    label: 'macOS 3.0.0 DMG',
-    fileName: 'CPE-Network-Dashboard-3.0.0-macos.dmg',
+    version: '3.5.2',
+    label: 'macOS 3.5.2 DMG',
+    fileName: 'CPE-Network-Dashboard-3.5.2-macos-arm64.dmg',
     href: '/#/download',
-    chunks: chunkedParts('macos-3.0.0', 'CPE-Network-Dashboard-3.0.0-macos.dmg', 5),
-    chunkBytes: [20971520, 20971520, 20971520, 20971520, 5976951],
-    size: '85.7 MiB',
-    checksum: '35ae5e36c5c72723e520c7240a7ff39263a51567f48936815b9973478d5de952',
+    chunks: chunkedParts('macos-3.5.2', 'CPE-Network-Dashboard-3.5.2-macos-arm64.dmg', 7),
+    chunkBytes: [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 1794421],
+    size: '121.7 MiB',
+    checksum: 'cf03bf8ae81ef106acce2b24fb69b868b8445c456cd01468b37d62cb24086288',
     channel: 'stable',
   },
-  'windows-exe-3.0.0': {
+  'windows-exe-3.5.2': {
     platform: 'windows',
-    version: '3.0.0',
-    label: 'Windows 3.0.0 EXE',
-    fileName: 'CPE-Network-Dashboard-3.0.0-windows-x64.exe',
+    version: '3.5.2',
+    label: 'Windows 3.5.2 EXE',
+    fileName: 'CPE-Network-Dashboard-3.5.2-windows-x64.exe',
     href: '/#/download',
-    chunks: chunkedParts('windows-exe-3.0.0', 'CPE-Network-Dashboard-3.0.0-windows-x64.exe', 5),
-    chunkBytes: [20971520, 20971520, 20971520, 20971520, 20507136],
-    size: '99.6 MiB',
-    checksum: '0d613ea043d0f38f17d52334ad3c42fddb4beeb80877eda0aa87c6165d466803',
+    chunks: chunkedParts('windows-exe-3.5.2', 'CPE-Network-Dashboard-3.5.2-windows-x64.exe', 7),
+    chunkBytes: [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 14713072],
+    size: '134.0 MiB',
+    checksum: '51ff1548a340b643fa0c9b1bc6640d1324b1a21cdf89bf75c2827cd82c1df3e5',
     channel: 'stable',
   },
-  'windows-msi-3.0.0': {
+  'windows-msi-3.5.2': {
     platform: 'windows',
-    version: '3.0.0',
-    label: 'Windows 3.0.0 MSI',
-    fileName: 'CPE-Network-Dashboard-3.0.0-windows-x64.msi',
+    version: '3.5.2',
+    label: 'Windows 3.5.2 MSI',
+    fileName: 'CPE-Network-Dashboard-3.5.2-windows-x64.msi',
     href: '/#/download',
-    chunks: chunkedParts('windows-msi-3.0.0', 'CPE-Network-Dashboard-3.0.0-windows-x64.msi', 5),
-    chunkBytes: [20971520, 20971520, 20971520, 20971520, 19799576],
-    size: '98.9 MiB',
-    checksum: '9e738a7cedfe93ffdaa2c8a73a8689d31d9118ccf4c5b757664d6a4e7039f7cf',
+    chunks: chunkedParts('windows-msi-3.5.2', 'CPE-Network-Dashboard-3.5.2-windows-x64.msi', 7),
+    chunkBytes: [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 14004224],
+    size: '133.4 MiB',
+    checksum: '32ec9c0b3bc1de358ac8da89c902243874f0ed311a4d55234d4fd51c6d9e3362',
     channel: 'stable',
   },
-  'windows-portable-3.0.0': {
+  'windows-portable-3.5.2': {
     platform: 'windows',
-    version: '3.0.0',
-    label: 'Windows 3.0.0 Portable',
-    fileName: 'CPE-Network-Dashboard-3.0.0-protected-portable-windows-x64.zip',
+    version: '3.5.2',
+    label: 'Windows 3.5.2 Portable',
+    fileName: 'CPE-Network-Dashboard-3.5.2-protected-portable-windows-x64.zip',
     href: '/#/download',
     chunks: chunkedParts(
-      'windows-portable-3.0.0',
-      'CPE-Network-Dashboard-3.0.0-protected-portable-windows-x64.zip',
-      5
+      'windows-portable-3.5.2',
+      'CPE-Network-Dashboard-3.5.2-protected-portable-windows-x64.zip',
+      6
     ),
-    chunkBytes: [20971520, 20971520, 20971520, 20971520, 18346522],
-    size: '97.5 MiB',
-    checksum: 'a359d9eff066173efd7431687b804d6fa7a63a511aa477f21440f06fecb9983a',
+    chunkBytes: [20971520, 20971520, 20971520, 20971520, 20971520, 14572374],
+    size: '113.9 MiB',
+    checksum: '1587f5e4eea86718f7c1f3c6ada053a6d2c24b1608801667cd92dffb438ed549',
     channel: 'stable',
   },
 }
@@ -412,24 +412,45 @@ const DEFAULT_UPDATE_CHANNEL = 'stable'
 
 const DEFAULT_RELEASES = {
   android: {
-    stable: releaseFromDownload('android-3.5', {
-      notes: 'Android 3.5 正式版：新增通则设备适配和华为 E6898-886 适配，重构测速页，并修复 AMBR、流量单位、锁频提示等问题。',
+    stable: releaseFromDownload('android-3.5.2', {
+      versionCode: 10,
+      releaseDate: '2026-06-08',
+      notes: '3.5.2 正式版：修复烽火 / FiberHome 登录后连接页闪烁，新增应用内检查更新、下载进度和校验安装流程。',
     }),
   },
   windows: {
-    stable: releaseFromDownload('windows-exe-3.0.0', {
-      notes: '当前 Windows 桌面版。',
-      alternatives: ['windows-msi-3.0.0', 'windows-portable-3.0.0'].map((id) =>
+    stable: releaseFromDownload('windows-portable-3.5.2', {
+      versionCode: 352,
+      releaseDate: '2026-06-08',
+      notes: '3.5.2 Windows 桌面版：同步烽火后台重登录修复，默认推荐 Portable 免安装包，EXE 和 MSI 作为备选。',
+      alternatives: ['windows-exe-3.5.2', 'windows-msi-3.5.2'].map((id) =>
         releaseDownloadPayload(id)
       ),
     }),
   },
   macos: {
-    stable: releaseFromDownload('macos-3.0.0', {
-      notes: '当前 macOS 桌面版。',
+    stable: releaseFromDownload('macos-3.5.2', {
+      versionCode: 352,
+      releaseDate: '2026-06-08',
+      notes: '3.5.2 macOS 桌面版：同步烽火后台重登录修复，并保留近期桌面端更新检测、设备保存和紧凑看板改进。',
     }),
   },
-  ios: {},
+  ios: {
+    stable: {
+      platform: 'ios',
+      channel: 'stable',
+      version: 'coming-soon',
+      versionCode: 0,
+      title: 'iOS 版本正在路上',
+      notes: 'iOS 版本正在推进，预计很快就能和大家见面。',
+      releaseDate: '',
+      publishedAt: '',
+      mandatory: false,
+      minSupportedVersion: '',
+      download: null,
+      alternatives: [],
+    },
+  },
 }
 
 function normalizeUpdatePlatform(value) {
@@ -570,6 +591,7 @@ async function readUpdateStore(kv) {
   if (!str) return defaults
   try {
     const parsed = JSON.parse(str)
+    if (Number(parsed?.version || 0) < UPDATE_STORE_VERSION) return defaults
     const releases = { ...defaults.releases }
     for (const [platform, channels] of Object.entries(parsed?.releases || {})) {
       const normalizedPlatform = normalizeUpdatePlatform(platform)

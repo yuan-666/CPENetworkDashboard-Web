@@ -7,7 +7,7 @@ import { changelogEntries } from '@/content'
     <header class="page-heading">
       <p>更新日志</p>
       <h1>更新日志</h1>
-      <span>Android 3.5 是当前最新正式版；当前暂无 Android Beta 版本；macOS 和 Windows 当前桌面包为 3.0.0。</span>
+      <span>3.5.2 是当前最新正式版，已同步 Android、macOS 和 Windows；iOS 版本正在路上，敬请期待。</span>
     </header>
 
     <div class="timeline">

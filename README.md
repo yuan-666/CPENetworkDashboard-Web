@@ -15,39 +15,32 @@ CPE 网络看板产品官网。前端使用 Vue 3 + TypeScript + Vite，下载�
 ESA 静态构建产物单文件限制为 25MB。当前发布方式是：
 
 - Android APK 小于 25MB，保留原始文件直链。
-- macOS DMG、Windows EXE、Windows MSI、Windows Portable 原始包移出 `public`，不进入 `dist`。
+- macOS DMG、Windows EXE、Windows MSI、Windows Portable 原始大包不直接放入 `dist`。
 - 大文件按 20MiB 拆到 `public/downloads/chunks/<file-id>/`，前端点击下载时逐片读取并在浏览器中合成为原文件。
-- 原始大文件仅保留在本地 `release-originals/`，该目录被 `.gitignore` 忽略，不参与 ESA 发布。
+- 原始大文件仅作为 GitHub Release 附件发布；ESA 侧继续使用分片下载，保持当前省成本分发方式。
 
 ## 官网内容结构
 
-官网使用 Vue 单页应用拆出独立 hash 页面，部署到 ESA 静态站点时不依赖子路径回源规则：
-
-| 页面     | 路径          | 内容                                                                                       |
-| -------- | ------------- | ------------------------------------------------------------------------------------------ |
+| 页面     | 路径          | 内容                                                                                         |
+| -------- | ------------- | -------------------------------------------------------------------------------------------- |
 | 首页     | `#/`          | 应用图标、核心产品表达、电脑/手机界面动效和指标滚动条                                      |
 | 产品介绍 | `#/product`   | 排障流程、电脑端截图、手机端截图、平台说明和设备覆盖                                       |
-| 下载     | `#/download`  | 自动识别当前设备并推荐 Android APK、macOS DMG 或 Windows EXE，保留 MSI / Portable 手动选择 |
-| 更新日志 | `#/changelog` | 按用户场景展开 Android 3.5、Desktop 3.0.0、Cross-platform 3.0、Upstream 2.7 / 2.6          |
-| 关于     | `#/about`     | 同步应用内部 About：软件名、版本、QQ群、制作者和完整致谢名单                               |
-
-截图展示规则：
-
-- 电脑端展示只引用 `public/media/computer` 横向截图。
-- 手机端展示只引用 `public/media/phone` 长屏截图。
-- 首页可以同时出现电脑端和手机端画面，但会分别放在桌面窗口与手机外框中。
-- 下载页保留所有公开安装包的静态下载、下载统计和 SHA-256 复制。
-- 桌面大包通过前端分片下载合并，边缘函数的下载跳转指向 `/#/download`。
+| 下载     | `#/download`  | 自动识别当前设备并推荐 Android APK、macOS DMG 或 Windows Portable，保留 EXE / MSI 手动选择 |
+| 更新日志 | `#/changelog` | 展开 3.5.2、Android 3.5 旧版、Desktop 3.0.0、Cross-platform 3.0 等更新记录                  |
+| 关于     | `#/about`     | 软件名、版本、QQ群、开发者、赞助入口和完整致谢名单                                          |
 
 ## 当前公开下载
 
-| 文件                                                             | 平台        | 版本  | 大小     |
-| ---------------------------------------------------------------- | ----------- | ----- | -------- |
-| `CPENetworkDashboard V3.5-Release.apk`                           | Android     | 3.5   | 13.3 MiB |
-| `CPE-Network-Dashboard-3.0.0-macos.dmg`                          | macOS       | 3.0.0 | 85.7 MiB |
-| `CPE-Network-Dashboard-3.0.0-windows-x64.exe`                    | Windows x64 | 3.0.0 | 99.6 MiB |
-| `CPE-Network-Dashboard-3.0.0-windows-x64.msi`                    | Windows x64 | 3.0.0 | 98.9 MiB |
-| `CPE-Network-Dashboard-3.0.0-protected-portable-windows-x64.zip` | Windows x64 | 3.0.0 | 97.5 MiB |
+| 文件                                                               | 平台        | 版本  | 大小      |
+| ------------------------------------------------------------------ | ----------- | ----- | --------- |
+| `CPENetworkDashboard-v3.5.2.apk`                                   | Android     | 3.5.2 | 13.3 MiB  |
+| `CPENetworkDashboard V3.5-Release.apk`                             | Android     | 3.5   | 13.3 MiB  |
+| `CPE-Network-Dashboard-3.5.2-macos-arm64.dmg`                      | macOS arm64 | 3.5.2 | 121.7 MiB |
+| `CPE-Network-Dashboard-3.5.2-protected-portable-windows-x64.zip`   | Windows x64 | 3.5.2 | 113.9 MiB |
+| `CPE-Network-Dashboard-3.5.2-windows-x64.exe`                      | Windows x64 | 3.5.2 | 134.0 MiB |
+| `CPE-Network-Dashboard-3.5.2-windows-x64.msi`                      | Windows x64 | 3.5.2 | 133.4 MiB |
+
+Android 3.5 是旧版回退包，当前默认推荐 3.5.2。Windows 默认推荐 Portable 免安装包。
 
 SHA-256 见 `public/downloads/checksums.txt`。桌面端大文件在网页里自动分片下载并合并，用户不需要手动处理分片。
 
@@ -85,18 +78,20 @@ cpeweb
 
 公开 API：
 
-| 路径                      | 方法 | 用途                                   |
-| ------------------------- | ---- | -------------------------------------- |
-| `/api/health`             | GET  | 健康检查                               |
-| `/api/counter?skip=1`     | GET  | 读取访问计数                           |
-| `/api/track`              | POST | 写入页面访问事件                       |
-| `/api/download`           | POST | 写入下载点击事件                       |
-| `/api/download?file=<id>` | GET  | 统计后跳转；大文件请使用页面内分片下载 |
-| `/api/downloads`          | GET  | 读取下载计数                           |
-| `/api/updates/latest`     | GET  | 读取当前公开最新版本                    |
-| `/api/updates/check`      | GET/POST | 按平台和当前版本检测是否需要更新     |
-| `/api/updates/publish`    | POST | 使用写入 token 发布云端最新版本         |
-| `/api/analytics/summary`  | GET  | 公开聚合统计                           |
+| 路径                      | 方法     | 用途                                      |
+| ------------------------- | -------- | ----------------------------------------- |
+| `/api/health`             | GET      | 健康检查                                  |
+| `/api/counter?skip=1`     | GET      | 读取访问计数                              |
+| `/api/track`              | POST     | 写入页面访问事件                          |
+| `/api/download`           | POST     | 写入下载点击事件                          |
+| `/api/download?file=<id>` | GET      | 统计后跳转；大文件请使用页面内分片下载    |
+| `/api/downloads`          | GET      | 读取下载计数                              |
+| `/api/updates/latest`     | GET      | 读取当前公开最新版本                      |
+| `/api/updates/check`      | GET/POST | 按平台和当前版本检测是否需要更新          |
+| `/api/updates/publish`    | POST     | 使用写入 token 发布云端最新版本           |
+| `/api/analytics/summary`  | GET      | 公开聚合统计                              |
+
+3.5.2 起，更新检测默认数据包括 Android、Windows、macOS；iOS 返回“正在路上”的占位信息，不提供下载包。
 
 前端默认 API 前缀为 `/api`，需要改路径时设置：
 
@@ -121,6 +116,7 @@ VITE_API_TOKEN=your-token npm run build
 
 ## 内容来源
 
-- Android 3.5 更新记录来自本次官网需求。
+- 3.5.2 更新记录来自 Android 3.5.1/3.5.2 与桌面 3.5.2 发布说明。
+- Android 3.5 更新记录来自官网发布需求。
 - 桌面 3.0.0、跨平台 3.0 记录整理自当前产品仓库的 `README.md`、`VERSION.md` 和 `RELEASE_NOTES_V3.0.0.md`。
 - 官网 `CHANGELOG.md` 保留更完整的公开发布记录，产品页只保留适合用户阅读的更新摘要。

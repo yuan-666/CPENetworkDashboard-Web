@@ -1,5 +1,15 @@
 # CPE Network Dashboard Web Changelog
 
+## Release 3.5.2 (2026-06-08)
+
+- 发布 Android、macOS arm64、Windows EXE、Windows MSI 和 Windows Portable 3.5.2 安装包。
+- Android 更新到 `versionCode = 10` / `versionName = "3.5.2"`，修复烽火 / FiberHome 登录后连接页反复闪烁的问题。
+- Android 3.5.1 已加入应用内检查更新：支持手动检查、下载进度、SHA-256 校验、系统安装器交接，以及单 APK / 分片下载两种下载模式。
+- 桌面端同步烽火后台重登录修复，继续保留更新检测、已保存设备、测试页面、AMBR/QCI 和紧凑看板等近期改进。
+- 官网下载页更新到 3.5.2，Windows 默认推荐 Portable 免安装包；Android 旧版只保留 3.5，并显著标记为旧版本。
+- ESA 分发继续使用 20MiB 分片下载和浏览器合并方式，避免桌面大包进入单文件构建限制。
+- 后端 `/api/updates/check` 默认数据更新到 Android / Windows / macOS 3.5.2，并加入 iOS “正在路上”的占位信息。
+
 ## Website 2.0.3 (2026-06-08)
 
 - 新增访问统计页面，展示访问量、下载排行、24 小时分布、来源/设备拆分和城市分布。
