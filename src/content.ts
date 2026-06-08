@@ -490,6 +490,15 @@ export const aboutInfo: AboutInfo = {
       contribution: '负责项目宣传部分。纯血鸿蒙设备可继续关注由墨戥玳独立开发的 CPE 监控面板。',
     },
     {
+      name: '大湾区网络观察',
+      contribution: '建议增加中兴、烽火的载波聚合显示卡片，让当前载波聚合的小区连接情况更直观。',
+    },
+    {
+      name: '马野',
+      contribution: '提供鲲鹏多设备接口 C5800+AK68 帮助；马野正在开发鲲鹏系统的一键安装脚本。',
+      links: [{ label: '鲲鹏脚本', href: 'https://nradio.mayebano.shop/' }],
+    },
+    {
       name: '空',
       contribution: '空哥在测试时提供了设备，也给了项目很多其他方面的帮助。',
     },
@@ -498,15 +507,6 @@ export const aboutInfo: AboutInfo = {
       contribution:
         '本 app 的 UI 设计引用了 GitHub 上 AndroidLiquidGlassView 项目的方案，感谢作者的开源实现。',
       links: [{ label: 'GitHub', href: 'https://github.com/QmDeve/AndroidLiquidGlassView' }],
-    },
-    {
-      name: '大湾区网络观察',
-      contribution: '建议增加中兴、烽火的载波聚合显示卡片，让当前载波聚合的小区连接情况更直观。',
-    },
-    {
-      name: '马野',
-      contribution: '提供鲲鹏多设备接口 C5800+AK68 帮助；马野正在开发鲲鹏系统的一键安装脚本。',
-      links: [{ label: '鲲鹏脚本', href: 'https://nradio.mayebano.shop/' }],
     },
     {
       name: '春风不语',
