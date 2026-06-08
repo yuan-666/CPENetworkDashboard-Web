@@ -21,11 +21,56 @@ function writeHeaders(): HeadersInit {
   }
 }
 
+function numberOrZero(value: unknown): number {
+  const next = Number(value)
+  return Number.isFinite(next) ? next : 0
+}
+
+function arrayOrEmpty<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : []
+}
+
+function normalizeSummary(value: Partial<AnalyticsSummary> | null | undefined): AnalyticsSummary {
+  const downloadsByFile =
+    value?.downloadsByFile && typeof value.downloadsByFile === 'object'
+      ? value.downloadsByFile
+      : {}
+  const downloadsTotal = Object.values(downloadsByFile).reduce(
+    (sum, item) => sum + numberOrZero(item?.total),
+    0
+  )
+
+  return {
+    visits: {
+      total: numberOrZero(value?.visits?.total),
+      today: numberOrZero(value?.visits?.today),
+    },
+    downloadsTotal: Math.max(numberOrZero(value?.downloadsTotal), downloadsTotal),
+    downloadsByFile,
+    pages: arrayOrEmpty(value?.pages),
+    referrers: arrayOrEmpty(value?.referrers),
+    devices: arrayOrEmpty(value?.devices),
+    recent: arrayOrEmpty(value?.recent),
+    geo: {
+      countries: arrayOrEmpty(value?.geo?.countries),
+      cities: arrayOrEmpty(value?.geo?.cities),
+    },
+    hourly: value?.hourly
+      ? {
+          bars: arrayOrEmpty(value.hourly.bars),
+          total: numberOrZero(value.hourly.total),
+          max: numberOrZero(value.hourly.max),
+          currentHour: numberOrZero(value.hourly.currentHour),
+        }
+      : undefined,
+  }
+}
+
 export async function fetchSummary(): Promise<AnalyticsSummary> {
   const response = await fetch(apiUrl('/analytics/summary'), {
     headers: { Accept: 'application/json' },
   })
-  return readJson<AnalyticsSummary>(response)
+  return normalizeSummary(await readJson<Partial<AnalyticsSummary>>(response))
 }
 
 function currentPagePath(): string {

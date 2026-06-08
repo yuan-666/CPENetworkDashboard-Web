@@ -103,6 +103,8 @@ export interface AnalyticsSummary {
   referrers: BreakdownItem[]
   devices: BreakdownItem[]
   recent: RecentEvent[]
+  geo?: GeoData
+  hourly?: HourlyData
 }
 
 export interface BreakdownItem {
@@ -120,6 +122,44 @@ export interface RecentEvent {
   device?: string
   browser?: string
   os?: string
+  country?: string
+  countryCode?: string
+  city?: string
+  region?: string
+  lat?: number
+  lon?: number
+}
+
+export interface CountryStat {
+  name: string
+  count: number
+}
+
+export interface CityStat {
+  country: string
+  countryCode: string
+  city: string
+  region: string
+  lat: number
+  lon: number
+  count: number
+}
+
+export interface GeoData {
+  countries: CountryStat[]
+  cities: CityStat[]
+}
+
+export interface HourlyBar {
+  hour: number
+  count: number
+}
+
+export interface HourlyData {
+  bars: HourlyBar[]
+  total: number
+  max: number
+  currentHour: number
 }
 
 export interface DownloadState {

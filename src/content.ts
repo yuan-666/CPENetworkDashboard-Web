@@ -16,6 +16,7 @@ export const routes: Route[] = [
   { path: '/download', label: '下载', title: '下载 CPE 网络看板' },
   { path: '/changelog', label: '更新日志', title: '更新日志' },
   { path: '/about', label: '关于', title: '关于 CPE 网络看板' },
+  { path: '/analytics', label: '统计', title: '访问统计' },
 ]
 
 export const heroDesktopImage = '/media/computer/desktop-signal-dashboard.png'

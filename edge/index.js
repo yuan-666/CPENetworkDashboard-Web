@@ -18,14 +18,177 @@
  */
 
 const KV_NAMESPACE = 'cpeweb'
-const EDGE_BUILD = '2026-05-28.2'
+const EDGE_BUILD = '2026-06-08.1'
 const ANALYTICS_KEY = 'analytics'
 const MAX_JSON_BYTES = 24 * 1024
 const MAX_DAILY_EVENTS = 360
 const PUBLIC_DAYS = 7
+const ANALYTICS_READ_CACHE_TTL_MS = 15 * 1000
+const ANALYTICS_FLUSH_INTERVAL_MS = 60 * 1000
+const ANALYTICS_FLUSH_EVENT_THRESHOLD = 24
+const GEO_CACHE_TTL_MS = 6 * 60 * 60 * 1000
+const RATE_BUCKET_MAX_ENTRIES = 1000
 const WRITE_TOKEN = readEnv('CPE_STATS_TOKEN') || readEnv('STATS_WRITE_TOKEN')
 
+function runtimeState() {
+  const key = '__CPE_NETWORK_DASHBOARD_EDGE_RUNTIME__'
+  if (!globalThis[key]) {
+    globalThis[key] = {
+      analyticsStore: null,
+      analyticsStoreLoadedAt: 0,
+      dirtyEvents: 0,
+      lastFlushAt: 0,
+      mutationQueue: Promise.resolve(),
+      rateBuckets: new Map(),
+      geoCache: new Map(),
+    }
+  }
+  return globalThis[key]
+}
+
+const GEO_PROVIDERS = [
+  {
+    url: (ip) => `https://api.ip.sb/geoip/${ip}`,
+    parse: (data) => ({
+      country: data.country || '',
+      countryCode: data.country_code || '',
+      region: data.region || '',
+      city: data.city || '',
+      lat: data.latitude,
+      lon: data.longitude,
+    }),
+  },
+  {
+    url: (ip) => `https://ipwho.is/${ip}`,
+    parse: (data) => ({
+      country: data.country || '',
+      countryCode: data.country_code || '',
+      region: data.region || '',
+      city: data.city || '',
+      lat: data.latitude,
+      lon: data.longitude,
+    }),
+  },
+]
+
+const CN_CITY_ALIASES = {
+  昆山: '苏州',
+  常熟: '苏州',
+  张家港: '苏州',
+  太仓: '苏州',
+  南山: '深圳',
+  福田: '深圳',
+  罗湖: '深圳',
+  宝安: '深圳',
+  龙岗: '深圳',
+  龙华: '深圳',
+  光明: '深圳',
+  坪山: '深圳',
+  大鹏: '深圳',
+  盐田: '深圳',
+  浦东: '上海',
+  闵行: '上海',
+  徐汇: '上海',
+  静安: '上海',
+  黄浦: '上海',
+  长宁: '上海',
+  虹口: '上海',
+  杨浦: '上海',
+  宝山: '上海',
+  嘉定: '上海',
+  松江: '上海',
+  青浦: '上海',
+  奉贤: '上海',
+  金山: '上海',
+  崇明: '上海',
+  海淀: '北京',
+  朝阳: '北京',
+  丰台: '北京',
+  石景山: '北京',
+  通州: '北京',
+  顺义: '北京',
+  昌平: '北京',
+  大兴: '北京',
+  亦庄: '北京',
+}
+
+function isPrivateIP(ip) {
+  return (
+    !ip ||
+    ip === '0.0.0.0' ||
+    ip === '127.0.0.1' ||
+    ip === '::1' ||
+    ip.startsWith('10.') ||
+    ip.startsWith('192.168.') ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(ip)
+  )
+}
+
+async function fetchGeo(ip) {
+  if (isPrivateIP(ip)) return null
+
+  const runtime = runtimeState()
+  const cached = runtime.geoCache.get(ip)
+  if (cached && cached.expiresAt > Date.now()) return cached.value
+
+  for (const provider of GEO_PROVIDERS) {
+    let timeout = 0
+    try {
+      const controller = new AbortController()
+      timeout = setTimeout(() => controller.abort(), 900)
+      const response = await fetch(provider.url(ip), {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'cpe-network-dashboard/1.0' },
+      })
+      if (!response.ok) continue
+      const data = await response.json()
+      if (!data || data.error || data.status === 'fail') continue
+      const geo = provider.parse(data)
+      if (geo.country || geo.city) {
+        runtime.geoCache.set(ip, { value: geo, expiresAt: Date.now() + GEO_CACHE_TTL_MS })
+        return geo
+      }
+    } catch {
+      /* try next provider */
+    } finally {
+      clearTimeout(timeout)
+    }
+  }
+
+  runtime.geoCache.set(ip, { value: null, expiresAt: Date.now() + 10 * 60 * 1000 })
+  return null
+}
+
+function normalizeGeo(geo, ip) {
+  if (!geo) return { ip: ipBucket(ip) }
+  let { country, countryCode, region, city, lat, lon } = geo
+  country = country || '未知'
+  countryCode = String(countryCode || '').toUpperCase()
+  city = city || '未知'
+  region = region || ''
+
+  if (countryCode === 'TW') country = '中国台湾'
+  if (countryCode === 'HK') country = '中国香港'
+  if (countryCode === 'MO') country = '中国澳门'
+  if (CN_CITY_ALIASES[city]) city = CN_CITY_ALIASES[city]
+  if (['北京', '上海', '天津', '重庆'].includes(city)) region = city
+
+  return {
+    ip: ipBucket(ip),
+    country,
+    countryCode,
+    region,
+    city,
+    lat: typeof lat === 'number' ? lat : parseFloat(lat) || 0,
+    lon: typeof lon === 'number' ? lon : parseFloat(lon) || 0,
+  }
+}
+
 const DOWNLOADS = {
+  'android-3.2-beta': {
+    label: 'Android 3.2 Beta APK',
+    href: '/downloads/CPENetworkDashboard V3.2-Beta.apk',
+  },
   'android-3.1': {
     label: 'Android 3.1 APK',
     href: '/downloads/CPE-Network-Dashboard-3.1-android.apk',
@@ -190,13 +353,26 @@ async function kvPutText(kv, key, value) {
   await kv.put(key, String(value))
 }
 
-async function consumeRate(kv, key, limit, windowSeconds) {
+function trimRateBuckets(buckets) {
+  if (buckets.size <= RATE_BUCKET_MAX_ENTRIES) return
+  const now = Date.now()
+  for (const [key, bucket] of buckets.entries()) {
+    if (bucket.resetAt <= now || buckets.size > RATE_BUCKET_MAX_ENTRIES) buckets.delete(key)
+  }
+}
+
+async function consumeRate(key, limit, windowSeconds) {
   try {
-    const windowId = Math.floor(Date.now() / 1000 / windowSeconds)
-    const rateKey = kvKey('rate', key, windowSeconds, windowId)
-    const current = parseInt((await kvGetText(kv, rateKey)) || '0', 10)
-    if (current >= limit) return false
-    await kvPutText(kv, rateKey, current + 1)
+    const runtime = runtimeState()
+    const now = Date.now()
+    const rateKey = `${safeKey(key)}:${windowSeconds}`
+    const current = runtime.rateBuckets.get(rateKey)
+    const bucket =
+      current && current.resetAt > now ? current : { count: 0, resetAt: now + windowSeconds * 1000 }
+    if (bucket.count >= limit) return false
+    bucket.count += 1
+    runtime.rateBuckets.set(rateKey, bucket)
+    trimRateBuckets(runtime.rateBuckets)
     return true
   } catch {
     return true
@@ -250,22 +426,28 @@ function parseUserAgent(ua = '') {
   }
 }
 
-function sameSiteOrNoOrigin(request) {
+function sameSiteRequest(request, options = {}) {
+  const allowNoOrigin = Boolean(options.allowNoOrigin)
   const origin = request.headers.get('Origin')
   const referer = request.headers.get('Referer')
-  if (!origin && !referer) return true
+  const fetchSite = String(request.headers.get('Sec-Fetch-Site') || '').toLowerCase()
+  if (['same-origin', 'same-site'].includes(fetchSite)) return true
+  if (fetchSite && !['none', 'same-origin', 'same-site'].includes(fetchSite)) return false
 
   const targetHost = new URL(request.url).hostname.toLowerCase()
+  const localHosts = new Set(['localhost', '127.0.0.1', '::1'])
+  const isLocalTarget = localHosts.has(targetHost)
   const isAllowed = (value) => {
     if (!value) return false
     try {
       const host = new URL(value).hostname.toLowerCase()
-      return host === targetHost || host === 'localhost' || host === '127.0.0.1' || host === '::1'
+      return host === targetHost || (isLocalTarget && localHosts.has(host))
     } catch {
       return false
     }
   }
 
+  if (!origin && !referer) return allowNoOrigin
   return isAllowed(origin) || isAllowed(referer)
 }
 
@@ -276,6 +458,17 @@ function verifyWriteToken(request, body = {}) {
   const bodyToken = body && typeof body === 'object' ? String(body.token || '') : ''
   const bearer = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : ''
   return [headerToken, bodyToken, bearer].some((token) => token && token === WRITE_TOKEN)
+}
+
+function hasConfiguredWriteToken(request, body = {}) {
+  return Boolean(WRITE_TOKEN) && verifyWriteToken(request, body)
+}
+
+function guardWriteRequest(request, body = {}) {
+  const sameSite = sameSiteRequest(request)
+  const hasToken = hasConfiguredWriteToken(request, body)
+  if (!sameSite && !hasToken) return json({ error: 'Access denied' }, 403)
+  return null
 }
 
 async function readJsonLimited(request) {
@@ -418,13 +611,15 @@ function emptySummary() {
 
 function emptyAnalyticsStore() {
   return {
-    version: 1,
+    version: 2,
     updatedAt: '',
     counters: {
       visits: { total: 0, today: 0, todayKey: '' },
       downloads: {},
     },
     events: [],
+    geo: { countries: {}, cities: {} },
+    dailyVisits: [],
   }
 }
 
@@ -437,11 +632,25 @@ function normalizeStoredCounter(counter = {}, todayKey) {
 }
 
 async function readAnalyticsStore(kv) {
+  const runtime = runtimeState()
+  const cacheAge = Date.now() - runtime.analyticsStoreLoadedAt
+  if (
+    runtime.analyticsStore &&
+    (runtime.dirtyEvents > 0 || cacheAge < ANALYTICS_READ_CACHE_TTL_MS)
+  ) {
+    return runtime.analyticsStore
+  }
+
   const str = await kvGetText(kv, ANALYTICS_KEY)
-  if (!str) return emptyAnalyticsStore()
+  if (!str) {
+    runtime.analyticsStore = emptyAnalyticsStore()
+    runtime.analyticsStoreLoadedAt = Date.now()
+    return runtime.analyticsStore
+  }
+
   try {
     const parsed = JSON.parse(str)
-    return {
+    runtime.analyticsStore = {
       ...emptyAnalyticsStore(),
       ...parsed,
       counters: {
@@ -449,15 +658,29 @@ async function readAnalyticsStore(kv) {
         downloads: parsed?.counters?.downloads || {},
       },
       events: Array.isArray(parsed?.events) ? parsed.events : [],
+      geo: {
+        countries: parsed?.geo?.countries || {},
+        cities: parsed?.geo?.cities || {},
+      },
+      dailyVisits: Array.isArray(parsed?.dailyVisits) ? parsed.dailyVisits : [],
     }
+    runtime.analyticsStoreLoadedAt = Date.now()
+    return runtime.analyticsStore
   } catch {
-    return emptyAnalyticsStore()
+    runtime.analyticsStore = emptyAnalyticsStore()
+    runtime.analyticsStoreLoadedAt = Date.now()
+    return runtime.analyticsStore
   }
 }
 
 async function writeAnalyticsStore(kv, store) {
   store.updatedAt = new Date().toISOString()
   await kvPutText(kv, ANALYTICS_KEY, JSON.stringify(store))
+  const runtime = runtimeState()
+  runtime.analyticsStore = store
+  runtime.analyticsStoreLoadedAt = Date.now()
+  runtime.dirtyEvents = 0
+  runtime.lastFlushAt = Date.now()
 }
 
 function incrementStoredCounter(store, group, id, todayKey) {
@@ -484,11 +707,103 @@ function appendStoredEvent(store, event) {
   }
 }
 
+function appendStoredDailyVisit(store, event) {
+  store.dailyVisits.push({
+    time: event.time,
+    page: event.page,
+    country: event.country || '',
+    city: event.city || '',
+    device: event.device,
+    referrer: event.referrer,
+  })
+  const dates = new Set(recentDateKeys())
+  store.dailyVisits = store.dailyVisits
+    .filter((visit) => visit.time && dates.has(String(visit.time).slice(0, 10)))
+    .slice(-MAX_DAILY_EVENTS * PUBLIC_DAYS)
+}
+
+function incrementStoredGeo(store, geo) {
+  if (!geo || !geo.city || geo.city === '未知') return
+  const countryKey = geo.country || '未知'
+  if (!store.geo.countries[countryKey]) store.geo.countries[countryKey] = { count: 0 }
+  store.geo.countries[countryKey].count += 1
+
+  const cityKey = `${countryKey}|${geo.city}`
+  if (!store.geo.cities[cityKey]) {
+    store.geo.cities[cityKey] = {
+      country: geo.country || '',
+      countryCode: geo.countryCode || '',
+      city: geo.city || '',
+      region: geo.region || '',
+      lat: geo.lat || 0,
+      lon: geo.lon || 0,
+      count: 0,
+    }
+  }
+  store.geo.cities[cityKey].count += 1
+}
+
+function geoFromStore(store) {
+  return {
+    countries: Object.entries(store.geo?.countries || {})
+      .map(([name, data]) => ({ name, count: data.count || 0 }))
+      .sort((a, b) => b.count - a.count),
+    cities: Object.values(store.geo?.cities || {})
+      .map((data) => ({
+        country: data.country || '',
+        countryCode: data.countryCode || '',
+        city: data.city || '',
+        region: data.region || '',
+        lat: data.lat || 0,
+        lon: data.lon || 0,
+        count: data.count || 0,
+      }))
+      .sort((a, b) => b.count - a.count),
+  }
+}
+
+function buildHourlyBars(visits) {
+  const now = new Date()
+  const offset = now.getTimezoneOffset() + 480
+  const localNow = new Date(now.getTime() + offset * 60000)
+  const currentHour = localNow.getUTCHours()
+  const todayDate = localNow.toISOString().slice(0, 10)
+  const bars = Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 }))
+
+  for (const visit of visits || []) {
+    if (!visit.time) continue
+    const d = new Date(visit.time)
+    const local = new Date(d.getTime() + offset * 60000)
+    if (local.toISOString().slice(0, 10) !== todayDate) continue
+    const hour = local.getUTCHours()
+    if (hour >= 0 && hour < 24) bars[hour].count += 1
+  }
+
+  const total = bars.reduce((sum, item) => sum + item.count, 0)
+  const max = Math.max(1, ...bars.map((item) => item.count))
+  return { bars, total, max, currentHour }
+}
+
+function shouldFlushAnalytics(runtime, flushNow) {
+  if (flushNow) return true
+  if (runtime.dirtyEvents >= ANALYTICS_FLUSH_EVENT_THRESHOLD) return true
+  return Date.now() - runtime.lastFlushAt >= ANALYTICS_FLUSH_INTERVAL_MS
+}
+
 async function trackInAnalyticsStore(kv, mutator) {
-  const store = await readAnalyticsStore(kv)
-  const result = mutator(store)
-  await writeAnalyticsStore(kv, store)
-  return result
+  const runtime = runtimeState()
+  const pending = runtime.mutationQueue.then(async () => {
+    const store = await readAnalyticsStore(kv)
+    const result = mutator(store)
+    runtime.analyticsStore = store
+    runtime.dirtyEvents += 1
+    if (shouldFlushAnalytics(runtime, result.flushNow)) await writeAnalyticsStore(kv, store)
+    const publicResult = { ...result }
+    delete publicResult.flushNow
+    return publicResult
+  })
+  runtime.mutationQueue = pending.catch(() => undefined)
+  return pending
 }
 
 function summaryFromStore(store, todayKey) {
@@ -506,7 +821,10 @@ function summaryFromStore(store, todayKey) {
     downloadsTotal += counter.total
   }
 
-  const events = [...store.events].sort((a, b) =>
+  const events = [...(store.events || [])].sort((a, b) =>
+    String(b.time || '').localeCompare(String(a.time || ''))
+  )
+  const dailyVisits = [...(store.dailyVisits || [])].sort((a, b) =>
     String(b.time || '').localeCompare(String(a.time || ''))
   )
 
@@ -521,6 +839,8 @@ function summaryFromStore(store, todayKey) {
     referrers: topBreakdown(events, (event) => event.referrer),
     devices: topBreakdown(events, (event) => event.device),
     recent: events.slice(0, 18),
+    geo: geoFromStore(store),
+    hourly: buildHourlyBars(dailyVisits),
   }
 }
 
@@ -529,41 +849,65 @@ function routePath(url) {
   return path === '' ? '/' : path
 }
 
+function redirectToDownload(request, fileId) {
+  return Response.redirect(new URL(DOWNLOADS[fileId].href, request.url).toString(), 302)
+}
+
 async function handleCounter(request) {
   const kv = edgeKv()
   const todayKey = getTodayKey()
   const url = new URL(request.url)
-  const skip = url.searchParams.get('skip') === '1'
+  const readOnly = url.searchParams.get('skip') === '1' || url.searchParams.get('increment') === '0'
   try {
-    if (!skip) {
-      const allowed = await consumeRate(kv, `counter:${ipBucket(getClientIP(request))}`, 120, 3600)
-      if (!allowed) return json({ error: 'Too many requests' }, 429)
-      return json(
-        await trackInAnalyticsStore(kv, (store) =>
-          incrementStoredCounter(store, 'visits', 'visits', todayKey)
-        )
-      )
+    const allowed = await consumeRate(`counter:${ipBucket(getClientIP(request))}`, 240, 3600)
+    if (!allowed) return json({ error: 'Too many requests', build: EDGE_BUILD }, 429)
+
+    if (!readOnly) {
+      if (!sameSiteRequest(request)) return json({ error: 'Access denied' }, 403)
+      const writeAllowed = await consumeRate(`counter-write:${ipBucket(getClientIP(request))}`, 60, 3600)
+      if (!writeAllowed) return json({ error: 'Too many requests', build: EDGE_BUILD }, 429)
+      const result = await trackInAnalyticsStore(kv, (store) => ({
+        ...incrementStoredCounter(store, 'visits', 'visits', todayKey),
+        flushNow: false,
+      }))
+      return json({ ...result, build: EDGE_BUILD })
     }
+
     const store = await readAnalyticsStore(kv)
-    return json(normalizeStoredCounter(store.counters.visits, todayKey))
+    return json({ ...normalizeStoredCounter(store.counters.visits, todayKey), build: EDGE_BUILD })
   } catch {
-    return json(await safeReadCounter(kv, 'visits', todayKey))
+    return json({ ...(await safeReadCounter(kv, 'visits', todayKey)), build: EDGE_BUILD })
   }
 }
 
+async function guardReadRequest(request, name, limit = 360, windowSeconds = 300) {
+  const allowed = await consumeRate(`${name}:${ipBucket(getClientIP(request))}`, limit, windowSeconds)
+  if (!allowed) return json({ error: 'Too many requests', build: EDGE_BUILD }, 429)
+  return null
+}
+
 async function handleTrack(request) {
-  if (!sameSiteOrNoOrigin(request)) return json({ error: 'Access denied' }, 403)
   const kv = edgeKv()
-  const bucket = ipBucket(getClientIP(request))
-  const allowed = await consumeRate(kv, `track:${bucket}`, 240, 3600)
-  if (!allowed) return json({ error: 'Too many requests' }, 429)
+  const ip = getClientIP(request)
+  const bucket = ipBucket(ip)
+  const allowed = await consumeRate(`track:${bucket}`, 240, 3600)
+  if (!allowed) return json({ error: 'Too many requests', build: EDGE_BUILD }, 429)
+
+  let body = {}
+  try {
+    body = await readJsonLimited(request)
+  } catch {
+    return json({ ok: false, error: 'Invalid JSON' }, 400)
+  }
+
+  const blocked = guardWriteRequest(request, body)
+  if (blocked) return blocked
 
   try {
-    const body = await readJsonLimited(request)
-    if (!verifyWriteToken(request, body)) return json({ error: 'Invalid write token' }, 401)
     const ua = parseUserAgent(body.ua || request.headers.get('User-Agent') || '')
     const todayKey = getTodayKey()
     const page = normalizePage(body.page || '/')
+    const geo = normalizeGeo(await fetchGeo(ip).catch(() => null), ip)
     const event = {
       kind: 'view',
       time: new Date().toISOString(),
@@ -572,11 +916,19 @@ async function handleTrack(request) {
       device: ua.device,
       browser: ua.browser,
       os: ua.os,
+      country: geo.country || '',
+      countryCode: geo.countryCode || '',
+      city: geo.city || '',
+      region: geo.region || '',
+      lat: geo.lat || 0,
+      lon: geo.lon || 0,
     }
     const visits = await trackInAnalyticsStore(kv, (store) => {
       const counter = incrementStoredCounter(store, 'visits', 'visits', todayKey)
       appendStoredEvent(store, event)
-      return counter
+      appendStoredDailyVisit(store, event)
+      incrementStoredGeo(store, geo)
+      return { ...counter, flushNow: false }
     })
     return json({ ok: true, visits, eventStored: true, build: EDGE_BUILD })
   } catch (error) {
@@ -608,11 +960,11 @@ async function handleDownload(request) {
   let body = {}
 
   if (request.method === 'POST') {
-    if (!sameSiteOrNoOrigin(request)) return json({ error: 'Access denied' }, 403)
     try {
       body = await readJsonLimited(request)
+      const blocked = guardWriteRequest(request, body)
+      if (blocked) return blocked
       fileId = body.file || fileId
-      if (!verifyWriteToken(request, body)) return json({ error: 'Invalid write token' }, 401)
     } catch {
       return json({ ok: false, error: 'Invalid JSON' }, 400)
     }
@@ -620,13 +972,16 @@ async function handleDownload(request) {
 
   if (!DOWNLOADS[fileId]) return json({ ok: false, error: 'Unknown download file' }, 404)
 
-  const allowed = await consumeRate(
-    kv,
-    `download:${fileId}:${ipBucket(getClientIP(request))}`,
-    90,
-    3600
-  )
-  if (!allowed) return json({ error: 'Too many requests' }, 429)
+  if (
+    request.method === 'GET' &&
+    !sameSiteRequest(request) &&
+    !hasConfiguredWriteToken(request)
+  ) {
+    return redirectToDownload(request, fileId)
+  }
+
+  const allowed = await consumeRate(`download:${fileId}:${ipBucket(getClientIP(request))}`, 90, 3600)
+  if (!allowed) return json({ error: 'Too many requests', build: EDGE_BUILD }, 429)
 
   try {
     const todayKey = getTodayKey()
@@ -645,23 +1000,26 @@ async function handleDownload(request) {
     const counter = await trackInAnalyticsStore(kv, (store) => {
       const next = incrementStoredCounter(store, 'downloads', fileId, todayKey)
       appendStoredEvent(store, event)
-      return next
+      return { ...next, flushNow: true }
     })
 
     if (request.method === 'GET') {
-      return Response.redirect(new URL(DOWNLOADS[fileId].href, request.url).toString(), 302)
+      return redirectToDownload(request, fileId)
     }
 
     return json({ ok: true, file: fileId, eventStored: true, ...counter, build: EDGE_BUILD })
   } catch (error) {
     if (request.method === 'GET') {
-      return Response.redirect(new URL(DOWNLOADS[fileId].href, request.url).toString(), 302)
+      return redirectToDownload(request, fileId)
     }
     return json({ ok: false, error: 'Failed to track download', build: EDGE_BUILD }, 500)
   }
 }
 
-async function handleDownloads() {
+async function handleDownloads(request) {
+  const blocked = await guardReadRequest(request, 'downloads-read')
+  if (blocked) return blocked
+
   try {
     const kv = edgeKv()
     const todayKey = getTodayKey()
@@ -680,7 +1038,10 @@ async function handleDownloads() {
   }
 }
 
-async function handleSummary() {
+async function handleSummary(request) {
+  const blocked = await guardReadRequest(request, 'summary-read')
+  if (blocked) return blocked
+
   const kv = edgeKv()
   const todayKey = getTodayKey()
   const store = await readAnalyticsStore(kv)
@@ -692,6 +1053,7 @@ async function handleSummary() {
   ) {
     return json({ ...storeSummary, build: EDGE_BUILD })
   }
+
   const [visits, downloads, events] = await Promise.all([
     safeReadCounter(kv, 'visits', todayKey),
     readDownloads(kv, todayKey).catch(() => ({ downloadsByFile: {}, downloadsTotal: 0 })),
@@ -707,6 +1069,8 @@ async function handleSummary() {
     referrers: topBreakdown(events, (event) => event.referrer),
     devices: topBreakdown(events, (event) => event.device),
     recent: events.slice(0, 18),
+    geo: storeSummary.geo,
+    hourly: storeSummary.hourly,
     build: EDGE_BUILD,
   })
 }
@@ -746,12 +1110,12 @@ export default {
 
     if (path === '/downloads') {
       if (request.method !== 'GET') return json({ error: 'Use GET' }, 405)
-      return handleDownloads()
+      return handleDownloads(request)
     }
 
     if (path === '/analytics/summary') {
       if (request.method !== 'GET') return json({ error: 'Use GET' }, 405)
-      return handleSummary()
+      return handleSummary(request)
     }
 
     return json({ error: 'Not found' }, 404)

@@ -32,6 +32,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '关于 CPE 网络看板' },
   },
   {
+    path: '/analytics',
+    name: 'analytics',
+    component: () => import('@/pages/AnalyticsPage.vue'),
+    meta: { title: '访问统计' },
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/',
   },
