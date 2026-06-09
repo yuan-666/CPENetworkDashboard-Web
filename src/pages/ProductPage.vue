@@ -5,6 +5,7 @@ import {
   desktopScreens,
   desktopScreenTones,
   mobileScreenLabels,
+  mobileScreenTones,
   mobileScreens,
   platformCards,
   productMoments,
@@ -104,6 +105,7 @@ const mobileFeatures = [
             <ScrollImageSwitcher
               :images="mobileScreens"
               :labels="mobileScreenLabels"
+              :image-tones="mobileScreenTones"
               alt="CPE 网络看板 Android 手机截图"
             />
           </div>

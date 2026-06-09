@@ -35,19 +35,23 @@ export const desktopScreenItems: Array<{
   { image: '/media/computer/desktop-login-config.png', label: '登录配置', tone: 'light' },
 ]
 
-export const mobileScreenItems = [
-  { image: '/media/phone/mobile-status-dashboard-dark.jpg', label: '状态看板' },
-  { image: '/media/phone/mobile-lock-arfcn.jpg', label: '锁 ARFCN' },
-  { image: '/media/phone/mobile-band-selection.jpg', label: '频段选择' },
-  { image: '/media/phone/mobile-network-preference.jpg', label: '网络首选' },
-  { image: '/media/phone/mobile-lock-pci.jpg', label: '锁 PCI' },
-  { image: '/media/phone/mobile-device-neighbor-cells.jpg', label: '设备信息与邻区' },
-  { image: '/media/phone/mobile-ping-test.jpg', label: 'Ping 测试' },
-  { image: '/media/phone/mobile-speed-test.jpg', label: '测速页面' },
-  { image: '/media/phone/mobile-route-test.jpg', label: '路由追踪' },
-  { image: '/media/phone/mobile-display-settings.jpg', label: '显示设置' },
-  { image: '/media/phone/mobile-device-settings.jpg', label: '设备设置' },
-  { image: '/media/phone/mobile-status-dashboard-light.jpg', label: '浅色状态看板' },
+export const mobileScreenItems: Array<{
+  image: string
+  label: string
+  tone: 'light' | 'dark'
+}> = [
+  { image: '/media/phone/mobile-status-dashboard-dark.jpg', label: '状态看板', tone: 'dark' },
+  { image: '/media/phone/mobile-lock-arfcn.jpg', label: '锁 ARFCN', tone: 'dark' },
+  { image: '/media/phone/mobile-band-selection.jpg', label: '频段选择', tone: 'dark' },
+  { image: '/media/phone/mobile-network-preference.jpg', label: '网络首选', tone: 'dark' },
+  { image: '/media/phone/mobile-lock-pci.jpg', label: '锁 PCI', tone: 'dark' },
+  { image: '/media/phone/mobile-device-neighbor-cells.jpg', label: '设备信息与邻区', tone: 'dark' },
+  { image: '/media/phone/mobile-ping-test.jpg', label: 'Ping 测试', tone: 'dark' },
+  { image: '/media/phone/mobile-speed-test.jpg', label: '测速页面', tone: 'dark' },
+  { image: '/media/phone/mobile-route-test.jpg', label: '路由追踪', tone: 'dark' },
+  { image: '/media/phone/mobile-display-settings.jpg', label: '显示设置', tone: 'dark' },
+  { image: '/media/phone/mobile-device-settings.jpg', label: '设备设置', tone: 'dark' },
+  { image: '/media/phone/mobile-status-dashboard-light.jpg', label: '浅色状态看板', tone: 'light' },
 ]
 
 export const desktopScreens = desktopScreenItems.map((item) => item.image)
@@ -55,6 +59,7 @@ export const desktopScreenLabels = desktopScreenItems.map((item) => item.label)
 export const desktopScreenTones = desktopScreenItems.map((item) => item.tone)
 export const mobileScreens = mobileScreenItems.map((item) => item.image)
 export const mobileScreenLabels = mobileScreenItems.map((item) => item.label)
+export const mobileScreenTones = mobileScreenItems.map((item) => item.tone)
 
 function chunkedParts(folder: string, fileName: string, count: number): string[] {
   return Array.from(
@@ -141,7 +146,7 @@ export const supportedDevices: Array<[string, string]> = [
   ['HUAWEI / 华为', 'H168-383 / H155-381 / H153-381'],
   ['FiberHome / 烽火通信', 'LG6121D / LG6121F / LG6121H / LG6851F / LG6151M'],
   ['NRADIO / 鲲鹏无限', 'LuCI NRADIO CPE，兼容 cpe / cpe1 / wan0 模板'],
-  ['Tongze / 通则', 'X300 Max / X300 GT 可读取；锁频未测试'],
+  ['ZLT / 通则', 'X300 Max 支持读取和锁频；X300 GT 可读取，锁频未测试'],
   ['ZTE / 中兴通讯', 'G5 Pro / U60 Pro'],
 ]
 

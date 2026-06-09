@@ -374,23 +374,24 @@ onUnmounted(() => {
 }
 
 :global(.phone-main .scroll-viewport) {
-  overflow: hidden;
-  padding-bottom: 0;
+  overflow: visible;
+  padding-bottom: 34px;
   box-sizing: border-box;
 }
 
 :global(.phone-main .image-stack) {
   overflow: hidden;
-  border-radius: var(--radius-xl, 24px);
-  background: #121a22;
+  border-radius: 24px;
 }
 
 :global(.phone-main .progress-track) {
-  bottom: 14px;
+  bottom: 8px;
   width: min(242px, calc(100% - 28px));
   min-height: 18px;
-  background: rgba(23, 29, 36, 0.48);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  background: rgba(245, 244, 238, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 12px 28px rgba(25, 32, 27, 0.12);
 }
 
 /* Screen reader only */
@@ -419,7 +420,7 @@ onUnmounted(() => {
   }
 
   :global(.phone-main .progress-track) {
-    bottom: 12px;
+    bottom: 8px;
     width: min(230px, calc(100% - 22px));
   }
 
