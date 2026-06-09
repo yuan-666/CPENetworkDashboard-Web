@@ -756,7 +756,7 @@ p {
 }
 
 .phone-shell {
-  overflow: visible;
+  overflow: hidden;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   background: #121a22;
@@ -1198,8 +1198,14 @@ p {
   width: clamp(250px, 22vw, 340px);
   max-width: 100%;
   justify-self: center;
-  overflow: visible;
-  padding: 0 0 42px;
+  overflow: hidden;
+  padding: 0;
+  background: #101821;
+}
+
+.phone-shell.phone-main,
+:root[data-theme='dark'] .phone-shell.phone-main {
+  background: #101821;
 }
 
 @media (max-height: 760px) and (min-width: 1081px) {
@@ -1240,12 +1246,14 @@ p {
 
 .phone-main .scroll-image-container {
   min-height: 0;
-  aspect-ratio: 1264 / 2660;
-  overflow: visible;
+  aspect-ratio: 1264 / 2626;
+  overflow: hidden;
+  background: #101821;
 }
 
 .phone-main .scroll-viewport {
-  overflow: visible;
+  overflow: hidden;
+  padding-bottom: 0;
 }
 
 .phone-main .image-stack {
@@ -1255,7 +1263,7 @@ p {
 }
 
 .phone-main .progress-track {
-  bottom: 12px;
+  bottom: 14px;
   width: min(240px, calc(100% - 24px));
   background: rgba(23, 29, 36, 0.34);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);

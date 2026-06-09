@@ -141,6 +141,7 @@ export const supportedDevices: Array<[string, string]> = [
   ['HUAWEI / 华为', 'H168-383 / H155-381 / H153-381'],
   ['FiberHome / 烽火通信', 'LG6121D / LG6121F / LG6121H / LG6851F / LG6151M'],
   ['NRADIO / 鲲鹏无限', 'LuCI NRADIO CPE，兼容 cpe / cpe1 / wan0 模板'],
+  ['Tongze / 通则', 'X300 Max / X300 GT 可读取；锁频未测试'],
   ['ZTE / 中兴通讯', 'G5 Pro / U60 Pro'],
 ]
 

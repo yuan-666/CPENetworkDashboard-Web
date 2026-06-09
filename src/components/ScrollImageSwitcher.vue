@@ -374,8 +374,8 @@ onUnmounted(() => {
 }
 
 :global(.phone-main .scroll-viewport) {
-  overflow: visible;
-  padding-bottom: 44px;
+  overflow: hidden;
+  padding-bottom: 0;
   box-sizing: border-box;
 }
 
@@ -386,7 +386,7 @@ onUnmounted(() => {
 }
 
 :global(.phone-main .progress-track) {
-  bottom: 12px;
+  bottom: 14px;
   width: min(242px, calc(100% - 28px));
   min-height: 18px;
   background: rgba(23, 29, 36, 0.48);
@@ -419,7 +419,7 @@ onUnmounted(() => {
   }
 
   :global(.phone-main .progress-track) {
-    bottom: 10px;
+    bottom: 12px;
     width: min(230px, calc(100% - 22px));
   }
 
