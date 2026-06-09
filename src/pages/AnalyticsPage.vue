@@ -519,41 +519,43 @@ watch(cities, () => {
 
 <template>
   <div class="analytics-page">
-    <button
-      class="mobile-section-toggle"
-      :class="{ active: mobileNavOpen }"
-      type="button"
-      aria-label="打开统计目录"
-      :aria-expanded="mobileNavOpen"
-      aria-controls="analytics-mobile-nav"
-      @click="mobileNavOpen = !mobileNavOpen"
-    >
-      <span />
-      <span />
-    </button>
-    <div
-      v-if="mobileNavOpen"
-      class="mobile-nav-scrim"
-      aria-hidden="true"
-      @click="mobileNavOpen = false"
-    />
-    <aside
-      id="analytics-mobile-nav"
-      class="mobile-section-drawer"
-      :class="{ open: mobileNavOpen }"
-      :aria-hidden="!mobileNavOpen"
-      aria-label="统计页快速跳转"
-    >
-      <strong>统计</strong>
+    <Teleport to="body">
       <button
-        v-for="section in mobileSections"
-        :key="section.id"
+        class="mobile-section-toggle"
+        :class="{ active: mobileNavOpen }"
         type="button"
-        @click="goMobileSection(section.id)"
+        aria-label="打开统计目录"
+        :aria-expanded="mobileNavOpen"
+        aria-controls="analytics-mobile-nav"
+        @click="mobileNavOpen = !mobileNavOpen"
       >
-        {{ section.label }}
+        <span />
+        <span />
       </button>
-    </aside>
+      <div
+        v-if="mobileNavOpen"
+        class="mobile-nav-scrim"
+        aria-hidden="true"
+        @click="mobileNavOpen = false"
+      />
+      <aside
+        id="analytics-mobile-nav"
+        class="mobile-section-drawer"
+        :class="{ open: mobileNavOpen }"
+        :aria-hidden="!mobileNavOpen"
+        aria-label="统计页快速跳转"
+      >
+        <strong>统计</strong>
+        <button
+          v-for="section in mobileSections"
+          :key="section.id"
+          type="button"
+          @click="goMobileSection(section.id)"
+        >
+          {{ section.label }}
+        </button>
+      </aside>
+    </Teleport>
 
     <!-- Header -->
     <header class="analytics-header">
@@ -787,9 +789,9 @@ watch(cities, () => {
   animation: page-rise 480ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.mobile-section-toggle,
-.mobile-section-drawer,
-.mobile-nav-scrim {
+:global(.mobile-section-toggle),
+:global(.mobile-section-drawer),
+:global(.mobile-nav-scrim) {
   display: none;
 }
 
@@ -1425,9 +1427,20 @@ watch(cities, () => {
   .analytics-page {
     width: min(100% - 20px, 560px);
     padding: 124px 0 56px;
+    overflow-x: clip;
+    animation: none;
+    transform: none;
   }
 
-  .mobile-section-toggle {
+  #analytics-metrics,
+  #analytics-chart,
+  #analytics-map,
+  #analytics-breakdown,
+  #analytics-downloads {
+    scroll-margin-top: 128px;
+  }
+
+  :global(.mobile-section-toggle) {
     position: fixed;
     right: 14px;
     top: 148px;
@@ -1444,13 +1457,13 @@ watch(cities, () => {
     -webkit-backdrop-filter: blur(18px);
   }
 
-  :root[data-theme='dark'] .mobile-section-toggle {
+  :global(:root[data-theme='dark'] .mobile-section-toggle) {
     border-color: rgba(255, 255, 255, 0.12);
     background: rgba(24, 25, 23, 0.86);
     box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
   }
 
-  .mobile-section-toggle span {
+  :global(.mobile-section-toggle span) {
     position: absolute;
     width: 17px;
     height: 2px;
@@ -1461,23 +1474,23 @@ watch(cities, () => {
       opacity var(--transition-fast);
   }
 
-  .mobile-section-toggle span:first-child {
+  :global(.mobile-section-toggle span:first-child) {
     transform: translateY(-4px);
   }
 
-  .mobile-section-toggle span:last-child {
+  :global(.mobile-section-toggle span:last-child) {
     transform: translateY(4px);
   }
 
-  .mobile-section-toggle.active span:first-child {
+  :global(.mobile-section-toggle.active span:first-child) {
     transform: rotate(45deg);
   }
 
-  .mobile-section-toggle.active span:last-child {
+  :global(.mobile-section-toggle.active span:last-child) {
     transform: rotate(-45deg);
   }
 
-  .mobile-nav-scrim {
+  :global(.mobile-nav-scrim) {
     position: fixed;
     inset: 0;
     z-index: 34;
@@ -1487,7 +1500,7 @@ watch(cities, () => {
     -webkit-backdrop-filter: blur(2px);
   }
 
-  .mobile-section-drawer {
+  :global(.mobile-section-drawer) {
     position: fixed;
     top: 140px;
     right: 10px;
@@ -1504,32 +1517,32 @@ watch(cities, () => {
     -webkit-backdrop-filter: blur(22px);
     opacity: 0;
     pointer-events: none;
-    transform: translate3d(12px, -8px, 0) scale(0.97);
+    transform: translate3d(0, -8px, 0) scale(0.97);
     transition:
       opacity var(--transition-normal),
       transform var(--transition-normal);
   }
 
-  .mobile-section-drawer.open {
+  :global(.mobile-section-drawer.open) {
     opacity: 1;
     pointer-events: auto;
     transform: translate3d(0, 0, 0) scale(1);
   }
 
-  :root[data-theme='dark'] .mobile-section-drawer {
+  :global(:root[data-theme='dark'] .mobile-section-drawer) {
     border-color: rgba(255, 255, 255, 0.1);
     background: rgba(23, 24, 22, 0.94);
     box-shadow: 0 22px 46px rgba(0, 0, 0, 0.36);
   }
 
-  .mobile-section-drawer strong {
+  :global(.mobile-section-drawer strong) {
     padding: 2px 4px 4px;
     color: var(--muted);
     font-size: 12px;
     font-weight: 700;
   }
 
-  .mobile-section-drawer button {
+  :global(.mobile-section-drawer button) {
     min-height: 38px;
     border: 1px solid transparent;
     border-radius: 12px;
@@ -1541,7 +1554,7 @@ watch(cities, () => {
     padding: 0 11px;
   }
 
-  .mobile-section-drawer button:active {
+  :global(.mobile-section-drawer button:active) {
     transform: scale(0.98);
   }
 
@@ -1580,11 +1593,13 @@ watch(cities, () => {
 
   .kpi-value {
     font-size: 23px;
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 
   .kpi-card:nth-child(1) .kpi-value,
   .kpi-card:nth-child(2) .kpi-value {
-    font-size: 30px;
+    font-size: clamp(26px, 7.2vw, 30px);
   }
 
   .kpi-label {
@@ -1651,6 +1666,11 @@ watch(cities, () => {
     flex-wrap: nowrap;
     overflow-x: auto;
     padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .city-strip::-webkit-scrollbar {
+    display: none;
   }
 
   .city-tag {
@@ -1736,6 +1756,19 @@ watch(cities, () => {
     margin-top: 0;
   }
 
+  .tab-content,
+  .bottom-row > .glass-panel,
+  .rank-info {
+    min-width: 0;
+  }
+
+  .rank-info strong,
+  .rank-info small,
+  .recent-table td {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   .glass-panel {
     padding: 15px;
     border-radius: 18px;
@@ -1761,6 +1794,280 @@ watch(cities, () => {
 
   .map-container {
     height: 220px;
+  }
+}
+
+@media (max-width: 360px) {
+  .analytics-page {
+    width: min(100% - 14px, 360px);
+    padding-top: 120px;
+    padding-bottom: 48px;
+  }
+
+  .bottom-row {
+    min-width: 0;
+  }
+
+  #analytics-metrics,
+  #analytics-chart,
+  #analytics-map,
+  #analytics-breakdown,
+  #analytics-downloads {
+    scroll-margin-top: 122px;
+  }
+
+  :global(.mobile-section-toggle) {
+    top: 140px;
+    right: 10px;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
+
+  :global(.mobile-section-toggle span) {
+    width: 15px;
+  }
+
+  :global(.mobile-section-drawer) {
+    top: 132px;
+    right: 8px;
+    width: min(174px, calc(100vw - 18px));
+    gap: 7px;
+    padding: 10px;
+    border-radius: 16px;
+  }
+
+  :global(.mobile-section-drawer strong) {
+    font-size: 11px;
+  }
+
+  :global(.mobile-section-drawer button) {
+    min-height: 36px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .analytics-header {
+    margin-bottom: 16px;
+    padding-right: 48px;
+  }
+
+  .analytics-header h1 {
+    font-size: 30px;
+  }
+
+  .analytics-header p {
+    font-size: 13px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+
+  .kpi-card {
+    grid-column: auto;
+    min-height: 78px;
+    padding: 10px 8px;
+    border-radius: 15px;
+  }
+
+  .kpi-card:nth-child(1),
+  .kpi-card:nth-child(2) {
+    grid-column: auto;
+    min-height: 88px;
+    padding: 12px 10px;
+  }
+
+  .kpi-card:nth-child(5) {
+    grid-column: 1 / -1;
+    min-height: 74px;
+  }
+
+  .kpi-label {
+    margin-bottom: 6px;
+    font-size: 10px;
+  }
+
+  .kpi-value {
+    font-size: 20px;
+  }
+
+  .kpi-card:nth-child(1) .kpi-value,
+  .kpi-card:nth-child(2) .kpi-value {
+    font-size: clamp(21px, 7vw, 25px);
+  }
+
+  .glass-panel {
+    padding: 13px;
+    border-radius: 16px;
+  }
+
+  .panel-title {
+    margin-bottom: 14px;
+  }
+
+  .panel-title span {
+    font-size: 14px;
+  }
+
+  .panel-title small {
+    font-size: 11px;
+  }
+
+  .dual-chart {
+    gap: 10px;
+  }
+
+  .chart-row {
+    gap: 7px;
+  }
+
+  .chart-row-head strong {
+    font-size: 12px;
+  }
+
+  .chart-row-head span {
+    font-size: 10px;
+  }
+
+  .bar-chart {
+    grid-template-columns: 24px 1fr;
+    gap: 6px;
+    min-height: 74px;
+  }
+
+  .bar-scale span {
+    font-size: 7px;
+  }
+
+  .bar-grid {
+    min-height: 74px;
+  }
+
+  .bar-fill {
+    width: min(90%, 7px);
+  }
+
+  .bar-hour {
+    font-size: 6px;
+    opacity: 0;
+  }
+
+  .bar-col:nth-child(4n + 1) .bar-hour {
+    opacity: 1;
+  }
+
+  .download-distribution {
+    gap: 7px;
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .distribution-row {
+    grid-template-columns: 36px 1fr 20px;
+    gap: 5px;
+  }
+
+  .map-container {
+    height: 208px;
+    border-radius: 11px;
+  }
+
+  .city-strip {
+    gap: 5px;
+    margin-top: 10px;
+  }
+
+  .city-tag {
+    min-height: 24px;
+    padding: 0 9px;
+    font-size: 11px;
+  }
+
+  .tab-bar {
+    margin-bottom: 12px;
+  }
+
+  .tab-btn {
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .breakdown-table tr {
+    padding: 11px 44px 11px 36px;
+  }
+
+  .rank-cell {
+    left: 10px;
+    top: 13px;
+  }
+
+  .count-cell {
+    right: 10px;
+  }
+
+  .rank-item {
+    gap: 9px;
+    padding: 12px 0;
+  }
+
+  .rank-num {
+    width: 26px;
+    flex-basis: 26px;
+    height: 26px;
+  }
+
+  .rank-info strong {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 340px) {
+  .analytics-page {
+    width: min(100% - 12px, 340px);
+  }
+
+  .analytics-header h1 {
+    font-size: 28px;
+  }
+
+  .kpi-grid {
+    gap: 6px;
+  }
+
+  .kpi-card {
+    min-height: 76px;
+    padding: 9px 7px;
+  }
+
+  .kpi-card:nth-child(1),
+  .kpi-card:nth-child(2) {
+    min-height: 84px;
+    padding: 11px 9px;
+  }
+
+  .kpi-value {
+    font-size: 19px;
+  }
+
+  .kpi-card:nth-child(1) .kpi-value,
+  .kpi-card:nth-child(2) .kpi-value {
+    font-size: clamp(20px, 6.6vw, 23px);
+  }
+
+  .distribution-list {
+    grid-template-columns: 1fr;
+  }
+
+  .map-container {
+    height: 198px;
+  }
+
+  .breakdown-table tr {
+    padding-right: 40px;
   }
 }
 
