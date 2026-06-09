@@ -7,6 +7,21 @@ import { formatNumber } from '@/utils/format'
 
 const { summary, analyticsState, loadSummary } = useAnalytics()
 
+const mobileNavOpen = ref(false)
+
+const mobileSections = [
+  { id: 'analytics-metrics', label: '数据' },
+  { id: 'analytics-chart', label: '图表' },
+  { id: 'analytics-map', label: '地图' },
+  { id: 'analytics-breakdown', label: '明细' },
+  { id: 'analytics-downloads', label: '下载' },
+]
+
+function goMobileSection(id: string): void {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  mobileNavOpen.value = false
+}
+
 /* ── KPI cards ───────────────────────────────────────────── */
 
 const todayVisits = computed(() => summary.value?.visits?.today ?? 0)
@@ -504,6 +519,42 @@ watch(cities, () => {
 
 <template>
   <div class="analytics-page">
+    <button
+      class="mobile-section-toggle"
+      :class="{ active: mobileNavOpen }"
+      type="button"
+      aria-label="打开统计目录"
+      :aria-expanded="mobileNavOpen"
+      aria-controls="analytics-mobile-nav"
+      @click="mobileNavOpen = !mobileNavOpen"
+    >
+      <span />
+      <span />
+    </button>
+    <div
+      v-if="mobileNavOpen"
+      class="mobile-nav-scrim"
+      aria-hidden="true"
+      @click="mobileNavOpen = false"
+    />
+    <aside
+      id="analytics-mobile-nav"
+      class="mobile-section-drawer"
+      :class="{ open: mobileNavOpen }"
+      :aria-hidden="!mobileNavOpen"
+      aria-label="统计页快速跳转"
+    >
+      <strong>统计</strong>
+      <button
+        v-for="section in mobileSections"
+        :key="section.id"
+        type="button"
+        @click="goMobileSection(section.id)"
+      >
+        {{ section.label }}
+      </button>
+    </aside>
+
     <!-- Header -->
     <header class="analytics-header">
       <h1>访问统计</h1>
@@ -511,7 +562,7 @@ watch(cities, () => {
     </header>
 
     <!-- KPI Cards -->
-    <div class="kpi-grid">
+    <div id="analytics-metrics" class="kpi-grid">
       <div class="kpi-card">
         <span class="kpi-label">累计访问</span>
         <strong class="kpi-value">{{ formatNumber(totalVisits) }}</strong>
@@ -537,7 +588,7 @@ watch(cities, () => {
     <!-- Visualization Row: Bar Chart + Map -->
     <div class="viz-row">
       <!-- 24h Bar Chart -->
-      <section class="glass-panel bar-chart-panel">
+      <section id="analytics-chart" class="glass-panel bar-chart-panel">
         <div class="panel-title">
           <span>今日 24 小时</span>
           <small>访问 {{ hourlyTotal }} / 下载 {{ downloadHourlyTotal }}</small>
@@ -619,7 +670,7 @@ watch(cities, () => {
       </section>
 
       <!-- Map -->
-      <section class="glass-panel map-panel">
+      <section id="analytics-map" class="glass-panel map-panel">
         <div class="panel-title">
           <span>城市分布</span>
           <small>{{ cityCount }} 个城市</small>
@@ -638,7 +689,7 @@ watch(cities, () => {
     <!-- Tabbed Breakdown + Download Ranking -->
     <div class="bottom-row">
       <!-- Breakdown Tabs -->
-      <section class="glass-panel breakdown-panel">
+      <section id="analytics-breakdown" class="glass-panel breakdown-panel">
         <div class="tab-bar">
           <button
             v-for="tab in tabs"
@@ -695,7 +746,7 @@ watch(cities, () => {
       </section>
 
       <!-- Download Ranking -->
-      <section class="glass-panel download-rank-panel">
+      <section id="analytics-downloads" class="glass-panel download-rank-panel">
         <div class="panel-title">
           <span>下载排行</span>
           <small>{{ summary?.downloadsTotal ?? 0 }} 次下载</small>
@@ -734,6 +785,12 @@ watch(cities, () => {
   margin: 0 auto;
   padding: 118px 0 74px;
   animation: page-rise 480ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-section-toggle,
+.mobile-section-drawer,
+.mobile-nav-scrim {
+  display: none;
 }
 
 .analytics-header {
@@ -1366,29 +1423,173 @@ watch(cities, () => {
 
 @media (max-width: 720px) {
   .analytics-page {
-    width: min(100% - 24px, 560px);
-    padding-top: 134px;
+    width: min(100% - 20px, 560px);
+    padding: 124px 0 56px;
+  }
+
+  .mobile-section-toggle {
+    position: fixed;
+    right: 14px;
+    top: 148px;
+    z-index: 36;
+    display: inline-grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    background: rgba(245, 244, 238, 0.88);
+    box-shadow: 0 14px 34px rgba(26, 25, 22, 0.14);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  :root[data-theme='dark'] .mobile-section-toggle {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(24, 25, 23, 0.86);
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
+  }
+
+  .mobile-section-toggle span {
+    position: absolute;
+    width: 17px;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--ink);
+    transition:
+      transform var(--transition-normal),
+      opacity var(--transition-fast);
+  }
+
+  .mobile-section-toggle span:first-child {
+    transform: translateY(-4px);
+  }
+
+  .mobile-section-toggle span:last-child {
+    transform: translateY(4px);
+  }
+
+  .mobile-section-toggle.active span:first-child {
+    transform: rotate(45deg);
+  }
+
+  .mobile-section-toggle.active span:last-child {
+    transform: rotate(-45deg);
+  }
+
+  .mobile-nav-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 34;
+    display: block;
+    background: rgba(16, 18, 16, 0.18);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  .mobile-section-drawer {
+    position: fixed;
+    top: 140px;
+    right: 10px;
+    z-index: 35;
+    display: grid;
+    width: min(190px, calc(100vw - 24px));
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    background: rgba(245, 244, 238, 0.94);
+    box-shadow: 0 22px 46px rgba(26, 25, 22, 0.2);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(12px, -8px, 0) scale(0.97);
+    transition:
+      opacity var(--transition-normal),
+      transform var(--transition-normal);
+  }
+
+  .mobile-section-drawer.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  :root[data-theme='dark'] .mobile-section-drawer {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(23, 24, 22, 0.94);
+    box-shadow: 0 22px 46px rgba(0, 0, 0, 0.36);
+  }
+
+  .mobile-section-drawer strong {
+    padding: 2px 4px 4px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .mobile-section-drawer button {
+    min-height: 38px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+    text-align: left;
+    padding: 0 11px;
+  }
+
+  .mobile-section-drawer button:active {
+    transform: scale(0.98);
+  }
+
+  .analytics-header {
+    margin-bottom: 20px;
+    padding-right: 52px;
+  }
+
+  .analytics-header h1 {
+    font-size: 34px;
+  }
+
+  .analytics-header p {
+    font-size: 14px;
   }
 
   .kpi-grid {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(138px, 42vw);
-    grid-template-columns: none;
-    gap: 10px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scroll-snap-type: x proximity;
-    -webkit-overflow-scrolling: touch;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
   }
 
   .kpi-card {
-    padding: 14px;
-    scroll-snap-align: start;
+    min-height: 82px;
+    grid-column: span 2;
+    padding: 11px 10px;
+    text-align: left;
+  }
+
+  .kpi-card:nth-child(1),
+  .kpi-card:nth-child(2) {
+    grid-column: span 3;
+    min-height: 96px;
+    padding: 14px 13px;
   }
 
   .kpi-value {
-    font-size: 24px;
+    font-size: 23px;
+  }
+
+  .kpi-card:nth-child(1) .kpi-value,
+  .kpi-card:nth-child(2) .kpi-value {
+    font-size: 30px;
+  }
+
+  .kpi-label {
+    font-size: 10px;
+    letter-spacing: 0;
   }
 
   .panel-title {
@@ -1398,21 +1599,21 @@ watch(cities, () => {
   }
 
   .dual-chart {
-    gap: 16px;
+    gap: 12px;
   }
 
   .bar-chart {
     grid-template-columns: 30px 1fr;
-    min-height: 116px;
+    min-height: 78px;
   }
 
   .bar-scale span {
-    font-size: 9px;
+    font-size: 8px;
   }
 
   .bar-grid {
     gap: 2px;
-    min-height: 116px;
+    min-height: 78px;
   }
 
   .bar-fill {
@@ -1425,14 +1626,25 @@ watch(cities, () => {
 
   .download-distribution {
     grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
   }
 
   .distribution-list {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .distribution-row {
+    grid-template-columns: 38px 1fr 22px;
+    gap: 5px;
+    font-size: 9px;
   }
 
   .map-container {
-    height: 240px;
+    height: 238px;
+    border-radius: 12px;
   }
 
   .city-strip {
@@ -1446,30 +1658,93 @@ watch(cities, () => {
   }
 
   .tab-btn {
-    padding: 0 10px;
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 0 12px;
     font-size: 13px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
   }
 
-  .tab-content {
-    overflow-x: auto;
+  .tab-btn.active {
+    background: var(--soft);
+    border-bottom-color: var(--line);
   }
 
   .breakdown-table {
-    min-width: 520px;
+    display: block;
+    min-width: 0;
+  }
+
+  .breakdown-table tbody,
+  .breakdown-table tr,
+  .breakdown-table td {
+    display: block;
+  }
+
+  .breakdown-table tr {
+    position: relative;
+    margin-bottom: 8px;
+    padding: 12px 52px 12px 42px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .breakdown-table td {
+    padding: 0;
+    border-bottom: none;
+  }
+
+  .rank-cell {
+    position: absolute;
+    left: 12px;
+    top: 14px;
+    width: 20px;
+  }
+
+  .name-cell {
+    word-break: break-word;
+    line-height: 1.35;
+  }
+
+  .count-cell {
+    position: absolute;
+    top: 13px;
+    right: 12px;
+    width: auto;
+  }
+
+  .recent-table thead {
+    display: none;
+  }
+
+  .recent-table tr {
+    padding: 12px;
+  }
+
+  .recent-table .time-cell,
+  .recent-table .page-cell,
+  .recent-table .device-cell {
+    width: auto;
+    max-width: none;
+    margin-top: 6px;
+    white-space: normal;
+  }
+
+  .recent-table .time-cell {
+    margin-top: 0;
   }
 
   .glass-panel {
-    padding: 16px;
+    padding: 15px;
+    border-radius: 18px;
   }
 }
 
 @media (max-width: 460px) {
   .analytics-page {
     width: min(100% - 18px, 420px);
-  }
-
-  .kpi-grid {
-    grid-auto-columns: minmax(132px, 58vw);
   }
 
   .bar-chart {
