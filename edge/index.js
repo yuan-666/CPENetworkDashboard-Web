@@ -22,7 +22,7 @@
 
 const KV_NAMESPACE = 'cpeweb'
 const LEGACY_KV_NAMESPACES = ['cpe_network_dashboard_web']
-const EDGE_BUILD = '2026-06-10.6'
+const EDGE_BUILD = '2026-06-10.7'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
 const CONFIG_KEY = 'config'
@@ -53,9 +53,7 @@ function runtimeState() {
   const key = '__CPE_PLUS_PLUS_EDGE_RUNTIME__'
   if (!globalThis[key]) {
     globalThis[key] = {
-      analyticsStore: null,
-      analyticsStoreNamespace: '',
-      analyticsStoreLoadedAt: 0,
+      analyticsStores: new Map(),
       dirtyEvents: 0,
       lastFlushAt: 0,
       mutationQueue: Promise.resolve(),
@@ -2248,26 +2246,25 @@ function addBaselines(primary, incoming) {
 async function readAnalyticsStore(kv) {
   const runtime = runtimeState()
   const namespace = kvNamespace(kv)
-  const cacheAge = Date.now() - runtime.analyticsStoreLoadedAt
+  const cached = runtime.analyticsStores.get(namespace)
+  const cacheAge = cached ? Date.now() - cached.loadedAt : Infinity
   if (
-    runtime.analyticsStore &&
-    runtime.analyticsStoreNamespace === namespace &&
+    cached?.store &&
     (runtime.dirtyEvents > 0 || cacheAge < ANALYTICS_READ_CACHE_TTL_MS)
   ) {
-    return runtime.analyticsStore
+    return cached.store
   }
 
   const str = await kvGetText(kv, ANALYTICS_KEY)
   if (!str) {
-    runtime.analyticsStore = emptyAnalyticsStore()
-    runtime.analyticsStoreNamespace = namespace
-    runtime.analyticsStoreLoadedAt = Date.now()
-    return runtime.analyticsStore
+    const store = emptyAnalyticsStore()
+    runtime.analyticsStores.set(namespace, { store, loadedAt: Date.now() })
+    return store
   }
 
   try {
     const parsed = JSON.parse(str)
-    runtime.analyticsStore = {
+    const store = {
       ...emptyAnalyticsStore(),
       ...parsed,
       counters: {
@@ -2281,14 +2278,12 @@ async function readAnalyticsStore(kv) {
       },
       dailyVisits: Array.isArray(parsed?.dailyVisits) ? parsed.dailyVisits : [],
     }
-    runtime.analyticsStoreNamespace = namespace
-    runtime.analyticsStoreLoadedAt = Date.now()
-    return runtime.analyticsStore
+    runtime.analyticsStores.set(namespace, { store, loadedAt: Date.now() })
+    return store
   } catch {
-    runtime.analyticsStore = emptyAnalyticsStore()
-    runtime.analyticsStoreNamespace = namespace
-    runtime.analyticsStoreLoadedAt = Date.now()
-    return runtime.analyticsStore
+    const store = emptyAnalyticsStore()
+    runtime.analyticsStores.set(namespace, { store, loadedAt: Date.now() })
+    return store
   }
 }
 
@@ -2320,9 +2315,7 @@ async function writeAnalyticsStore(kv, store) {
   store.updatedAt = new Date().toISOString()
   await kvPutText(kv, ANALYTICS_KEY, JSON.stringify(store))
   const runtime = runtimeState()
-  runtime.analyticsStore = store
-  runtime.analyticsStoreNamespace = kvNamespace(kv)
-  runtime.analyticsStoreLoadedAt = Date.now()
+  runtime.analyticsStores.set(kvNamespace(kv), { store, loadedAt: Date.now() })
   runtime.dirtyEvents = 0
   runtime.lastFlushAt = Date.now()
 }
@@ -2468,7 +2461,7 @@ async function trackInAnalyticsStore(kv, mutator) {
   const pending = runtime.mutationQueue.then(async () => {
     const store = await readAnalyticsStore(kv)
     const result = mutator(store)
-    runtime.analyticsStore = store
+    runtime.analyticsStores.set(kvNamespace(kv), { store, loadedAt: Date.now() })
     runtime.dirtyEvents += 1
     if (shouldFlushAnalytics(runtime, result.flushNow)) await writeAnalyticsStore(kv, store)
     const publicResult = { ...result }
