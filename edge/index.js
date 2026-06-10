@@ -22,7 +22,7 @@
 
 const KV_NAMESPACE = 'cpeweb'
 const LEGACY_KV_NAMESPACES = ['cpe_network_dashboard_web']
-const EDGE_BUILD = '2026-06-10.4'
+const EDGE_BUILD = '2026-06-10.5'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
 const CONFIG_KEY = 'config'
@@ -3071,13 +3071,24 @@ async function handleSummary(request) {
   })
 }
 
-async function readDiagnosticsForKv(kv, todayKey) {
+async function readDiagnosticsForKv(kv, todayKey, options = {}) {
+  const deep = Boolean(options.deep)
   const namespace = kvNamespace(kv)
   const analyticsText = await kvGetText(kv, ANALYTICS_KEY).catch(() => '')
   const baselineText = await kvGetText(kv, BASELINE_KEY).catch(() => '')
-  const summary = await readSummaryFromKv(kv, todayKey).catch(() => emptySummary())
+  let parsedAnalytics = null
+  if (analyticsText) {
+    try {
+      parsedAnalytics = JSON.parse(analyticsText)
+    } catch {
+      parsedAnalytics = null
+    }
+  }
+  const summary = deep
+    ? await readSummaryFromKv(kv, todayKey).catch(() => emptySummary())
+    : emptySummary()
   const directVisits = await safeReadCounter(kv, 'visits', todayKey)
-  const eventKeys = recentDateKeys(3)
+  const eventKeys = deep ? recentDateKeys(1) : []
   const eventCounts = {}
   for (const date of eventKeys) {
     const text =
@@ -3095,7 +3106,10 @@ async function readDiagnosticsForKv(kv, todayKey) {
     }
   }
 
-  const knownIds = knownDownloadIds(Object.keys(summary.downloadsByFile || {}))
+  const knownIds = knownDownloadIds(Object.keys(summary.downloadsByFile || {})).slice(
+    0,
+    deep ? 24 : 6
+  )
   const directDownloads = {}
   for (const id of knownIds) {
     const counter = await safeReadCounter(kv, `download:${id}`, todayKey)
@@ -3115,6 +3129,21 @@ async function readDiagnosticsForKv(kv, todayKey) {
     analyticsBytes: analyticsText.length,
     baselineExists: Boolean(baselineText),
     baselineBytes: baselineText.length,
+    analyticsPreview: parsedAnalytics
+      ? {
+          version: parsedAnalytics.version || 0,
+          visits: parsedAnalytics.counters?.visits || null,
+          downloadIds: Object.keys(parsedAnalytics.counters?.downloads || {}).slice(0, 24),
+          downloadTotal: Object.values(parsedAnalytics.counters?.downloads || {}).reduce(
+            (sum, item) => sum + (Number(item?.total) || 0),
+            0
+          ),
+          events: Array.isArray(parsedAnalytics.events) ? parsedAnalytics.events.length : 0,
+          dailyVisits: Array.isArray(parsedAnalytics.dailyVisits)
+            ? parsedAnalytics.dailyVisits.length
+            : 0,
+        }
+      : null,
     summary: {
       visits: summary.visits,
       downloadsTotal: summary.downloadsTotal,
@@ -3135,26 +3164,47 @@ async function handleAnalyticsDebug(request) {
   const protectedRead = await guardAnalyticsRead(request)
   if (protectedRead) return protectedRead
 
+  const url = new URL(request.url)
+  const deep = url.searchParams.get('deep') === '1'
   const todayKey = getTodayKey()
-  const kvs = [edgeKv(), ...legacyEdgeKvs()]
+  const kvs = deep ? [edgeKv(), ...legacyEdgeKvs()] : [edgeKv()]
   const namespaces = []
   for (const kv of kvs) {
-    namespaces.push(await readDiagnosticsForKv(kv, todayKey))
+    namespaces.push(await readDiagnosticsForKv(kv, todayKey, { deep }))
   }
-  const current = await readSummaryFromKv(kvs[0], todayKey).catch(() => emptySummary())
-  const legacy = await readLegacyStoreSummaries(todayKey).catch(() => [])
+  const current = deep ? await readSummaryFromKv(kvs[0], todayKey).catch(() => emptySummary()) : emptySummary()
+  const legacy = deep ? await readLegacyStoreSummaries(todayKey).catch(() => []) : []
   const baseline = await readStatsBaseline(kvs[0], todayKey)
-  const publicVisits = await readPublicVisits(kvs[0], todayKey, current, legacy)
-  const publicDownloads = await readDownloads(kvs[0], todayKey, current, legacy).catch(() => ({
-    downloadsByFile: {},
-    downloadsByVersion: {},
-    downloadsTotal: 0,
-  }))
+  const publicVisits = deep
+    ? await readPublicVisits(kvs[0], todayKey, current, legacy)
+    : {
+        total:
+          numberOrZero(namespaces[0]?.analyticsPreview?.visits?.total) +
+          numberOrZero(namespaces[0]?.directVisits?.total) +
+          baseline.visits.total,
+        today:
+          numberOrZero(namespaces[0]?.analyticsPreview?.visits?.today) +
+          numberOrZero(namespaces[0]?.directVisits?.today) +
+          baseline.visits.today,
+        todayKey,
+      }
+  const publicDownloads = deep
+    ? await readDownloads(kvs[0], todayKey, current, legacy).catch(() => ({
+        downloadsByFile: {},
+        downloadsByVersion: {},
+        downloadsTotal: 0,
+      }))
+    : {
+        downloadsByFile: {},
+        downloadsByVersion: {},
+        downloadsTotal: 0,
+      }
 
   return json({
     ok: true,
     build: EDGE_BUILD,
     todayKey,
+    mode: deep ? 'deep' : 'light',
     namespaces,
     baseline,
     public: {
