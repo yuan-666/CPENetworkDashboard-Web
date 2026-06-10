@@ -21,26 +21,29 @@
  */
 
 const KV_NAMESPACE = 'cpeweb'
-const EDGE_BUILD = '2026-06-09.1'
+const EDGE_BUILD = '2026-06-10.1'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
+const CONFIG_KEY = 'config'
 const UPDATE_STORE_VERSION = 2
 const MAX_JSON_BYTES = 24 * 1024
 const MAX_DAILY_EVENTS = 360
 const PUBLIC_DAYS = 7
 const ANALYTICS_READ_CACHE_TTL_MS = 15 * 1000
+const CONFIG_CACHE_TTL_MS = 30 * 1000
 const ANALYTICS_FLUSH_INTERVAL_MS = 60 * 1000
 const ANALYTICS_FLUSH_EVENT_THRESHOLD = 24
 const GEO_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 const RATE_BUCKET_MAX_ENTRIES = 1000
 const DOWNLOAD_DEDUPE_TTL_MS = 60 * 60 * 1000
-const WRITE_TOKEN = readEnv('CPE_STATS_TOKEN') || readEnv('STATS_WRITE_TOKEN')
-const AMAP_WEB_SERVICE_KEY =
+const BUILD_WRITE_TOKEN = readEnv('CPE_STATS_TOKEN') || readEnv('STATS_WRITE_TOKEN')
+const BUILD_AMAP_WEB_SERVICE_KEY =
   readEnv('AMAP_WEB_SERVICE_KEY') ||
   readEnv('AMAP_WEB_KEY') ||
   readEnv('VITE_AMAP_WEB_KEY') ||
   readEnv('AMAP_KEY')
-const READ_TOKEN = readEnv('CPE_ANALYTICS_TOKEN') || readEnv('ANALYTICS_READ_TOKEN') || WRITE_TOKEN
+const BUILD_READ_TOKEN =
+  readEnv('CPE_ANALYTICS_TOKEN') || readEnv('ANALYTICS_READ_TOKEN') || BUILD_WRITE_TOKEN
 
 function runtimeState() {
   const key = '__CPE_PLUS_PLUS_EDGE_RUNTIME__'
@@ -54,6 +57,8 @@ function runtimeState() {
       rateBuckets: new Map(),
       recentDownloadKeys: new Map(),
       geoCache: new Map(),
+      config: null,
+      configLoadedAt: 0,
     }
   }
   return globalThis[key]
@@ -689,13 +694,13 @@ function validCoordinate(lat, lon) {
   )
 }
 
-async function fetchAmapReverseGeo(lat, lon) {
-  if (!AMAP_WEB_SERVICE_KEY || !validCoordinate(lat, lon)) return null
+async function fetchAmapReverseGeo(lat, lon, amapWebServiceKey = '') {
+  if (!amapWebServiceKey || !validCoordinate(lat, lon)) return null
 
   const latitude = Number(lat)
   const longitude = Number(lon)
   const url = new URL('https://restapi.amap.com/v3/geocode/regeo')
-  url.searchParams.set('key', AMAP_WEB_SERVICE_KEY)
+  url.searchParams.set('key', amapWebServiceKey)
   url.searchParams.set('location', `${longitude.toFixed(6)},${latitude.toFixed(6)}`)
   url.searchParams.set('extensions', 'base')
   url.searchParams.set('output', 'json')
@@ -732,11 +737,11 @@ async function fetchAmapReverseGeo(lat, lon) {
   }
 }
 
-async function enrichChinaGeoWithAmap(geo) {
-  if (!geo || !AMAP_WEB_SERVICE_KEY || !validCoordinate(geo.lat, geo.lon)) return geo
+async function enrichChinaGeoWithAmap(geo, amapWebServiceKey = '') {
+  if (!geo || !amapWebServiceKey || !validCoordinate(geo.lat, geo.lon)) return geo
   const normalized = normalizeChinaGeoFields(geo)
   if (normalized.country !== '中国') return geo
-  const amapGeo = await fetchAmapReverseGeo(geo.lat, geo.lon)
+  const amapGeo = await fetchAmapReverseGeo(geo.lat, geo.lon, amapWebServiceKey)
   return amapGeo || geo
 }
 
@@ -746,6 +751,7 @@ async function fetchGeo(ip) {
   const runtime = runtimeState()
   const cached = runtime.geoCache.get(ip)
   if (cached && cached.expiresAt > Date.now()) return cached.value
+  const config = await readRuntimeConfig().catch(() => normalizeConfig())
 
   for (const provider of GEO_PROVIDERS) {
     let timeout = 0
@@ -759,7 +765,7 @@ async function fetchGeo(ip) {
       if (!response.ok) continue
       const data = await response.json()
       if (!data || data.error || data.status === 'fail') continue
-      const geo = await enrichChinaGeoWithAmap(provider.parse(data))
+      const geo = await enrichChinaGeoWithAmap(provider.parse(data), config.amapWebServiceKey)
       if (geo.country || geo.city) {
         runtime.geoCache.set(ip, { value: geo, expiresAt: Date.now() + GEO_CACHE_TTL_MS })
         return geo
@@ -980,11 +986,13 @@ const UPDATE_PLATFORM_ALIASES = {
 }
 
 const DEFAULT_UPDATE_CHANNEL = 'stable'
+const ANDROID_STABLE_LATEST_VERSION = '3.5.3'
+const ANDROID_STABLE_LATEST_VERSION_CODE = 10
 
 const DEFAULT_RELEASES = {
   android: {
     stable: releaseFromDownload('android-3.5.3', {
-      versionCode: 353,
+      versionCode: ANDROID_STABLE_LATEST_VERSION_CODE,
       releaseDate: '2026-06-09',
       notes: '3.5.3 正式版：统一 CPE加加 / CPE++ 品牌和新图标，修复混淆后 release / portable 更新检查异常，并同步烽火后台重登录优化。',
     }),
@@ -1064,6 +1072,22 @@ function compareVersions(a, b) {
     if (l !== r) return l > r ? 1 : -1
   }
   return 0
+}
+
+function normalizeUpdateRelease(release) {
+  if (
+    release &&
+    release.platform === 'android' &&
+    release.channel === 'stable' &&
+    compareVersions(release.version, ANDROID_STABLE_LATEST_VERSION) === 0
+  ) {
+    return {
+      ...release,
+      version: ANDROID_STABLE_LATEST_VERSION,
+      versionCode: ANDROID_STABLE_LATEST_VERSION_CODE,
+    }
+  }
+  return release
 }
 
 function releaseDownloadPayload(fileId) {
@@ -1152,10 +1176,10 @@ function withAbsoluteDownloadUrls(download, request) {
 
 function serializeRelease(release, request) {
   if (!release) return null
-  return {
+  return normalizeUpdateRelease({
     platform: release.platform || '',
     channel: release.channel || DEFAULT_UPDATE_CHANNEL,
-    version: release.version || '',
+    version: release.version || release.versionName || '',
     versionCode: Number(release.versionCode || 0) || 0,
     title: release.title || '',
     notes: release.notes || '',
@@ -1167,7 +1191,7 @@ function serializeRelease(release, request) {
     alternatives: Array.isArray(release.alternatives)
       ? release.alternatives.map((item) => withAbsoluteDownloadUrls(item, request)).filter(Boolean)
       : [],
-  }
+  })
 }
 
 function emptyUpdateStore() {
@@ -1189,9 +1213,16 @@ async function readUpdateStore(kv) {
     for (const [platform, channels] of Object.entries(parsed?.releases || {})) {
       const normalizedPlatform = normalizeUpdatePlatform(platform)
       if (!normalizedPlatform || !channels || typeof channels !== 'object') continue
-      releases[normalizedPlatform] = {
-        ...(releases[normalizedPlatform] || {}),
-        ...channels,
+      releases[normalizedPlatform] = { ...(releases[normalizedPlatform] || {}) }
+      for (const [channel, release] of Object.entries(channels || {})) {
+        const normalizedChannel = normalizeUpdateChannel(channel)
+        if (!release || typeof release !== 'object') continue
+        releases[normalizedPlatform][normalizedChannel] = normalizeUpdateRelease({
+          ...release,
+          platform: release.platform || normalizedPlatform,
+          channel: release.channel || normalizedChannel,
+          version: release.version || release.versionName || '',
+        })
       }
     }
     return {
@@ -1236,7 +1267,7 @@ function normalizePublishedRelease(body) {
         }
       : null
   const download = customDownload || knownDownload
-  const version = String(body.version || download?.version || '').trim()
+  const version = String(body.version || body.versionName || download?.version || '').trim()
   if (!version) return { error: 'Missing version' }
 
   const alternatives = Array.isArray(body.alternatives)
@@ -1253,7 +1284,7 @@ function normalizePublishedRelease(body) {
     : []
 
   return {
-    release: {
+    release: normalizeUpdateRelease({
       platform,
       channel,
       version,
@@ -1266,7 +1297,7 @@ function normalizePublishedRelease(body) {
       minSupportedVersion: String(body.minSupportedVersion || body.minimumVersion || '').trim(),
       download,
       alternatives,
-    },
+    }),
   }
 }
 
@@ -1412,6 +1443,71 @@ async function kvPutText(kv, key, value) {
   await kv.put(key, String(value))
 }
 
+function normalizeConfig(raw = {}) {
+  const writeToken =
+    raw.CPE_STATS_TOKEN ||
+    raw.STATS_WRITE_TOKEN ||
+    raw.statsToken ||
+    raw.writeToken ||
+    BUILD_WRITE_TOKEN
+  const readToken =
+    raw.CPE_ANALYTICS_TOKEN ||
+    raw.ANALYTICS_READ_TOKEN ||
+    raw.analyticsToken ||
+    raw.readToken ||
+    BUILD_READ_TOKEN ||
+    writeToken
+  const amapKey =
+    raw.AMAP_WEB_SERVICE_KEY ||
+    raw.AMAP_WEB_KEY ||
+    raw.VITE_AMAP_WEB_KEY ||
+    raw.AMAP_KEY ||
+    raw.amapKey ||
+    BUILD_AMAP_WEB_SERVICE_KEY
+
+  return {
+    writeToken: String(writeToken || '').trim(),
+    readToken: String(readToken || '').trim(),
+    amapWebServiceKey: String(amapKey || '').trim(),
+  }
+}
+
+async function readRuntimeConfig(kv = edgeKv()) {
+  const runtime = runtimeState()
+  const cacheAge = Date.now() - runtime.configLoadedAt
+  if (runtime.config && cacheAge < CONFIG_CACHE_TTL_MS) return runtime.config
+
+  const raw = {}
+  try {
+    const configText = await kvGetText(kv, CONFIG_KEY)
+    if (configText) Object.assign(raw, JSON.parse(configText))
+  } catch {
+    /* keep per-key fallback */
+  }
+
+  const keys = [
+    'CPE_STATS_TOKEN',
+    'STATS_WRITE_TOKEN',
+    'CPE_ANALYTICS_TOKEN',
+    'ANALYTICS_READ_TOKEN',
+    'AMAP_WEB_SERVICE_KEY',
+    'AMAP_WEB_KEY',
+    'VITE_AMAP_WEB_KEY',
+    'AMAP_KEY',
+  ]
+  await Promise.all(
+    keys.map(async (key) => {
+      if (raw[key]) return
+      const value = await kvGetText(kv, key)
+      if (value) raw[key] = value
+    })
+  )
+
+  runtime.config = normalizeConfig(raw)
+  runtime.configLoadedAt = Date.now()
+  return runtime.config
+}
+
 function trimRateBuckets(buckets) {
   if (buckets.size <= RATE_BUCKET_MAX_ENTRIES) return
   const now = Date.now()
@@ -1510,18 +1606,21 @@ function sameSiteRequest(request, options = {}) {
   return isAllowed(origin) || isAllowed(referer)
 }
 
-function verifyWriteToken(request, body = {}) {
-  if (!WRITE_TOKEN) return true
+async function verifyWriteToken(request, body = {}, config = null) {
+  const runtimeConfig = config || (await readRuntimeConfig())
+  const writeToken = runtimeConfig.writeToken
+  if (!writeToken) return true
   const auth = request.headers.get('Authorization') || ''
   const headerToken = request.headers.get('X-CPE-Stats-Token') || ''
   const adminToken = request.headers.get('X-Admin-Token') || ''
   const bodyToken = body && typeof body === 'object' ? String(body.token || '') : ''
   const bearer = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : ''
-  return [headerToken, adminToken, bodyToken, bearer].some((token) => token && token === WRITE_TOKEN)
+  return [headerToken, adminToken, bodyToken, bearer].some((token) => token && token === writeToken)
 }
 
-function hasConfiguredWriteToken(request, body = {}) {
-  return Boolean(WRITE_TOKEN) && verifyWriteToken(request, body)
+async function hasConfiguredWriteToken(request, body = {}, config = null) {
+  const runtimeConfig = config || (await readRuntimeConfig())
+  return Boolean(runtimeConfig.writeToken) && (await verifyWriteToken(request, body, runtimeConfig))
 }
 
 function isUpdateDownloadRequest(request) {
@@ -1532,27 +1631,31 @@ function isUpdateDownloadRequest(request) {
   )
 }
 
-function guardWriteRequest(request, body = {}) {
+async function guardWriteRequest(request, body = {}) {
   const sameSite = sameSiteRequest(request)
-  const hasToken = hasConfiguredWriteToken(request, body)
+  if (sameSite) return null
+  const hasToken = await hasConfiguredWriteToken(request, body)
   if (!sameSite && !hasToken) return json({ error: 'Access denied' }, 403)
   return null
 }
 
-function verifyReadToken(request) {
-  if (!READ_TOKEN) return false
+async function verifyReadToken(request, config = null) {
+  const runtimeConfig = config || (await readRuntimeConfig())
+  const readToken = runtimeConfig.readToken
+  if (!readToken) return false
   const url = new URL(request.url)
   const auth = request.headers.get('Authorization') || ''
   const headerToken = request.headers.get('X-CPE-Stats-Token') || ''
   const adminToken = request.headers.get('X-Admin-Token') || ''
   const queryToken = url.searchParams.get('token') || ''
   const bearer = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : ''
-  return [headerToken, adminToken, queryToken, bearer].some((token) => token && token === READ_TOKEN)
+  return [headerToken, adminToken, queryToken, bearer].some((token) => token && token === readToken)
 }
 
-function guardAnalyticsRead(request) {
-  if (!READ_TOKEN) return json({ ok: false, error: 'Analytics token is not configured' }, 403)
-  if (!verifyReadToken(request)) return json({ ok: false, error: 'Access denied' }, 403)
+async function guardAnalyticsRead(request) {
+  const config = await readRuntimeConfig()
+  if (!config.readToken) return json({ ok: false, error: 'Analytics token is not configured' }, 403)
+  if (!(await verifyReadToken(request, config))) return json({ ok: false, error: 'Access denied' }, 403)
   return null
 }
 
@@ -2154,7 +2257,7 @@ async function handleTrack(request) {
     return json({ ok: false, error: 'Invalid JSON' }, 400)
   }
 
-  const blocked = guardWriteRequest(request, body)
+  const blocked = await guardWriteRequest(request, body)
   if (blocked) return blocked
 
   try {
@@ -2219,7 +2322,7 @@ async function handleDownload(request) {
   if (request.method === 'POST') {
     try {
       body = await readJsonLimited(request)
-      const blocked = guardWriteRequest(request, body)
+      const blocked = await guardWriteRequest(request, body)
       if (blocked) return blocked
       fileId = body.file || fileId
     } catch {
@@ -2232,7 +2335,7 @@ async function handleDownload(request) {
   if (
     request.method === 'GET' &&
     !sameSiteRequest(request) &&
-    !hasConfiguredWriteToken(request) &&
+    !(await hasConfiguredWriteToken(request)) &&
     !isUpdateDownloadRequest(request)
   ) {
     return redirectToDownload(request, fileId)
@@ -2383,13 +2486,23 @@ async function handleUpdateCheck(request) {
   const channel = normalizeUpdateChannel(body.channel || url.searchParams.get('channel'))
   const currentVersion = String(
     body.currentVersion ||
+      body.versionName ||
       body.version ||
       url.searchParams.get('currentVersion') ||
+      url.searchParams.get('versionName') ||
       url.searchParams.get('version') ||
       ''
   ).trim()
   const currentVersionCode =
-    Number(body.currentVersionCode || body.versionCode || url.searchParams.get('versionCode') || 0) ||
+    Number(
+      body.currentVersionCode ||
+        body.versionCode ||
+        body.buildNumber ||
+        url.searchParams.get('currentVersionCode') ||
+        url.searchParams.get('versionCode') ||
+        url.searchParams.get('buildNumber') ||
+        0
+    ) ||
     0
 
   const kv = edgeKv()
@@ -2406,8 +2519,10 @@ async function handleUpdateCheck(request) {
     latest && currentVersion
       ? compareVersions(latest.version, currentVersion) > 0
       : false
+  const sameVersionName =
+    latest && currentVersion ? compareVersions(latest.version, currentVersion) === 0 : false
   const codeUpdate =
-    latest && latest.versionCode && currentVersionCode
+    latest && latest.versionCode && currentVersionCode && !sameVersionName
       ? latest.versionCode > currentVersionCode
       : false
   const belowMin =
@@ -2432,7 +2547,8 @@ async function handleUpdateCheck(request) {
 }
 
 async function handleUpdatePublish(request) {
-  if (!WRITE_TOKEN) return json({ ok: false, error: 'Publish token is not configured' }, 403)
+  const config = await readRuntimeConfig()
+  if (!config.writeToken) return json({ ok: false, error: 'Publish token is not configured' }, 403)
 
   let body = {}
   try {
@@ -2441,7 +2557,8 @@ async function handleUpdatePublish(request) {
     return json({ ok: false, error: 'Invalid JSON' }, 400)
   }
 
-  if (!verifyWriteToken(request, body)) return json({ ok: false, error: 'Access denied' }, 403)
+  if (!(await verifyWriteToken(request, body, config)))
+    return json({ ok: false, error: 'Access denied' }, 403)
 
   const allowed = await consumeRate(`updates-publish:${ipBucket(getClientIP(request))}`, 30, 3600)
   if (!allowed) return json({ error: 'Too many requests', build: EDGE_BUILD }, 429)
@@ -2467,7 +2584,7 @@ async function handleUpdatePublish(request) {
 }
 
 async function handleSummary(request) {
-  const protectedRead = guardAnalyticsRead(request)
+  const protectedRead = await guardAnalyticsRead(request)
   if (protectedRead) return protectedRead
 
   const blocked = await guardReadRequest(request, 'summary-read')

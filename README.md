@@ -76,6 +76,81 @@ EdgeKV namespace：
 cpeweb
 ```
 
+### ESA 后台填写清单
+
+1. 静态站点构建变量只填前端公开变量：
+
+```text
+VITE_API_BASE=/api
+```
+
+2. EdgeKV 新建或选择 namespace：
+
+```text
+cpeweb
+```
+
+3. 在 `cpeweb` 里新增 KV key：
+
+```text
+config
+```
+
+KV value 填 JSON：
+
+```json
+{
+  "CPE_STATS_TOKEN": "自己生成一个长随机字符串，用于统计写入和版本发布",
+  "CPE_ANALYTICS_TOKEN": "自己生成一个长随机字符串，用于统计页登录",
+  "AMAP_WEB_SERVICE_KEY": "高德 WebService Key，没有就填空字符串"
+}
+```
+
+4. Edge Function 路由保持：
+
+```text
+/api/* -> edge/index.js
+/*     -> dist 静态站点
+```
+
+5. `updates` 是版本数据 KV，不是必须手动填。默认版本已经内置在 `edge/index.js`；后续发版推荐调用 `POST /api/updates/publish` 写入。当前函数会把历史 KV 中 Android `3.5.3 / versionCode 353` 自动规范成 Android APK 真实的 `versionCode 10`，所以部署本函数后 3.5.3 不会再误报更新。
+
+### ESA KV 配置和维护密码
+
+ESA 的环境变量只能在构建时传给前端，不能作为 Edge Function 的运行时配置使用。运行时 token、统计密码和高德 Key 请放到 EdgeKV，不要写进前端 `.env`，也不要打包进网页。
+
+推荐在 `cpeweb` namespace 里新增一个 KV：
+
+| KV key | KV value |
+| --- | --- |
+| `config` | 下面这段 JSON |
+
+```json
+{
+  "CPE_STATS_TOKEN": "填一个长随机写入和发布 token",
+  "CPE_ANALYTICS_TOKEN": "填统计页登录密码 token",
+  "AMAP_WEB_SERVICE_KEY": "填高德 WebService Key，没有就留空"
+}
+```
+
+也可以拆成三个单独 KV key：
+
+| 变量名 | 用途 | 调用方式 |
+| --- | --- | --- |
+| `CPE_STATS_TOKEN` | 统计写入和版本发布 token。设置后，外部写入 `/api/track`、`POST /api/download`、`POST /api/updates/publish` 需要带同一个 token。 | `Authorization: Bearer <token>`，也兼容 `X-CPE-Stats-Token`、`X-Admin-Token` 或 JSON body 里的 `token`。 |
+| `CPE_ANALYTICS_TOKEN` | 完整统计页密码，访问 `#/analytics` 时输入这个值。 | 前端会以 `Authorization: Bearer <token>` 请求 `/api/analytics/summary`。 |
+| `AMAP_WEB_SERVICE_KEY` | 可选，高德 WebService Key，用于把中国地区访问数据规范化为中文省市名。 | 只由 Edge Function 后端读取。 |
+
+兼容旧 KV key：`STATS_WRITE_TOKEN` 等价于 `CPE_STATS_TOKEN`，`ANALYTICS_READ_TOKEN` 等价于 `CPE_ANALYTICS_TOKEN`。如果没有单独配置 `CPE_ANALYTICS_TOKEN`，完整统计页会回退使用 `CPE_STATS_TOKEN`。Edge Function 会缓存 KV 配置 30 秒，后台修改后等一会儿即可生效，不需要重新构建前端。
+
+前端构建只需要：
+
+```bash
+VITE_API_BASE=/api npm run build
+```
+
+不要再配置 `VITE_API_TOKEN`，也不要把 `CPE_STATS_TOKEN`、`CPE_ANALYTICS_TOKEN`、`AMAP_WEB_SERVICE_KEY` 放到前端构建环境里。
+
 公开 API：
 
 | 路径                      | 方法     | 用途                                      |
@@ -139,7 +214,7 @@ Content-Type: application/json
     "platform": "android",
     "channel": "stable",
     "version": "3.5.3",
-    "versionCode": 353,
+    "versionCode": 10,
     "title": "Android 3.5.3 Release APK",
     "notes": "3.5.3 正式版：统一 CPE加加 / CPE++ 品牌和新图标，修复混淆后 release / portable 更新检查异常，并同步烽火后台重登录优化。",
     "releaseDate": "2026-06-09",
@@ -180,12 +255,19 @@ Content-Type: application/json
 
 | 平台      | channel  | version        | versionCode | 下载模式  | 说明                                  |
 | --------- | -------- | -------------- | ----------- | --------- | ------------------------------------- |
-| Android   | `stable` | `3.5.3`        | `353`       | `single`  | APK 直链                              |
+| Android   | `stable` | `3.5.3`        | `10`        | `single`  | APK 直链，和 Android 包内 versionCode 保持一致 |
 | Windows   | `stable` | `3.5.3`        | `353`       | `chunked` | 默认 Portable，`alternatives` 含 EXE/MSI |
 | macOS     | `stable` | `3.5.3`        | `353`       | `chunked` | arm64 DMG 分片                        |
 | iOS       | `stable` | `coming-soon`  | `0`         | 无        | `download` 为 `null`                  |
 
 也可以用 `GET /api/updates/check?platform=android&version=3.5.1&versionCode=9&channel=stable` 检查更新。`GET /api/updates/latest` 返回全平台数据，`GET /api/updates/latest?platform=windows` 只返回指定平台。`POST /api/updates/publish` 用于带 token 发布云端版本，App 端不需要调用。
+
+App 侧建议这样用：
+
+- Android 检查更新时，把本机 `versionName` 和实际 APK 的 `versionCode` 一起传给 `/api/updates/check`。
+- 如果是 Android 3.5.3，请使用 `versionName = 3.5.3`、`versionCode = 10`，不要再传 353。
+- Windows 和 macOS 继续用桌面端自己的版本号与打包号即可。
+- 完整统计页 `#/analytics` 只给维护者使用，输入服务端配置的 `CPE_ANALYTICS_TOKEN` 后才能打开。
 
 ### 统计接口权限
 

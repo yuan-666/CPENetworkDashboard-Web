@@ -6,7 +6,7 @@
 
 ## 主要变化
 
-- 桌面端、Android Gradle 元数据和共享应用元数据统一升级到 3.5.3 / versionCode 353。
+- Android 更新到 versionCode 10 / versionName 3.5.3；桌面端和共享应用元数据升级到 3.5.3 / versionCode 353。
 - 应用品牌统一为 CPE加加，英文名 CPE++；发布文件名统一使用 CPEPlusPlus。
 - Android、Windows 和 macOS 图标资源替换为新的 CPE++ 图标。
 - 修复 ProGuard 混淆后 release / portable 更新检查异常：更新请求使用显式 JSON key，响应字段名保持稳定。
