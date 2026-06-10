@@ -22,7 +22,7 @@
 
 const KV_NAMESPACE = 'cpeweb'
 const LEGACY_KV_NAMESPACES = ['cpe_network_dashboard_web']
-const EDGE_BUILD = '2026-06-10.5'
+const EDGE_BUILD = '2026-06-10.6'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
 const CONFIG_KEY = 'config'
@@ -3106,10 +3106,18 @@ async function readDiagnosticsForKv(kv, todayKey, options = {}) {
     }
   }
 
-  const knownIds = knownDownloadIds(Object.keys(summary.downloadsByFile || {})).slice(
-    0,
-    deep ? 24 : 6
-  )
+  const knownIds = (
+    deep
+      ? knownDownloadIds(Object.keys(summary.downloadsByFile || {}))
+      : [
+          'android-3.5.3',
+          'android-3.5',
+          'android-3.2-beta',
+          'android-3.1',
+          'windows-portable-3.5.3',
+          'macos-3.5.3',
+        ]
+  ).slice(0, deep ? 24 : 6)
   const directDownloads = {}
   for (const id of knownIds) {
     const counter = await safeReadCounter(kv, `download:${id}`, todayKey)
@@ -3167,7 +3175,7 @@ async function handleAnalyticsDebug(request) {
   const url = new URL(request.url)
   const deep = url.searchParams.get('deep') === '1'
   const todayKey = getTodayKey()
-  const kvs = deep ? [edgeKv(), ...legacyEdgeKvs()] : [edgeKv()]
+  const kvs = [edgeKv(), ...legacyEdgeKvs()]
   const namespaces = []
   for (const kv of kvs) {
     namespaces.push(await readDiagnosticsForKv(kv, todayKey, { deep }))
