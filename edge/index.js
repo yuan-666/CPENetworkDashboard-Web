@@ -21,7 +21,8 @@
  */
 
 const KV_NAMESPACE = 'cpeweb'
-const EDGE_BUILD = '2026-06-10.1'
+const LEGACY_KV_NAMESPACES = ['cpe_network_dashboard_web']
+const EDGE_BUILD = '2026-06-10.2'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
 const CONFIG_KEY = 'config'
@@ -36,6 +37,7 @@ const ANALYTICS_FLUSH_EVENT_THRESHOLD = 24
 const GEO_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 const RATE_BUCKET_MAX_ENTRIES = 1000
 const DOWNLOAD_DEDUPE_TTL_MS = 60 * 60 * 1000
+const KV_INSTANCE_NAMESPACES = new WeakMap()
 const BUILD_WRITE_TOKEN = readEnv('CPE_STATS_TOKEN') || readEnv('STATS_WRITE_TOKEN')
 const BUILD_AMAP_WEB_SERVICE_KEY =
   readEnv('AMAP_WEB_SERVICE_KEY') ||
@@ -50,6 +52,7 @@ function runtimeState() {
   if (!globalThis[key]) {
     globalThis[key] = {
       analyticsStore: null,
+      analyticsStoreNamespace: '',
       analyticsStoreLoadedAt: 0,
       dirtyEvents: 0,
       lastFlushAt: 0,
@@ -873,6 +876,13 @@ const DOWNLOADS = {
 }
 
 const LEGACY_DOWNLOADS = {
+  'android-3.5.2': {
+    platform: 'android',
+    version: '3.5.2',
+    label: 'Android 3.5.2 APK',
+    href: '/#/download',
+    channel: 'stable',
+  },
   'android-3.5.1': {
     platform: 'android',
     version: '3.5.1',
@@ -898,6 +908,34 @@ const LEGACY_DOWNLOADS = {
     platform: 'android',
     version: '3.0',
     label: 'Android 3.0 APK',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'macos-3.5.2': {
+    platform: 'macos',
+    version: '3.5.2',
+    label: 'macOS 3.5.2 DMG',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'windows-exe-3.5.2': {
+    platform: 'windows',
+    version: '3.5.2',
+    label: 'Windows 3.5.2 EXE',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'windows-msi-3.5.2': {
+    platform: 'windows',
+    version: '3.5.2',
+    label: 'Windows 3.5.2 MSI',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'windows-portable-3.5.2': {
+    platform: 'windows',
+    version: '3.5.2',
+    label: 'Windows 3.5.2 Portable',
     href: '/#/download',
     channel: 'stable',
   },
@@ -1330,8 +1368,18 @@ function json(data, status = 200) {
   })
 }
 
-function edgeKv() {
-  return new EdgeKV({ namespace: KV_NAMESPACE })
+function edgeKv(namespace = KV_NAMESPACE) {
+  const kv = new EdgeKV({ namespace })
+  KV_INSTANCE_NAMESPACES.set(kv, namespace)
+  return kv
+}
+
+function legacyEdgeKvs() {
+  return LEGACY_KV_NAMESPACES.map((namespace) => edgeKv(namespace))
+}
+
+function kvNamespace(kv) {
+  return KV_INSTANCE_NAMESPACES.get(kv) || KV_NAMESPACE
 }
 
 function getTodayKey() {
@@ -1717,6 +1765,17 @@ async function readCounter(kv, baseKey, todayKey) {
   }
 }
 
+async function readCounterAcrossKvs(kvs, baseKey, todayKey) {
+  const counters = await Promise.all(kvs.map((kv) => safeReadCounter(kv, baseKey, todayKey)))
+  return counters.reduce(
+    (best, counter) => ({
+      total: Math.max(best.total, counter.total),
+      today: Math.max(best.today, counter.today),
+    }),
+    { total: 0, today: 0 }
+  )
+}
+
 async function appendDailyEvent(kv, event) {
   const date = getTodayKey()
   const key = kvKey('events', date)
@@ -1885,6 +1944,7 @@ function mergeDownloadSummaries(primary, fallback) {
   }
   return {
     downloadsByFile,
+    downloadsByVersion: buildDownloadsByVersion(downloadsByFile, true),
     downloadsTotal: Object.values(downloadsByFile).reduce(
       (sum, item) => sum + (Number(item.total) || 0),
       0
@@ -1894,9 +1954,11 @@ function mergeDownloadSummaries(primary, fallback) {
 
 async function readAnalyticsStore(kv) {
   const runtime = runtimeState()
+  const namespace = kvNamespace(kv)
   const cacheAge = Date.now() - runtime.analyticsStoreLoadedAt
   if (
     runtime.analyticsStore &&
+    runtime.analyticsStoreNamespace === namespace &&
     (runtime.dirtyEvents > 0 || cacheAge < ANALYTICS_READ_CACHE_TTL_MS)
   ) {
     return runtime.analyticsStore
@@ -1905,6 +1967,7 @@ async function readAnalyticsStore(kv) {
   const str = await kvGetText(kv, ANALYTICS_KEY)
   if (!str) {
     runtime.analyticsStore = emptyAnalyticsStore()
+    runtime.analyticsStoreNamespace = namespace
     runtime.analyticsStoreLoadedAt = Date.now()
     return runtime.analyticsStore
   }
@@ -1925,10 +1988,12 @@ async function readAnalyticsStore(kv) {
       },
       dailyVisits: Array.isArray(parsed?.dailyVisits) ? parsed.dailyVisits : [],
     }
+    runtime.analyticsStoreNamespace = namespace
     runtime.analyticsStoreLoadedAt = Date.now()
     return runtime.analyticsStore
   } catch {
     runtime.analyticsStore = emptyAnalyticsStore()
+    runtime.analyticsStoreNamespace = namespace
     runtime.analyticsStoreLoadedAt = Date.now()
     return runtime.analyticsStore
   }
@@ -1939,6 +2004,7 @@ async function writeAnalyticsStore(kv, store) {
   await kvPutText(kv, ANALYTICS_KEY, JSON.stringify(store))
   const runtime = runtimeState()
   runtime.analyticsStore = store
+  runtime.analyticsStoreNamespace = kvNamespace(kv)
   runtime.analyticsStoreLoadedAt = Date.now()
   runtime.dirtyEvents = 0
   runtime.lastFlushAt = Date.now()
@@ -2105,7 +2171,7 @@ function summaryFromStore(store, todayKey) {
     if (counter.total <= 0 && !DOWNLOADS[id]) continue
     downloadsByFile[id] = serializeDownloadCounter(id, counter)
   }
-  const downloadsByVersion = buildDownloadsByVersion(downloadsByFile)
+  const downloadsByVersion = buildDownloadsByVersion(downloadsByFile, true)
   const downloadsTotal = Object.values(downloadsByFile).reduce(
     (sum, item) => sum + (Number(item.total) || 0),
     0
@@ -2149,12 +2215,15 @@ function displayDownloadPlatform(platform) {
   }[platform] || platform || 'Unknown'
 }
 
-function buildDownloadsByVersion(downloadsByFile) {
+function buildDownloadsByVersion(downloadsByFile, includeLegacy = false) {
   const downloadsByVersion = {}
-  for (const id of Object.keys(DOWNLOADS)) {
-    const download = DOWNLOADS[id]
+  const source = includeLegacy ? DOWNLOAD_META : DOWNLOADS
+  for (const id of Object.keys(source)) {
+    const download = source[id]
     const key = downloadVersionKey(download)
     const stats = downloadsByFile[id] || { total: 0, today: 0 }
+    if (!includeLegacy && !DOWNLOADS[id]) continue
+    if (includeLegacy && !DOWNLOADS[id] && Number(stats.total || 0) <= 0) continue
     const current =
       downloadsByVersion[key] || {
         id: key,
@@ -2217,8 +2286,19 @@ async function handleCounter(request) {
       return json({ ...result, build: EDGE_BUILD })
     }
 
-    const store = await readAnalyticsStore(kv)
-    return json({ ...normalizeStoredCounter(store.counters.visits, todayKey), build: EDGE_BUILD })
+    const [store, legacy] = await Promise.all([
+      readAnalyticsStore(kv),
+      readCounterAcrossKvs([kv, ...legacyEdgeKvs()], 'visits', todayKey),
+    ])
+    const stored = normalizeStoredCounter(store.counters.visits, todayKey)
+    return json(
+      {
+        total: Math.max(stored.total, legacy.total),
+        today: Math.max(stored.today, legacy.today),
+        todayKey,
+        build: EDGE_BUILD,
+      }
+    )
   } catch {
     return json({ ...(await safeReadCounter(kv, 'visits', todayKey)), build: EDGE_BUILD })
   }
@@ -2294,10 +2374,11 @@ async function handleTrack(request) {
 }
 
 async function readDownloads(kv, todayKey) {
+  const kvs = [kv, ...legacyEdgeKvs()]
   const downloadsByFile = {}
   await Promise.all(
     knownDownloadIds().map(async (id) => {
-      const counter = await safeReadCounter(kv, `download:${id}`, todayKey)
+      const counter = await readCounterAcrossKvs(kvs, `download:${id}`, todayKey)
       if (counter.total <= 0 && !DOWNLOADS[id]) return
       downloadsByFile[id] = serializeDownloadCounter(id, counter)
     })
@@ -2308,7 +2389,7 @@ async function readDownloads(kv, todayKey) {
   )
   return {
     downloadsByFile,
-    downloadsByVersion: buildDownloadsByVersion(downloadsByFile),
+    downloadsByVersion: buildDownloadsByVersion(downloadsByFile, true),
     downloadsTotal,
   }
 }
@@ -2403,15 +2484,12 @@ async function handleDownloads(request) {
     const todayKey = getTodayKey()
     const store = await readAnalyticsStore(kv)
     const summary = summaryFromStore(store, todayKey)
-    if (summary.downloadsTotal > 0) {
-      return json({
-        downloadsByFile: summary.downloadsByFile,
-        downloadsByVersion: summary.downloadsByVersion,
-        downloadsTotal: summary.downloadsTotal,
-        build: EDGE_BUILD,
-      })
-    }
-    return json({ ...(await readDownloads(kv, todayKey)), build: EDGE_BUILD })
+    const legacy = await readDownloads(kv, todayKey)
+    const downloads = mergeDownloadSummaries(
+      { downloadsByFile: summary.downloadsByFile },
+      legacy
+    )
+    return json({ ...downloads, build: EDGE_BUILD })
   } catch {
     return json({ downloadsByFile: {}, downloadsByVersion: {}, downloadsTotal: 0, build: EDGE_BUILD })
   }
@@ -2596,24 +2674,28 @@ async function handleSummary(request) {
   const storeSummary = summaryFromStore(store, todayKey)
   const legacyDownloads = await readDownloads(kv, todayKey).catch(() => ({
     downloadsByFile: {},
+    downloadsByVersion: {},
     downloadsTotal: 0,
   }))
   const downloads = mergeDownloadSummaries(
     { downloadsByFile: storeSummary.downloadsByFile },
     legacyDownloads
   )
+  const legacyVisits = await readCounterAcrossKvs([kv, ...legacyEdgeKvs()], 'visits', todayKey)
+  const visits = {
+    total: Math.max(storeSummary.visits.total, legacyVisits.total),
+    today: Math.max(storeSummary.visits.today, legacyVisits.today),
+    todayKey,
+  }
   if (
-    storeSummary.visits.total > 0 ||
+    visits.total > 0 ||
     downloads.downloadsTotal > 0 ||
     storeSummary.recent.length > 0
   ) {
-    return json({ ...storeSummary, ...downloads, build: EDGE_BUILD })
+    return json({ ...storeSummary, visits, ...downloads, build: EDGE_BUILD })
   }
 
-  const [visits, events] = await Promise.all([
-    safeReadCounter(kv, 'visits', todayKey),
-    readRecentEvents(kv).catch(() => []),
-  ])
+  const events = await readRecentEvents(kv).catch(() => [])
   return json({
     visits,
     ...downloads,
