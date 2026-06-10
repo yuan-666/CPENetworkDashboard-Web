@@ -46,7 +46,11 @@ function mergeSummary(next: AnalyticsSummary): AnalyticsSummary {
     next.downloadsTotal,
     Object.values(downloadsByFile).reduce((sum, item) => sum + item.total, 0)
   )
-  const downloadsByVersion = buildDownloadVersions(downloadsByFile)
+  const downloadsByVersion = mergeDownloadVersions(
+    current.downloadsByVersion,
+    next.downloadsByVersion,
+    buildDownloadVersions(downloadsByFile)
+  )
 
   return {
     ...next,
@@ -105,6 +109,23 @@ function buildDownloadVersions(downloadsByFile: AnalyticsSummary['downloadsByFil
   return result
 }
 
+function mergeDownloadVersions(
+  ...groups: Array<AnalyticsSummary['downloadsByVersion'] | undefined>
+) {
+  const result: AnalyticsSummary['downloadsByVersion'] = {}
+  for (const group of groups) {
+    for (const [key, item] of Object.entries(group || {})) {
+      const current = result[key]
+      if (!current || item.total > current.total) {
+        result[key] = item
+      } else if (item.today > current.today) {
+        result[key] = { ...current, today: item.today }
+      }
+    }
+  }
+  return result
+}
+
 async function loadSummary(): Promise<void> {
   try {
     summary.value = mergeSummary(await fetchPublicSummary())
@@ -153,7 +174,10 @@ function applyDownloadTrack(result: DownloadTrackResult | null): void {
     downloadsTotal:
       previousSummary.downloadsTotal + Math.max(0, (result.total || 0) - previousTotal),
     downloadsByFile,
-    downloadsByVersion: buildDownloadVersions(downloadsByFile),
+    downloadsByVersion: mergeDownloadVersions(
+      previousSummary.downloadsByVersion,
+      buildDownloadVersions(downloadsByFile)
+    ),
   }
   analyticsState.value = 'ready'
 }

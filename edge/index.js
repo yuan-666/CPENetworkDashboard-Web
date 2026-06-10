@@ -22,10 +22,11 @@
 
 const KV_NAMESPACE = 'cpeweb'
 const LEGACY_KV_NAMESPACES = ['cpe_network_dashboard_web']
-const EDGE_BUILD = '2026-06-10.3'
+const EDGE_BUILD = '2026-06-10.4'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
 const CONFIG_KEY = 'config'
+const BASELINE_KEY = 'statsBaseline'
 const UPDATE_STORE_VERSION = 2
 const MAX_JSON_BYTES = 24 * 1024
 const MAX_DAILY_EVENTS = 360
@@ -63,6 +64,9 @@ function runtimeState() {
       geoCache: new Map(),
       config: null,
       configLoadedAt: 0,
+      statsBaseline: null,
+      statsBaselineKey: '',
+      statsBaselineLoadedAt: 0,
       publicDownloadsCache: null,
       publicDownloadsCacheKey: '',
       publicDownloadsCacheLoadedAt: 0,
@@ -880,6 +884,13 @@ const DOWNLOADS = {
 }
 
 const LEGACY_DOWNLOADS = {
+  'legacy-downloads-total': {
+    platform: 'legacy',
+    version: 'history',
+    label: '历史下载总量',
+    href: '/#/download',
+    channel: 'stable',
+  },
   'android-3.5.2': {
     platform: 'android',
     version: '3.5.2',
@@ -1860,6 +1871,11 @@ async function safeReadCounter(kv, baseKey, todayKey) {
   }
 }
 
+function numberOrZero(value) {
+  const next = Number(value)
+  return Number.isFinite(next) && next > 0 ? next : 0
+}
+
 function topBreakdown(items, keyFn, limit = 8) {
   const map = new Map()
   for (const item of items) {
@@ -2104,6 +2120,129 @@ function combineAnalyticsSummaries(...summaries) {
     hourly: combineHourlySummaries(...source.map((summary) => summary.hourly)),
     downloadHourly: combineHourlySummaries(...source.map((summary) => summary.downloadHourly)),
   }
+}
+
+function normalizeDownloadStats(id, stats = {}) {
+  const meta = downloadMetaForId(id)
+  return {
+    total: numberOrZero(stats.total),
+    today: numberOrZero(stats.today),
+    label: String(stats.label || meta.label || humanizeDownloadId(id)).trim(),
+    href: String(stats.href || meta.href || '/#/download').trim(),
+    platform: String(stats.platform || meta.platform || '').trim(),
+    version: String(stats.version || meta.version || '').trim(),
+    channel: String(stats.channel || meta.channel || '').trim(),
+  }
+}
+
+function normalizeBaseline(raw = {}) {
+  const visitsRaw = raw.visits && typeof raw.visits === 'object' ? raw.visits : raw
+  const downloadsByFile = {}
+  const sourceDownloads =
+    raw.downloadsByFile && typeof raw.downloadsByFile === 'object'
+      ? raw.downloadsByFile
+      : raw.downloads && typeof raw.downloads === 'object'
+        ? raw.downloads
+        : {}
+
+  for (const [id, value] of Object.entries(sourceDownloads)) {
+    if (!id) continue
+    const stats =
+      value && typeof value === 'object'
+        ? value
+        : {
+            total: value,
+            today: 0,
+          }
+    const normalized = normalizeDownloadStats(id, stats)
+    if (normalized.total > 0 || normalized.today > 0) downloadsByFile[id] = normalized
+  }
+
+  const fileTotal = Object.values(downloadsByFile).reduce(
+    (sum, item) => sum + (Number(item.total) || 0),
+    0
+  )
+  const explicitDownloadsTotal = numberOrZero(raw.downloadsTotal)
+  if (explicitDownloadsTotal > fileTotal) {
+    downloadsByFile['legacy-downloads-total'] = normalizeDownloadStats('legacy-downloads-total', {
+      total: explicitDownloadsTotal - fileTotal,
+      today: numberOrZero(raw.downloadsToday),
+      label: '历史下载总量',
+      platform: 'legacy',
+      version: 'history',
+    })
+  }
+
+  return {
+    visits: {
+      total: numberOrZero(visitsRaw?.total ?? raw.visitsTotal ?? raw.total),
+      today: numberOrZero(visitsRaw?.today ?? raw.visitsToday ?? raw.today),
+    },
+    downloadsByFile,
+    downloadsByVersion: buildDownloadsByVersion(downloadsByFile, true),
+    downloadsTotal: Math.max(numberOrZero(raw.downloadsTotal), fileTotal),
+    updatedAt: String(raw.updatedAt || '').trim(),
+    note: String(raw.note || '').slice(0, 160),
+  }
+}
+
+async function readStatsBaseline(kv = edgeKv(), todayKey = getTodayKey()) {
+  const runtime = runtimeState()
+  const cacheKey = `${kvNamespace(kv)}:${todayKey}`
+  if (
+    runtime.statsBaseline &&
+    runtime.statsBaselineKey === cacheKey &&
+    Date.now() - runtime.statsBaselineLoadedAt < CONFIG_CACHE_TTL_MS
+  ) {
+    return runtime.statsBaseline
+  }
+
+  let parsed = {}
+  try {
+    const text = await kvGetText(kv, BASELINE_KEY)
+    if (text) parsed = JSON.parse(text)
+  } catch {
+    parsed = {}
+  }
+
+  runtime.statsBaseline = normalizeBaseline(parsed)
+  runtime.statsBaselineKey = cacheKey
+  runtime.statsBaselineLoadedAt = Date.now()
+  return runtime.statsBaseline
+}
+
+function mergeBaselineIntoSummary(summary, baseline) {
+  if (!baseline || (baseline.visits.total <= 0 && baseline.downloadsTotal <= 0)) return summary
+  const downloads = combineDownloadSummaries(summary, baseline)
+  return {
+    ...summary,
+    visits: {
+      total: (Number(summary?.visits?.total) || 0) + baseline.visits.total,
+      today: (Number(summary?.visits?.today) || 0) + baseline.visits.today,
+    },
+    ...downloads,
+  }
+}
+
+function baselineFromSummary(summary) {
+  return normalizeBaseline({
+    visits: summary?.visits || {},
+    downloadsByFile: summary?.downloadsByFile || {},
+  })
+}
+
+function addBaselines(primary, incoming) {
+  const downloads = combineDownloadSummaries(primary, incoming)
+  return normalizeBaseline({
+    visits: {
+      total: (Number(primary?.visits?.total) || 0) + (Number(incoming?.visits?.total) || 0),
+      today: (Number(primary?.visits?.today) || 0) + (Number(incoming?.visits?.today) || 0),
+    },
+    downloadsByFile: downloads.downloadsByFile,
+    downloadsTotal: downloads.downloadsTotal,
+    updatedAt: new Date().toISOString(),
+    note: incoming?.note || primary?.note || '',
+  })
 }
 
 async function readAnalyticsStore(kv) {
@@ -2557,6 +2696,7 @@ function sumVisitsFromSummaries(summaries) {
 async function readPublicVisits(kv, todayKey, primarySummary = null, legacyStoreSummaries = null) {
   const primary = primarySummary || (await readSummaryFromKv(kv, todayKey))
   const legacySummaries = legacyStoreSummaries || (await readLegacyStoreSummaries(todayKey))
+  const baseline = await readStatsBaseline(kv, todayKey)
   const [currentDirect, legacyDirect] = await Promise.all([
     safeReadCounter(kv, 'visits', todayKey),
     readCounterSumAcrossKvs(legacyEdgeKvs(), 'visits', todayKey),
@@ -2565,10 +2705,12 @@ async function readPublicVisits(kv, todayKey, primarySummary = null, legacyStore
   return {
     total:
       Math.max(Number(primary.visits?.total) || 0, currentDirect.total) +
-      Math.max(legacyStoreVisits.total, legacyDirect.total),
+      Math.max(legacyStoreVisits.total, legacyDirect.total) +
+      baseline.visits.total,
     today:
       Math.max(Number(primary.visits?.today) || 0, currentDirect.today) +
-      Math.max(legacyStoreVisits.today, legacyDirect.today),
+      Math.max(legacyStoreVisits.today, legacyDirect.today) +
+      baseline.visits.today,
     todayKey,
   }
 }
@@ -2586,7 +2728,8 @@ async function readCounterDownloads(kvs, todayKey, extraIds = []) {
 
 async function readDownloads(kv, todayKey, baseSummary = null, legacySummaries = null) {
   const runtime = runtimeState()
-  const cacheKey = todayKey
+  const baseline = await readStatsBaseline(kv, todayKey)
+  const cacheKey = `${todayKey}:${baseline.updatedAt}:${baseline.downloadsTotal}`
   if (
     runtime.publicDownloadsCache &&
     runtime.publicDownloadsCacheKey === cacheKey &&
@@ -2611,7 +2754,7 @@ async function readDownloads(kv, todayKey, baseSummary = null, legacySummaries =
     combineDownloadSummaries(...legacyStoreSummaries),
     legacyCounters
   )
-  const downloads = combineDownloadSummaries(currentDownloads, legacyDownloads)
+  const downloads = combineDownloadSummaries(currentDownloads, legacyDownloads, baseline)
   runtime.publicDownloadsCache = downloads
   runtime.publicDownloadsCacheKey = cacheKey
   runtime.publicDownloadsCacheLoadedAt = Date.now()
@@ -2897,7 +3040,11 @@ async function handleSummary(request) {
     downloadsByVersion: {},
     downloadsTotal: 0,
   }))
-  const combinedSummary = combineAnalyticsSummaries(storeSummary, ...legacyStoreSummaries)
+  const baseline = await readStatsBaseline(kv, todayKey)
+  const combinedSummary = mergeBaselineIntoSummary(
+    combineAnalyticsSummaries(storeSummary, ...legacyStoreSummaries),
+    baseline
+  )
   if (
     visits.total > 0 ||
     downloads.downloadsTotal > 0 ||
@@ -2922,6 +3069,151 @@ async function handleSummary(request) {
     downloadHourly: buildHourlyBars(events.filter((event) => event.kind === 'download')),
     build: EDGE_BUILD,
   })
+}
+
+async function readDiagnosticsForKv(kv, todayKey) {
+  const namespace = kvNamespace(kv)
+  const analyticsText = await kvGetText(kv, ANALYTICS_KEY).catch(() => '')
+  const baselineText = await kvGetText(kv, BASELINE_KEY).catch(() => '')
+  const summary = await readSummaryFromKv(kv, todayKey).catch(() => emptySummary())
+  const directVisits = await safeReadCounter(kv, 'visits', todayKey)
+  const eventKeys = recentDateKeys(3)
+  const eventCounts = {}
+  for (const date of eventKeys) {
+    const text =
+      (await kvGetText(kv, kvKey('events', date)).catch(() => '')) ||
+      (await kvGetText(kv, legacyKey('events', date)).catch(() => ''))
+    if (!text) {
+      eventCounts[date] = 0
+      continue
+    }
+    try {
+      const parsed = JSON.parse(text)
+      eventCounts[date] = Array.isArray(parsed) ? parsed.length : 0
+    } catch {
+      eventCounts[date] = -1
+    }
+  }
+
+  const knownIds = knownDownloadIds(Object.keys(summary.downloadsByFile || {}))
+  const directDownloads = {}
+  for (const id of knownIds) {
+    const counter = await safeReadCounter(kv, `download:${id}`, todayKey)
+    if (counter.total > 0 || counter.today > 0 || summary.downloadsByFile?.[id]?.total > 0) {
+      directDownloads[id] = {
+        total: counter.total,
+        today: counter.today,
+        storeTotal: numberOrZero(summary.downloadsByFile?.[id]?.total),
+        storeToday: numberOrZero(summary.downloadsByFile?.[id]?.today),
+      }
+    }
+  }
+
+  return {
+    namespace,
+    analyticsExists: Boolean(analyticsText),
+    analyticsBytes: analyticsText.length,
+    baselineExists: Boolean(baselineText),
+    baselineBytes: baselineText.length,
+    summary: {
+      visits: summary.visits,
+      downloadsTotal: summary.downloadsTotal,
+      downloadIds: Object.keys(summary.downloadsByFile || {}).filter(
+        (id) => Number(summary.downloadsByFile[id]?.total) > 0
+      ),
+      recent: summary.recent.length,
+      countries: summary.geo?.countries?.length || 0,
+      cities: summary.geo?.cities?.length || 0,
+    },
+    directVisits,
+    directDownloads,
+    events: eventCounts,
+  }
+}
+
+async function handleAnalyticsDebug(request) {
+  const protectedRead = await guardAnalyticsRead(request)
+  if (protectedRead) return protectedRead
+
+  const todayKey = getTodayKey()
+  const kvs = [edgeKv(), ...legacyEdgeKvs()]
+  const namespaces = []
+  for (const kv of kvs) {
+    namespaces.push(await readDiagnosticsForKv(kv, todayKey))
+  }
+  const current = await readSummaryFromKv(kvs[0], todayKey).catch(() => emptySummary())
+  const legacy = await readLegacyStoreSummaries(todayKey).catch(() => [])
+  const baseline = await readStatsBaseline(kvs[0], todayKey)
+  const publicVisits = await readPublicVisits(kvs[0], todayKey, current, legacy)
+  const publicDownloads = await readDownloads(kvs[0], todayKey, current, legacy).catch(() => ({
+    downloadsByFile: {},
+    downloadsByVersion: {},
+    downloadsTotal: 0,
+  }))
+
+  return json({
+    ok: true,
+    build: EDGE_BUILD,
+    todayKey,
+    namespaces,
+    baseline,
+    public: {
+      visits: publicVisits,
+      downloadsTotal: publicDownloads.downloadsTotal,
+      downloadIds: Object.keys(publicDownloads.downloadsByFile || {}).filter(
+        (id) => Number(publicDownloads.downloadsByFile[id]?.total) > 0
+      ),
+    },
+  })
+}
+
+async function handleAnalyticsBaseline(request) {
+  const config = await readRuntimeConfig()
+  if (!config.writeToken && !config.readToken) {
+    return json({ ok: false, error: 'Admin token is not configured', build: EDGE_BUILD }, 403)
+  }
+
+  let body = {}
+  if (request.method === 'POST') {
+    try {
+      body = await readJsonLimited(request)
+    } catch {
+      return json({ ok: false, error: 'Invalid JSON', build: EDGE_BUILD }, 400)
+    }
+  }
+
+  const canRead = await verifyReadToken(request, config)
+  const canWrite = Boolean(config.writeToken) && (await verifyWriteToken(request, body, config))
+  if (!canRead && !canWrite) return json({ ok: false, error: 'Access denied', build: EDGE_BUILD }, 403)
+
+  const kv = edgeKv()
+  const todayKey = getTodayKey()
+  if (request.method === 'GET') {
+    return json({ ok: true, baseline: await readStatsBaseline(kv, todayKey), build: EDGE_BUILD })
+  }
+
+  const incoming = normalizeBaseline(body.baseline && typeof body.baseline === 'object' ? body.baseline : body)
+  if (body.mode === 'add') {
+    const current = await readStatsBaseline(kv, todayKey)
+    const merged = addBaselines(current, incoming)
+    await kvPutText(kv, BASELINE_KEY, JSON.stringify(merged))
+    const runtime = runtimeState()
+    runtime.statsBaseline = merged
+    runtime.statsBaselineLoadedAt = 0
+    runtime.publicDownloadsCache = null
+    return json({ ok: true, mode: 'add', baseline: merged, build: EDGE_BUILD })
+  }
+
+  const next = {
+    ...incoming,
+    updatedAt: new Date().toISOString(),
+  }
+  await kvPutText(kv, BASELINE_KEY, JSON.stringify(next))
+  const runtime = runtimeState()
+  runtime.statsBaseline = next
+  runtime.statsBaselineLoadedAt = 0
+  runtime.publicDownloadsCache = null
+  return json({ ok: true, mode: 'replace', baseline: next, build: EDGE_BUILD })
 }
 
 export default {
@@ -2980,6 +3272,16 @@ export default {
     if (path === '/analytics/summary') {
       if (request.method !== 'GET') return json({ error: 'Use GET' }, 405)
       return handleSummary(request)
+    }
+
+    if (path === '/analytics/debug') {
+      if (request.method !== 'GET') return json({ error: 'Use GET' }, 405)
+      return handleAnalyticsDebug(request)
+    }
+
+    if (path === '/analytics/baseline') {
+      if (!['GET', 'POST'].includes(request.method)) return json({ error: 'Use GET or POST' }, 405)
+      return handleAnalyticsBaseline(request)
     }
 
     return json({ error: 'Not found' }, 404)
