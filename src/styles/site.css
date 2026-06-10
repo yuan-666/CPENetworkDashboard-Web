@@ -21,7 +21,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   --ink: #181b18;
-  --muted: #656b63;
+  --muted: #50574f;
   --soft: #f5f4ee;
   --paper: #ffffff;
   --paper-soft: rgba(255, 255, 255, 0.82);
@@ -53,7 +53,7 @@
   color: #f4f2ea;
   background: #101311;
   --ink: #f4f2ea;
-  --muted: #c2c9c1;
+  --muted: #d1d8cf;
   --soft: #101311;
   --paper: #191d1a;
   --paper-soft: rgba(27, 31, 28, 0.9);
@@ -159,13 +159,13 @@ img {
   display: block;
   margin-bottom: 4px;
   color: var(--ink);
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .privacy-notice p {
   margin: 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.65;
 }
 
@@ -256,7 +256,7 @@ img {
 .brand-lockup small {
   margin-top: 2px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .nav-links {
@@ -272,7 +272,7 @@ img {
   border-radius: var(--radius-sm);
   padding: 0 13px;
   color: var(--muted);
-  font-size: 15px;
+  font-size: 16px;
   transition:
     background-color var(--transition-fast),
     color var(--transition-fast),
@@ -386,7 +386,7 @@ img {
   margin-bottom: 26px;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -593,7 +593,7 @@ p {
   display: block;
   color: var(--accent);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -759,7 +759,7 @@ p {
   margin-left: 6px;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   transition: color var(--transition-fast);
 }
 
@@ -859,7 +859,7 @@ p {
   display: block;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
 }
 
@@ -893,7 +893,7 @@ p {
   background: var(--glass-bg);
   color: var(--ink);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   animation: tape-float 4.8s ease-in-out infinite;
 }
 :root[data-theme='dark'] .metric-tape span {
@@ -928,7 +928,7 @@ p {
   padding: 18px 0;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   animation: marquee 28s linear infinite;
 }
@@ -1074,7 +1074,7 @@ p {
   padding: 0 10px;
   background: var(--glass-bg);
   color: var(--ink);
-  font-size: 12px;
+  font-size: 13px;
   transition: transform var(--transition-fast);
 }
 
@@ -1539,7 +1539,7 @@ p {
 .download-switcher small {
   margin-top: 2px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .download-card {
@@ -1576,7 +1576,7 @@ p {
 .download-row-actions small {
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .download-card h2 {
@@ -1605,7 +1605,7 @@ p {
   background: var(--glass-bg);
   color: var(--ink);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   transition: transform var(--transition-fast);
 }
 
@@ -1620,7 +1620,7 @@ p {
 .download-error {
   margin-top: 12px;
   color: #8e4c22;
-  font-size: 13px;
+  font-size: 14px;
   padding: 8px 12px;
   border-radius: 8px;
   background: rgba(173, 115, 51, 0.1);
@@ -1635,7 +1635,7 @@ p {
 .download-progress {
   margin-top: 18px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .download-progress > div {
@@ -1662,7 +1662,7 @@ p {
 .download-progress p {
   margin: 8px 0 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -1682,7 +1682,7 @@ p {
   border-radius: 4px;
   background: linear-gradient(135deg, #f6ad55, #fc8181);
   color: white;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -1696,7 +1696,7 @@ p {
   border-radius: 3px;
   background: linear-gradient(135deg, #f6ad55, #fc8181);
   color: white;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -1709,7 +1709,7 @@ p {
   background: rgba(246, 173, 85, 0.1);
   border: 1px solid rgba(246, 173, 85, 0.3);
   color: #8e4c22;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -1745,7 +1745,7 @@ p {
 .download-summary-card span {
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0;
@@ -1771,7 +1771,7 @@ p {
 .panel-subtitle {
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0;
@@ -1818,7 +1818,7 @@ p {
 .download-row-actions button {
   min-height: 36px;
   padding: 0 12px;
-  font-size: 13px;
+  font-size: 14px;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
@@ -1838,7 +1838,7 @@ p {
   display: grid;
   gap: 6px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .row-progress::before {
@@ -1861,7 +1861,7 @@ p {
 .row-progress small {
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.35;
 }
 
@@ -1907,7 +1907,7 @@ p {
   padding: 6px 10px;
   background: rgba(173, 115, 51, 0.1);
   color: #744915;
-  font-size: 12px;
+  font-size: 13px;
   transition: transform var(--transition-fast);
 }
 
@@ -1990,7 +1990,7 @@ p {
 .about-hero span {
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .about-intro {
@@ -2014,7 +2014,7 @@ p {
   max-width: 72ch;
   margin-top: 14px;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.72;
 }
 
@@ -2143,7 +2143,7 @@ p {
 .sponsor-channel-card small,
 .sponsor-qr-card small {
   color: #656b63;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .sponsor-qr-card img {
@@ -2158,7 +2158,7 @@ p {
 .sponsor-channel-card strong,
 .sponsor-qr-card strong {
   color: #181b18;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .sponsor-qr-card strong,
@@ -2281,7 +2281,7 @@ p {
   background: rgba(255, 255, 255, 0.08);
   color: rgba(248, 250, 245, 0.78);
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 14px;
   transition: all var(--transition-normal);
 }
 
@@ -2313,7 +2313,7 @@ p {
 .maker-card small {
   display: block;
   color: rgba(248, 250, 245, 0.64);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -2362,7 +2362,7 @@ p {
 .person-links a {
   min-height: 34px;
   padding: 0 12px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .thanks-list {
@@ -2432,7 +2432,7 @@ p {
   margin: 0 auto;
   color: var(--muted);
   border-top: 1px solid var(--line);
-  font-size: 14px;
+  font-size: 15px;
   padding: 24px 0 32px;
   position: relative;
   z-index: 1;
@@ -2472,7 +2472,7 @@ p {
   background: var(--glass-bg);
   color: var(--ink);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   transition:
     transform var(--transition-fast),
     box-shadow var(--transition-fast);
@@ -2752,7 +2752,7 @@ p {
     flex: 0 0 auto;
     min-height: 34px;
     padding: 0 10px;
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .page-view,

@@ -104,12 +104,19 @@ export async function fetchSummary(): Promise<AnalyticsSummary> {
 }
 
 export async function fetchPublicSummary(): Promise<AnalyticsSummary> {
-  const [visitsResponse, downloadsResponse] = await Promise.all([
-    fetch(apiUrl('/counter?skip=1'), { headers: { Accept: 'application/json' } }),
-    fetch(apiUrl('/downloads'), { headers: { Accept: 'application/json' } }),
+  const [visitsResult, downloadsResult] = await Promise.allSettled([
+    fetch(apiUrl('/counter?skip=1'), { headers: { Accept: 'application/json' } }).then((response) =>
+      readJson<{ total?: number; today?: number }>(response)
+    ),
+    fetch(apiUrl('/downloads'), { headers: { Accept: 'application/json' } }).then((response) =>
+      readJson<Partial<AnalyticsSummary>>(response)
+    ),
   ])
-  const visits = await readJson<{ total?: number; today?: number }>(visitsResponse)
-  const downloads = await readJson<Partial<AnalyticsSummary>>(downloadsResponse)
+  if (visitsResult.status === 'rejected' && downloadsResult.status === 'rejected') {
+    throw new Error('Public analytics unavailable')
+  }
+  const visits = visitsResult.status === 'fulfilled' ? visitsResult.value : {}
+  const downloads = downloadsResult.status === 'fulfilled' ? downloadsResult.value : {}
   return normalizeSummary({
     visits: {
       total: visits.total || 0,

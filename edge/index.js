@@ -22,7 +22,7 @@
 
 const KV_NAMESPACE = 'cpeweb'
 const LEGACY_KV_NAMESPACES = ['cpe_network_dashboard_web']
-const EDGE_BUILD = '2026-06-10.2'
+const EDGE_BUILD = '2026-06-10.3'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
 const CONFIG_KEY = 'config'
@@ -34,6 +34,7 @@ const ANALYTICS_READ_CACHE_TTL_MS = 15 * 1000
 const CONFIG_CACHE_TTL_MS = 30 * 1000
 const ANALYTICS_FLUSH_INTERVAL_MS = 60 * 1000
 const ANALYTICS_FLUSH_EVENT_THRESHOLD = 24
+const PUBLIC_DOWNLOADS_CACHE_TTL_MS = 30 * 1000
 const GEO_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 const RATE_BUCKET_MAX_ENTRIES = 1000
 const DOWNLOAD_DEDUPE_TTL_MS = 60 * 60 * 1000
@@ -62,6 +63,9 @@ function runtimeState() {
       geoCache: new Map(),
       config: null,
       configLoadedAt: 0,
+      publicDownloadsCache: null,
+      publicDownloadsCacheKey: '',
+      publicDownloadsCacheLoadedAt: 0,
     }
   }
   return globalThis[key]
@@ -1776,6 +1780,30 @@ async function readCounterAcrossKvs(kvs, baseKey, todayKey) {
   )
 }
 
+async function readCounterTotalAcrossKvs(kvs, baseKey) {
+  let total = 0
+  for (const kv of kvs) {
+    total += await readCounterTotalOnly(kv, baseKey).catch(() => 0)
+  }
+  return total
+}
+
+async function readCounterTodayAcrossKvs(kvs, baseKey, todayKey) {
+  let today = 0
+  for (const kv of kvs) {
+    today += await readCounterTodayOnly(kv, baseKey, todayKey).catch(() => 0)
+  }
+  return today
+}
+
+async function readCounterSumAcrossKvs(kvs, baseKey, todayKey) {
+  const [total, today] = await Promise.all([
+    readCounterTotalAcrossKvs(kvs, baseKey),
+    readCounterTodayAcrossKvs(kvs, baseKey, todayKey),
+  ])
+  return { total, today }
+}
+
 async function appendDailyEvent(kv, event) {
   const date = getTodayKey()
   const key = kvKey('events', date)
@@ -1919,6 +1947,10 @@ function knownDownloadIds(extraIds = []) {
   return Array.from(new Set([...Object.keys(DOWNLOAD_META), ...extraIds].filter(Boolean)))
 }
 
+function legacyDownloadIdsForPublicStats(extraIds = []) {
+  return Array.from(new Set([...Object.keys(DOWNLOAD_META), ...extraIds].filter(Boolean)))
+}
+
 function serializeDownloadCounter(id, counter) {
   const item = downloadMetaForId(id)
   return {
@@ -1949,6 +1981,128 @@ function mergeDownloadSummaries(primary, fallback) {
       (sum, item) => sum + (Number(item.total) || 0),
       0
     ),
+  }
+}
+
+function combineDownloadSummaries(...summaries) {
+  const downloadsByFile = {}
+  for (const summary of summaries) {
+    for (const [id, stats] of Object.entries(summary?.downloadsByFile || {})) {
+      const current = downloadsByFile[id]
+      downloadsByFile[id] = {
+        ...serializeDownloadCounter(id, { total: 0, today: 0 }),
+        ...current,
+        ...stats,
+        total: (Number(current?.total) || 0) + (Number(stats.total) || 0),
+        today: (Number(current?.today) || 0) + (Number(stats.today) || 0),
+      }
+    }
+  }
+  return {
+    downloadsByFile,
+    downloadsByVersion: buildDownloadsByVersion(downloadsByFile, true),
+    downloadsTotal: Object.values(downloadsByFile).reduce(
+      (sum, item) => sum + (Number(item.total) || 0),
+      0
+    ),
+  }
+}
+
+function combineBreakdowns(...groups) {
+  const map = new Map()
+  for (const group of groups) {
+    for (const item of group || []) {
+      const name = item?.name || 'Unknown'
+      map.set(name, (map.get(name) || 0) + (Number(item?.count) || 0))
+    }
+  }
+  return Array.from(map.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([name, count]) => ({ name, count }))
+}
+
+function combineGeoSummaries(...summaries) {
+  const countries = new Map()
+  const cityCountries = new Map()
+  const cities = new Map()
+  for (const summary of summaries) {
+    for (const item of summary?.geo?.countries || []) {
+      const normalized = normalizeChinaGeoFields({ country: item.name })
+      countries.set(
+        normalized.country,
+        (countries.get(normalized.country) || 0) + (Number(item.count) || 0)
+      )
+    }
+    for (const item of summary?.geo?.cities || []) {
+      const normalized = normalizeChinaGeoFields(item)
+      const key = `${normalized.country}|${normalized.region}|${normalized.city}`
+      const current = cities.get(key) || {
+        country: normalized.country,
+        countryCode: normalized.countryCode,
+        city: normalized.city,
+        region: normalized.region,
+        lat: item.lat || 0,
+        lon: item.lon || 0,
+        count: 0,
+      }
+      current.count += Number(item.count) || 0
+      if (!current.lat && item.lat) current.lat = item.lat
+      if (!current.lon && item.lon) current.lon = item.lon
+      cities.set(key, current)
+      cityCountries.set(
+        normalized.country,
+        (cityCountries.get(normalized.country) || 0) + (Number(item.count) || 0)
+      )
+    }
+  }
+  for (const [name, count] of cityCountries.entries()) {
+    if (!countries.get(name)) countries.set(name, count)
+  }
+  return {
+    countries: Array.from(countries.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count),
+    cities: Array.from(cities.values()).sort((a, b) => b.count - a.count),
+  }
+}
+
+function combineHourlySummaries(...hourlyItems) {
+  const bars = Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 }))
+  let currentHour = 0
+  for (const hourly of hourlyItems) {
+    if (!hourly?.bars) continue
+    currentHour = Number(hourly.currentHour) || currentHour
+    for (const bar of hourly.bars) {
+      const hour = Number(bar.hour)
+      if (hour >= 0 && hour < 24) bars[hour].count += Number(bar.count) || 0
+    }
+  }
+  const total = bars.reduce((sum, item) => sum + item.count, 0)
+  const max = Math.max(1, ...bars.map((item) => item.count))
+  return { bars, total, max, currentHour }
+}
+
+function combineAnalyticsSummaries(...summaries) {
+  const source = summaries.filter(Boolean)
+  const downloads = combineDownloadSummaries(...source)
+  const recent = source
+    .flatMap((summary) => summary.recent || [])
+    .sort((a, b) => String(b.time || '').localeCompare(String(a.time || '')))
+    .slice(0, 18)
+  return {
+    visits: {
+      total: source.reduce((sum, summary) => sum + (Number(summary.visits?.total) || 0), 0),
+      today: source.reduce((sum, summary) => sum + (Number(summary.visits?.today) || 0), 0),
+    },
+    ...downloads,
+    pages: combineBreakdowns(...source.map((summary) => summary.pages)),
+    referrers: combineBreakdowns(...source.map((summary) => summary.referrers)),
+    devices: combineBreakdowns(...source.map((summary) => summary.devices)),
+    recent,
+    geo: combineGeoSummaries(...source),
+    hourly: combineHourlySummaries(...source.map((summary) => summary.hourly)),
+    downloadHourly: combineHourlySummaries(...source.map((summary) => summary.downloadHourly)),
   }
 }
 
@@ -1997,6 +2151,30 @@ async function readAnalyticsStore(kv) {
     runtime.analyticsStoreLoadedAt = Date.now()
     return runtime.analyticsStore
   }
+}
+
+async function readSummaryFromKv(kv, todayKey) {
+  return summaryFromStore(await readAnalyticsStore(kv), todayKey)
+}
+
+async function readLegacyStoreSummaries(todayKey) {
+  const summaries = []
+  for (const kv of legacyEdgeKvs()) {
+    try {
+      const summary = await readSummaryFromKv(kv, todayKey)
+      if (
+        summary.visits.total > 0 ||
+        summary.downloadsTotal > 0 ||
+        summary.recent.length > 0 ||
+        summary.geo.countries.length > 0
+      ) {
+        summaries.push(summary)
+      }
+    } catch {
+      /* ignore unavailable legacy namespace */
+    }
+  }
+  return summaries
 }
 
 async function writeAnalyticsStore(kv, store) {
@@ -2286,19 +2464,12 @@ async function handleCounter(request) {
       return json({ ...result, build: EDGE_BUILD })
     }
 
-    const [store, legacy] = await Promise.all([
-      readAnalyticsStore(kv),
-      readCounterAcrossKvs([kv, ...legacyEdgeKvs()], 'visits', todayKey),
-    ])
-    const stored = normalizeStoredCounter(store.counters.visits, todayKey)
-    return json(
-      {
-        total: Math.max(stored.total, legacy.total),
-        today: Math.max(stored.today, legacy.today),
-        todayKey,
-        build: EDGE_BUILD,
-      }
-    )
+    const primarySummary = await readSummaryFromKv(kv, todayKey)
+    const legacyStoreSummaries = await readLegacyStoreSummaries(todayKey)
+    return json({
+      ...(await readPublicVisits(kv, todayKey, primarySummary, legacyStoreSummaries)),
+      build: EDGE_BUILD,
+    })
   } catch {
     return json({ ...(await safeReadCounter(kv, 'visits', todayKey)), build: EDGE_BUILD })
   }
@@ -2373,25 +2544,78 @@ async function handleTrack(request) {
   }
 }
 
-async function readDownloads(kv, todayKey) {
-  const kvs = [kv, ...legacyEdgeKvs()]
-  const downloadsByFile = {}
-  await Promise.all(
-    knownDownloadIds().map(async (id) => {
-      const counter = await readCounterAcrossKvs(kvs, `download:${id}`, todayKey)
-      if (counter.total <= 0 && !DOWNLOADS[id]) return
-      downloadsByFile[id] = serializeDownloadCounter(id, counter)
-    })
+function sumVisitsFromSummaries(summaries) {
+  return summaries.reduce(
+    (sum, summary) => ({
+      total: sum.total + (Number(summary?.visits?.total) || 0),
+      today: sum.today + (Number(summary?.visits?.today) || 0),
+    }),
+    { total: 0, today: 0 }
   )
-  const downloadsTotal = Object.values(downloadsByFile).reduce(
-    (sum, item) => sum + (Number(item.total) || 0),
-    0
-  )
+}
+
+async function readPublicVisits(kv, todayKey, primarySummary = null, legacyStoreSummaries = null) {
+  const primary = primarySummary || (await readSummaryFromKv(kv, todayKey))
+  const legacySummaries = legacyStoreSummaries || (await readLegacyStoreSummaries(todayKey))
+  const [currentDirect, legacyDirect] = await Promise.all([
+    safeReadCounter(kv, 'visits', todayKey),
+    readCounterSumAcrossKvs(legacyEdgeKvs(), 'visits', todayKey),
+  ])
+  const legacyStoreVisits = sumVisitsFromSummaries(legacySummaries)
   return {
-    downloadsByFile,
-    downloadsByVersion: buildDownloadsByVersion(downloadsByFile, true),
-    downloadsTotal,
+    total:
+      Math.max(Number(primary.visits?.total) || 0, currentDirect.total) +
+      Math.max(legacyStoreVisits.total, legacyDirect.total),
+    today:
+      Math.max(Number(primary.visits?.today) || 0, currentDirect.today) +
+      Math.max(legacyStoreVisits.today, legacyDirect.today),
+    todayKey,
   }
+}
+
+async function readCounterDownloads(kvs, todayKey, extraIds = []) {
+  const downloadsByFile = {}
+  for (const id of legacyDownloadIdsForPublicStats(extraIds)) {
+    const total = await readCounterTotalAcrossKvs(kvs, `download:${id}`)
+    if (total <= 0 && !DOWNLOADS[id]) continue
+    const today = total > 0 ? await readCounterTodayAcrossKvs(kvs, `download:${id}`, todayKey) : 0
+    downloadsByFile[id] = serializeDownloadCounter(id, { total, today })
+  }
+  return combineDownloadSummaries({ downloadsByFile })
+}
+
+async function readDownloads(kv, todayKey, baseSummary = null, legacySummaries = null) {
+  const runtime = runtimeState()
+  const cacheKey = todayKey
+  if (
+    runtime.publicDownloadsCache &&
+    runtime.publicDownloadsCacheKey === cacheKey &&
+    Date.now() - runtime.publicDownloadsCacheLoadedAt < PUBLIC_DOWNLOADS_CACHE_TTL_MS
+  ) {
+    return runtime.publicDownloadsCache
+  }
+
+  const primarySummary = baseSummary || (await readSummaryFromKv(kv, todayKey))
+  const legacyStoreSummaries = legacySummaries || (await readLegacyStoreSummaries(todayKey))
+  const legacyKvs = legacyEdgeKvs()
+  const extraIds = [
+    ...Object.keys(primarySummary.downloadsByFile || {}),
+    ...legacyStoreSummaries.flatMap((summary) => Object.keys(summary.downloadsByFile || {})),
+  ]
+  const [currentCounters, legacyCounters] = await Promise.all([
+    readCounterDownloads([kv], todayKey, extraIds),
+    readCounterDownloads(legacyKvs, todayKey, extraIds),
+  ])
+  const currentDownloads = mergeDownloadSummaries(primarySummary, currentCounters)
+  const legacyDownloads = mergeDownloadSummaries(
+    combineDownloadSummaries(...legacyStoreSummaries),
+    legacyCounters
+  )
+  const downloads = combineDownloadSummaries(currentDownloads, legacyDownloads)
+  runtime.publicDownloadsCache = downloads
+  runtime.publicDownloadsCacheKey = cacheKey
+  runtime.publicDownloadsCacheLoadedAt = Date.now()
+  return downloads
 }
 
 async function handleDownload(request) {
@@ -2482,13 +2706,8 @@ async function handleDownloads(request) {
   try {
     const kv = edgeKv()
     const todayKey = getTodayKey()
-    const store = await readAnalyticsStore(kv)
-    const summary = summaryFromStore(store, todayKey)
-    const legacy = await readDownloads(kv, todayKey)
-    const downloads = mergeDownloadSummaries(
-      { downloadsByFile: summary.downloadsByFile },
-      legacy
-    )
+    const summary = await readSummaryFromKv(kv, todayKey)
+    const downloads = await readDownloads(kv, todayKey, summary)
     return json({ ...downloads, build: EDGE_BUILD })
   } catch {
     return json({ downloadsByFile: {}, downloadsByVersion: {}, downloadsTotal: 0, build: EDGE_BUILD })
@@ -2670,29 +2889,21 @@ async function handleSummary(request) {
 
   const kv = edgeKv()
   const todayKey = getTodayKey()
-  const store = await readAnalyticsStore(kv)
-  const storeSummary = summaryFromStore(store, todayKey)
-  const legacyDownloads = await readDownloads(kv, todayKey).catch(() => ({
+  const storeSummary = await readSummaryFromKv(kv, todayKey)
+  const legacyStoreSummaries = await readLegacyStoreSummaries(todayKey)
+  const visits = await readPublicVisits(kv, todayKey, storeSummary, legacyStoreSummaries)
+  const downloads = await readDownloads(kv, todayKey, storeSummary, legacyStoreSummaries).catch(() => ({
     downloadsByFile: {},
     downloadsByVersion: {},
     downloadsTotal: 0,
   }))
-  const downloads = mergeDownloadSummaries(
-    { downloadsByFile: storeSummary.downloadsByFile },
-    legacyDownloads
-  )
-  const legacyVisits = await readCounterAcrossKvs([kv, ...legacyEdgeKvs()], 'visits', todayKey)
-  const visits = {
-    total: Math.max(storeSummary.visits.total, legacyVisits.total),
-    today: Math.max(storeSummary.visits.today, legacyVisits.today),
-    todayKey,
-  }
+  const combinedSummary = combineAnalyticsSummaries(storeSummary, ...legacyStoreSummaries)
   if (
     visits.total > 0 ||
     downloads.downloadsTotal > 0 ||
     storeSummary.recent.length > 0
   ) {
-    return json({ ...storeSummary, visits, ...downloads, build: EDGE_BUILD })
+    return json({ ...combinedSummary, visits, ...downloads, build: EDGE_BUILD })
   }
 
   const events = await readRecentEvents(kv).catch(() => [])
