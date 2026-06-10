@@ -104,28 +104,56 @@ export async function fetchSummary(): Promise<AnalyticsSummary> {
 }
 
 export async function fetchPublicSummary(): Promise<AnalyticsSummary> {
-  const [visitsResult, downloadsResult] = await Promise.allSettled([
-    fetch(apiUrl('/counter?skip=1'), { headers: { Accept: 'application/json' } }).then((response) =>
-      readJson<{ total?: number; today?: number }>(response)
-    ),
-    fetch(apiUrl('/downloads'), { headers: { Accept: 'application/json' } }).then((response) =>
-      readJson<Partial<AnalyticsSummary>>(response)
-    ),
-  ])
-  if (visitsResult.status === 'rejected' && downloadsResult.status === 'rejected') {
-    throw new Error('Public analytics unavailable')
+  try {
+    const statsResult = await fetch(apiUrl('/public-stats'), {
+      headers: { Accept: 'application/json' },
+    }).then((response) =>
+      readJson<Partial<AnalyticsSummary> & { total?: number; today?: number }>(response)
+    )
+    const visits = statsResult?.visits
+      ? statsResult.visits
+      : {
+          total: numberOrZero(statsResult?.total),
+          today: numberOrZero(statsResult?.today),
+        }
+    const downloads = {
+      downloadsTotal: statsResult?.downloadsTotal || 0,
+      downloadsByFile: statsResult?.downloadsByFile || {},
+      downloadsByVersion: statsResult?.downloadsByVersion || {},
+    }
+    return normalizeSummary({
+      visits: {
+        total: visits.total || 0,
+        today: visits.today || 0,
+      },
+      downloadsTotal: downloads.downloadsTotal || 0,
+      downloadsByFile: downloads.downloadsByFile || {},
+      downloadsByVersion: downloads.downloadsByVersion || {},
+    })
+  } catch {
+    const [visitsResult, downloadsResult] = await Promise.allSettled([
+      fetch(apiUrl('/counter?skip=1'), { headers: { Accept: 'application/json' } }).then((response) =>
+        readJson<{ total?: number; today?: number }>(response)
+      ),
+      fetch(apiUrl('/downloads'), { headers: { Accept: 'application/json' } }).then((response) =>
+        readJson<Partial<AnalyticsSummary>>(response)
+      ),
+    ])
+    if (visitsResult.status === 'rejected' && downloadsResult.status === 'rejected') {
+      throw new Error('Public analytics unavailable')
+    }
+    const visits = visitsResult.status === 'fulfilled' ? visitsResult.value : {}
+    const downloads = downloadsResult.status === 'fulfilled' ? downloadsResult.value : {}
+    return normalizeSummary({
+      visits: {
+        total: visits.total || 0,
+        today: visits.today || 0,
+      },
+      downloadsTotal: downloads.downloadsTotal || 0,
+      downloadsByFile: downloads.downloadsByFile || {},
+      downloadsByVersion: downloads.downloadsByVersion || {},
+    })
   }
-  const visits = visitsResult.status === 'fulfilled' ? visitsResult.value : {}
-  const downloads = downloadsResult.status === 'fulfilled' ? downloadsResult.value : {}
-  return normalizeSummary({
-    visits: {
-      total: visits.total || 0,
-      today: visits.today || 0,
-    },
-    downloadsTotal: downloads.downloadsTotal || 0,
-    downloadsByFile: downloads.downloadsByFile || {},
-    downloadsByVersion: downloads.downloadsByVersion || {},
-  })
 }
 
 export async function fetchProtectedSummary(token: string): Promise<AnalyticsSummary> {

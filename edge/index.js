@@ -22,7 +22,7 @@
 
 const KV_NAMESPACE = 'cpeweb'
 const LEGACY_KV_NAMESPACES = ['cpe_network_dashboard_web']
-const EDGE_BUILD = '2026-06-10.7'
+const EDGE_BUILD = '2026-06-10.8'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
 const CONFIG_KEY = 'config'
@@ -2850,6 +2850,39 @@ async function handleDownloads(request) {
   }
 }
 
+async function handlePublicStats(request) {
+  const blocked = await guardReadRequest(request, 'public-stats-read')
+  if (blocked) return blocked
+
+  const kv = edgeKv()
+  const todayKey = getTodayKey()
+  const summary = await readSummaryFromKv(kv, todayKey).catch(() => emptySummary())
+  const legacyStoreSummaries = await readLegacyStoreSummaries(todayKey).catch(() => [])
+  const [visits, downloads] = await Promise.all([
+    readPublicVisits(kv, todayKey, summary, legacyStoreSummaries).catch(() => ({
+      total: summary.visits.total || 0,
+      today: summary.visits.today || 0,
+      todayKey,
+    })),
+    readDownloads(kv, todayKey, summary, legacyStoreSummaries).catch(() => ({
+      downloadsByFile: {},
+      downloadsByVersion: {},
+      downloadsTotal: 0,
+    })),
+  ])
+
+  return json({
+    visits,
+    total: visits.total,
+    today: visits.today,
+    todayKey,
+    downloadsByFile: downloads.downloadsByFile,
+    downloadsByVersion: downloads.downloadsByVersion,
+    downloadsTotal: downloads.downloadsTotal,
+    build: EDGE_BUILD,
+  })
+}
+
 async function handleUpdateLatest(request) {
   const blocked = await guardReadRequest(request, 'updates-latest', 240, 300)
   if (blocked) return blocked
@@ -3303,6 +3336,11 @@ export default {
     if (path === '/downloads') {
       if (request.method !== 'GET') return json({ error: 'Use GET' }, 405)
       return handleDownloads(request)
+    }
+
+    if (path === '/public-stats') {
+      if (request.method !== 'GET') return json({ error: 'Use GET' }, 405)
+      return handlePublicStats(request)
     }
 
     if (path === '/updates/latest') {
