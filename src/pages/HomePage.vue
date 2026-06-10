@@ -12,14 +12,14 @@ const marqueeGroups = [telemetryWords, telemetryWords, telemetryWords, telemetry
     <div class="hero-copy">
       <div class="app-mark">
         <img :src="appIcon" alt="" loading="eager" decoding="async" fetchpriority="high" />
-        <span>Android / macOS / Windows 3.5.2</span>
+        <span>CPE加加 3.5.3 · Android / macOS / Windows</span>
       </div>
       <h1 class="hero-title">
-        <span class="hero-title-main">CPE 网络看板</span>
-        <span class="hero-title-sub">CPE Network Dashboard</span>
+        <span class="hero-title-main">CPE加加</span>
+        <span class="hero-title-sub">CPE++</span>
       </h1>
       <p>
-        3.5.2 已同步发布 Android、macOS 和 Windows，iOS 版本也正在路上。它不是另一个复杂后台，而是把 CPE
+        3.5.3 已同步发布 Android、macOS 和 Windows，iOS 版本也正在路上。CPE加加不是另一个复杂后台，而是把 CPE
         当前状态、锁定结果和链路测试放到同一个工作界面。
       </p>
       <p class="hero-note">
@@ -54,11 +54,11 @@ const marqueeGroups = [telemetryWords, telemetryWords, telemetryWords, telemetry
           <strong>Desktop Dashboard</strong>
         </div>
         <div class="desktop-screen-frame">
-          <LazyImage :src="heroDesktopImage" alt="CPE 网络看板电脑端截图" eager />
+          <LazyImage :src="heroDesktopImage" alt="CPE加加电脑端截图" eager />
         </div>
       </div>
       <div class="phone-shell hero-phone">
-        <LazyImage :src="mobileScreens[0]" alt="CPE 网络看板 Android 截图" eager />
+        <LazyImage :src="mobileScreens[0]" alt="CPE加加 Android 截图" eager />
       </div>
       <div class="live-card">
         <span>Local CPE</span>

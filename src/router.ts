@@ -5,7 +5,7 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     name: 'home',
     component: () => import('@/pages/HomePage.vue'),
-    meta: { title: 'CPE 网络看板' },
+    meta: { title: 'CPE加加' },
   },
   {
     path: '/product',
@@ -17,7 +17,7 @@ const routes: RouteRecordRaw[] = [
     path: '/download',
     name: 'download',
     component: () => import('@/pages/DownloadPage.vue'),
-    meta: { title: '下载 CPE 网络看板' },
+    meta: { title: '下载 CPE加加' },
   },
   {
     path: '/changelog',
@@ -29,7 +29,7 @@ const routes: RouteRecordRaw[] = [
     path: '/about',
     name: 'about',
     component: () => import('@/pages/AboutPage.vue'),
-    meta: { title: '关于 CPE 网络看板' },
+    meta: { title: '关于 CPE加加' },
   },
   {
     path: '/analytics',

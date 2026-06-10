@@ -1,4 +1,18 @@
-# CPE Network Dashboard Web Changelog
+# CPE++ Web Changelog
+
+## Release 3.5.3 (2026-06-09)
+
+- 发布 Android、macOS arm64、Windows EXE、Windows MSI 和 Windows Portable 3.5.3 安装包。
+- 桌面端、Android Gradle 元数据和共享应用元数据统一升级到 `3.5.3` / `versionCode = 353`。
+- 品牌统一为 CPE加加，英文名 CPE++；发布文件名统一使用 CPEPlusPlus。
+- Android、Windows 和 macOS 图标资源替换为新的 CPE++ 图标。
+- 修复 ProGuard 混淆后 release / portable 更新检查异常，请求 payload 使用显式 JSON key，响应字段名保持稳定。
+- 官网下载页更新到 3.5.3，Windows 默认推荐 Portable 免安装包；Android 旧版继续只保留 3.5，并显著标记为旧版本。
+- 后端 `/api/updates/check` 默认数据更新到 Android / Windows / macOS 3.5.3，并继续保留 iOS “正在路上”的占位信息。
+- 公共前端不再内置统计 token，完整统计页改为维护者 token 门禁；首页和导航不再展示统计页入口。
+- 公共页面只展示访问总量、下载总量和各版本下载量；页面、来源、设备和地理统计只通过受保护 `/api/analytics/summary` 查看。
+- 官网首次打开增加隐私统计告知，说明会统计访问页面、来源、设备/浏览器/系统、粗略地区和下载点击。
+- ESA 分发继续使用 20MiB 分片下载和浏览器合并方式，不改变桌面大包低成本分发方案。
 
 ## Website 2.0.4 (2026-06-08)
 
@@ -21,7 +35,7 @@
 
 ## Website 2.0.3 (2026-06-08)
 
-- 新增访问统计页面，展示访问量、下载排行、24 小时分布、来源/设备拆分和城市分布。
+- 历史版本曾新增访问统计页面，展示访问量、下载排行、24 小时分布、来源/设备拆分和城市分布；3.5.3 起完整统计已改为受保护入口。
 - 统计接口补齐 Android 3.2 Beta 下载项，前端对旧版或异常 summary 响应做兜底归一化，避免统计页因为缺字段显示异常。
 - ESA Edge 统计写入改为运行时限流加单键聚合：普通访问合并写入，下载点击立即写入，避免高频写 EdgeKV。
 - 写接口增加同站校验、可选写入 token、请求体大小限制和读取限流；外站脚本不能直接刷统计。
@@ -93,7 +107,7 @@
 
 - 官网改为分页式产品介绍结构：首屏、使用场景、电脑端展示、手机端展示、平台、设备覆盖、下载、更新和隐私统计各自成段。
 - 电脑端展示只引用 `public/media/computer` 横向截图，手机端展示只引用 `public/media/phone` 长屏截图，避免两类素材混放。
-- 使用 CPE 网络看板应用图标作为导航、首屏品牌标志和 favicon。
+- 使用 CPE加加应用图标作为导航、首屏品牌标志和 favicon。
 - 下载区改为一屏下载板，Android、macOS、Windows EXE、Windows MSI 和 Windows Portable 均保留直接静态下载入口与 SHA-256 复制。
 - 更新记录改为面向用户的产品语言，Android 3.1 重点说明烽火、测速页和 OPPO 系闪屏修复带来的实际体验变化。
 

@@ -11,12 +11,11 @@ import type {
 export const appIcon = '/media/app-icon.png'
 
 export const routes: Route[] = [
-  { path: '/', label: '首页', title: 'CPE 网络看板' },
+  { path: '/', label: '首页', title: 'CPE加加' },
   { path: '/product', label: '产品', title: '产品介绍' },
-  { path: '/download', label: '下载', title: '下载 CPE 网络看板' },
+  { path: '/download', label: '下载', title: '下载 CPE加加' },
   { path: '/changelog', label: '更新日志', title: '更新日志' },
-  { path: '/about', label: '关于', title: '关于 CPE 网络看板' },
-  { path: '/analytics', label: '统计', title: '访问统计' },
+  { path: '/about', label: '关于', title: '关于 CPE加加' },
 ]
 
 export const heroDesktopImage = '/media/computer/desktop-signal-dashboard.png'
@@ -69,10 +68,10 @@ function chunkedParts(folder: string, fileName: string, count: number): string[]
 }
 
 const chunkBytes: Record<string, number[]> = {
-  'macos-3.5.2': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 1794421],
-  'windows-exe-3.5.2': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 14713072],
-  'windows-msi-3.5.2': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 14004224],
-  'windows-portable-3.5.2': [20971520, 20971520, 20971520, 20971520, 20971520, 14572374],
+  'macos-3.5.3': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 8734301],
+  'windows-exe-3.5.3': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 20737264],
+  'windows-msi-3.5.3': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 19996672],
+  'windows-portable-3.5.3': [20971520, 20971520, 20971520, 20971520, 20971520, 20534614],
 }
 
 export const heroFacts: HeroFact[] = [
@@ -118,26 +117,26 @@ export const productMoments: ProductMoment[] = [
 export const platformCards: PlatformCard[] = [
   {
     name: 'Android',
-    version: '3.5.2',
+    version: '3.5.3',
     title: '在设备旁边，手机最方便。',
-    copy: '打开、看信号、扫邻区、改锁定。弱电箱、窗边、机柜旁边，用手机比搬电脑省事多了。',
+    copy: '打开 CPE加加，先看信号、扫邻区、改锁定。弱电箱、窗边、机柜旁边，用手机比搬电脑省事多了。',
   },
   {
     name: 'macOS',
-    version: '3.5.2',
+    version: '3.5.3',
     title: '坐下来排查，Mac 看得更全。',
-    copy: '连接、锁定、测试和日志能铺开，边调边记，也能把结果放到大屏上对比。',
+    copy: '连接、锁定、测试和日志能铺开，边调边记，也能把 CPE加加 的结果放到大屏上对比。',
   },
   {
     name: 'Windows',
-    version: '3.5.2',
+    version: '3.5.3',
     title: '维护电脑、临时电脑，都能用。',
-    copy: '默认推荐免安装 Portable，常规 EXE 和固定环境 MSI 也都保留。',
+    copy: '默认推荐免安装 Portable，常规 EXE 和固定环境 MSI 也都保留，方便把 CPE加加 放到随手可用的位置。',
   },
   {
     name: 'iOS',
     version: '敬请期待',
-    title: 'iOS 版本正在路上。',
+    title: 'CPE加加 iOS 版本正在路上。',
     copy: 'iOS 方向已经在推进，预计很快就能和大家见面。',
   },
 ]
@@ -152,94 +151,131 @@ export const supportedDevices: Array<[string, string]> = [
 
 export const downloads: Download[] = [
   {
-    id: 'android-3.5.2',
+    id: 'android-3.5.3',
     platform: 'Android',
-    version: '3.5.2',
+    version: '3.5.3',
     title: 'Android APK',
-    fileName: 'CPENetworkDashboard-v3.5.2.apk',
-    href: '/downloads/CPENetworkDashboard-v3.5.2.apk',
-    size: '13.3 MiB',
-    checksum: '302ceb8f1c145b8e41eac55aa33067bcc5eb9e5b19354a9bf09cd985211fc1b6',
+    fileName: 'CPEPlusPlus-v3.5.3.apk',
+    href: '/downloads/CPEPlusPlus-v3.5.3.apk',
+    size: '13.4 MiB',
+    checksum: '1f2180ff03f84a64aaeb413debebe349219ab3e739cea1c267d8e375995c99e1',
     label: '最新正式版',
-    copy: '当前 Android 最新正式版。修复烽火 / FiberHome 登录后连接页反复闪烁的问题，并接入应用内检查更新。',
+    copy: '当前 CPE加加 Android 最新正式版。统一 CPE加加 / CPE++ 品牌和新图标，并修复混淆后 release / portable 更新检查异常。',
   },
   {
-    id: 'macos-3.5.2',
+    id: 'macos-3.5.3',
     platform: 'macOS',
-    version: '3.5.2',
+    version: '3.5.3',
     title: 'macOS DMG',
-    fileName: 'CPE-Network-Dashboard-3.5.2-macos-arm64.dmg',
-    chunks: chunkedParts('macos-3.5.2', 'CPE-Network-Dashboard-3.5.2-macos-arm64.dmg', 7),
-    chunkBytes: chunkBytes['macos-3.5.2'],
-    size: '121.7 MiB',
-    checksum: 'cf03bf8ae81ef106acce2b24fb69b868b8445c456cd01468b37d62cb24086288',
+    fileName: 'CPEPlusPlus-3.5.3-macos-arm64.dmg',
+    chunks: chunkedParts('macos-3.5.3', 'CPEPlusPlus-3.5.3-macos-arm64.dmg', 7),
+    chunkBytes: chunkBytes['macos-3.5.3'],
+    size: '128.3 MiB',
+    checksum: 'c0cf7b64694f06d4dc6c45ef3c15f259aae1b442ff72f2dfd77b1cd56db165b4',
     label: 'Mac 桌面版',
-    copy: '当前 macOS arm64 最新桌面版。同步烽火后台重登录修复，并保留桌面端近期更新检测、设备保存和紧凑看板等改进。',
+    copy: '当前 CPE加加 macOS arm64 最新桌面版。同步品牌、图标、更新检测修复和烽火后台重登录优化。',
   },
   {
-    id: 'windows-portable-3.5.2',
+    id: 'windows-portable-3.5.3',
     platform: 'Windows',
-    version: '3.5.2',
+    version: '3.5.3',
     title: 'Windows Portable',
-    fileName: 'CPE-Network-Dashboard-3.5.2-protected-portable-windows-x64.zip',
+    fileName: 'CPEPlusPlus-3.5.3-protected-portable-windows-x64.zip',
     chunks: chunkedParts(
-      'windows-portable-3.5.2',
-      'CPE-Network-Dashboard-3.5.2-protected-portable-windows-x64.zip',
+      'windows-portable-3.5.3',
+      'CPEPlusPlus-3.5.3-protected-portable-windows-x64.zip',
       6
     ),
-    chunkBytes: chunkBytes['windows-portable-3.5.2'],
-    size: '113.9 MiB',
-    checksum: '1587f5e4eea86718f7c1f3c6ada053a6d2c24b1608801667cd92dffb438ed549',
+    chunkBytes: chunkBytes['windows-portable-3.5.3'],
+    size: '119.6 MiB',
+    checksum: '11091c7d2560000cf4167b6fc27231da3a0acb0cf6cfe7d17456de9dfcf703c5',
     label: 'Windows 免安装（推荐）',
-    copy: '当前 Windows 默认推荐版本。适合临时电脑、U 盘携带和没有安装权限的环境。',
+    copy: '当前 CPE加加 Windows 默认推荐版本。适合临时电脑、U 盘携带和没有安装权限的环境。',
   },
   {
-    id: 'windows-exe-3.5.2',
+    id: 'windows-exe-3.5.3',
     platform: 'Windows',
-    version: '3.5.2',
+    version: '3.5.3',
     title: 'Windows EXE',
-    fileName: 'CPE-Network-Dashboard-3.5.2-windows-x64.exe',
-    chunks: chunkedParts('windows-exe-3.5.2', 'CPE-Network-Dashboard-3.5.2-windows-x64.exe', 7),
-    chunkBytes: chunkBytes['windows-exe-3.5.2'],
-    size: '134.0 MiB',
-    checksum: '51ff1548a340b643fa0c9b1bc6640d1324b1a21cdf89bf75c2827cd82c1df3e5',
+    fileName: 'CPEPlusPlus-3.5.3-windows-x64.exe',
+    chunks: chunkedParts('windows-exe-3.5.3', 'CPEPlusPlus-3.5.3-windows-x64.exe', 7),
+    chunkBytes: chunkBytes['windows-exe-3.5.3'],
+    size: '139.8 MiB',
+    checksum: '0808a5a69bf1ac5a16561955f67cc55ac87cfb3c3298b28dbe8e6ab17290addf',
     label: 'Windows 常规安装',
-    copy: '适合固定使用的维护电脑。安装后可以像普通桌面应用一样使用。',
+    copy: '适合固定使用的维护电脑。安装后可以像普通桌面应用一样使用 CPE加加。',
   },
   {
-    id: 'windows-msi-3.5.2',
+    id: 'windows-msi-3.5.3',
     platform: 'Windows',
-    version: '3.5.2',
+    version: '3.5.3',
     title: 'Windows MSI',
-    fileName: 'CPE-Network-Dashboard-3.5.2-windows-x64.msi',
-    chunks: chunkedParts('windows-msi-3.5.2', 'CPE-Network-Dashboard-3.5.2-windows-x64.msi', 7),
-    chunkBytes: chunkBytes['windows-msi-3.5.2'],
-    size: '133.4 MiB',
-    checksum: '32ec9c0b3bc1de358ac8da89c902243874f0ed311a4d55234d4fd51c6d9e3362',
+    fileName: 'CPEPlusPlus-3.5.3-windows-x64.msi',
+    chunks: chunkedParts('windows-msi-3.5.3', 'CPEPlusPlus-3.5.3-windows-x64.msi', 7),
+    chunkBytes: chunkBytes['windows-msi-3.5.3'],
+    size: '139.1 MiB',
+    checksum: 'a9d313bd7c77963ef650f7c7b40ea3ce986dbbb20cc8e7d67c36a90e47cbd1de',
     label: 'Windows 固定部署',
-    copy: '适合固定部署、统一安装或更偏企业维护习惯的 Windows 环境。',
+    copy: '适合固定部署、统一安装或更偏企业维护习惯的 Windows 环境，方便统一分发 CPE加加。',
   },
   {
     id: 'android-3.5',
     platform: 'Android',
     version: '3.5',
     title: 'Android APK',
-    fileName: 'CPENetworkDashboard V3.5-Release.apk',
-    href: '/downloads/CPENetworkDashboard V3.5-Release.apk',
+    fileName: 'CPEPlusPlus-v3.5-legacy-release.apk',
+    href: '/downloads/CPEPlusPlus-v3.5-legacy-release.apk',
     size: '13.3 MiB',
     checksum: '9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700',
     label: '旧版 Android 3.5',
-    copy: '这是旧版本，仅保留给暂时需要回退的 Android 用户。新用户建议下载 3.5.2。',
+    copy: '这是旧版本的 CPE加加，仅保留给暂时需要回退的 Android 用户。新用户建议下载 3.5.3。',
   },
 ]
 
 export const changelogEntries: ChangelogEntry[] = [
   {
-    version: '3.5.2',
-    date: '2026-06-08',
+    version: '3.5.3',
+    date: '2026-06-09',
     badge: 'Android / macOS / Windows 最新正式版',
     lead:
-      '3.5.2 已经同步发布 Android、macOS 和 Windows。这个版本重点修复烽火 / FiberHome 登录后连接页反复闪烁的问题，并把 Android 应用内检查更新和桌面端近期改进一起纳入当前公开版本。',
+      'CPE加加 3.5.3 已经同步发布 Android、macOS 和 Windows。这个版本统一品牌与新图标，修复混淆后更新检查异常，并继续同步烽火后台重登录优化。',
+    sections: [
+      {
+        title: '主要变化',
+        items: [
+          '桌面端、Android Gradle 元数据和共享应用元数据统一升级到 3.5.3 / versionCode 353。',
+          '应用品牌统一为 CPE加加，英文名 CPE++；发布文件名统一使用 CPEPlusPlus，避免符号在部分系统里不兼容。',
+          'Android、Windows 和 macOS 图标资源替换为新的 CPE++ 图标。',
+          '修复 ProGuard 混淆后 release / portable 更新检查异常：更新请求使用显式 JSON key，响应字段名保持稳定。',
+        ],
+      },
+      {
+        title: '设备与桌面同步',
+        items: [
+          '同步烽火 / FiberHome 后台自动重登录优化：登录成功后记录并重置重登录时间，空小区重登录独立限流。',
+          '后台重登录会保留当前可见连接数据；刷新异常时触发后台重登，但不会先清空仍然有效的旧数据。',
+          'Windows 继续保留受保护 Portable 打包流程和 .cpe-portable 标记，并保留固定签名辅助脚本。',
+          '延续桌面 UI/UX、更新检查、已保存设备、测试页、AMBR/QCI 和紧凑看板等近期工作。',
+        ],
+      },
+      {
+        title: '发布包',
+        items: [
+          'Android：CPEPlusPlus-v3.5.3.apk，SHA-256：1f2180ff03f84a64aaeb413debebe349219ab3e739cea1c267d8e375995c99e1。',
+          'macOS：CPEPlusPlus-3.5.3-macos-arm64.dmg，SHA-256：c0cf7b64694f06d4dc6c45ef3c15f259aae1b442ff72f2dfd77b1cd56db165b4。',
+          'Windows Portable：CPEPlusPlus-3.5.3-protected-portable-windows-x64.zip，SHA-256：11091c7d2560000cf4167b6fc27231da3a0acb0cf6cfe7d17456de9dfcf703c5。',
+          'Windows EXE：CPEPlusPlus-3.5.3-windows-x64.exe，SHA-256：0808a5a69bf1ac5a16561955f67cc55ac87cfb3c3298b28dbe8e6ab17290addf。',
+          'Windows MSI：CPEPlusPlus-3.5.3-windows-x64.msi，SHA-256：a9d313bd7c77963ef650f7c7b40ea3ce986dbbb20cc8e7d67c36a90e47cbd1de。',
+        ],
+      },
+    ],
+  },
+  {
+    version: '3.5.2',
+    date: '2026-06-08',
+    badge: '上一版正式版',
+    lead:
+      'CPE加加 3.5.2 已经同步发布 Android、macOS 和 Windows。这个版本重点修复烽火 / FiberHome 登录后连接页反复闪烁的问题，并把 Android 应用内检查更新和桌面端近期改进一起纳入当前公开版本。',
     sections: [
       {
         title: '修复问题',
@@ -268,11 +304,11 @@ export const changelogEntries: ChangelogEntry[] = [
       {
         title: '发布包',
         items: [
-          'Android：CPENetworkDashboard-v3.5.2.apk，SHA-256：302ceb8f1c145b8e41eac55aa33067bcc5eb9e5b19354a9bf09cd985211fc1b6。',
-          'macOS：CPE-Network-Dashboard-3.5.2-macos-arm64.dmg，SHA-256：cf03bf8ae81ef106acce2b24fb69b868b8445c456cd01468b37d62cb24086288。',
-          'Windows Portable：CPE-Network-Dashboard-3.5.2-protected-portable-windows-x64.zip，SHA-256：1587f5e4eea86718f7c1f3c6ada053a6d2c24b1608801667cd92dffb438ed549。',
-          'Windows EXE：CPE-Network-Dashboard-3.5.2-windows-x64.exe，SHA-256：51ff1548a340b643fa0c9b1bc6640d1324b1a21cdf89bf75c2827cd82c1df3e5。',
-          'Windows MSI：CPE-Network-Dashboard-3.5.2-windows-x64.msi，SHA-256：32ec9c0b3bc1de358ac8da89c902243874f0ed311a4d55234d4fd51c6d9e3362。',
+          'Android：CPEPlusPlus-v3.5.2.apk，SHA-256：302ceb8f1c145b8e41eac55aa33067bcc5eb9e5b19354a9bf09cd985211fc1b6。',
+          'macOS：CPEPlusPlus-3.5.2-macos-arm64.dmg，SHA-256：cf03bf8ae81ef106acce2b24fb69b868b8445c456cd01468b37d62cb24086288。',
+          'Windows Portable：CPEPlusPlus-3.5.2-protected-portable-windows-x64.zip，SHA-256：1587f5e4eea86718f7c1f3c6ada053a6d2c24b1608801667cd92dffb438ed549。',
+          'Windows EXE：CPEPlusPlus-3.5.2-windows-x64.exe，SHA-256：51ff1548a340b643fa0c9b1bc6640d1324b1a21cdf89bf75c2827cd82c1df3e5。',
+          'Windows MSI：CPEPlusPlus-3.5.2-windows-x64.msi，SHA-256：32ec9c0b3bc1de358ac8da89c902243874f0ed311a4d55234d4fd51c6d9e3362。',
         ],
       },
     ],
@@ -282,7 +318,7 @@ export const changelogEntries: ChangelogEntry[] = [
     date: '2026-06-08',
     badge: '旧版 Android 正式版',
     lead:
-      'Android 3.5 是当前保留的旧版 Android 包，主要用于需要回退的用户。新用户建议下载 3.5.2。',
+      'Android 3.5 是当前保留的旧版 Android 包，主要用于需要回退的用户。新用户建议下载 3.5.3。',
     sections: [
       {
         title: '新增功能',
@@ -333,7 +369,7 @@ export const changelogEntries: ChangelogEntry[] = [
       {
         title: '发布包',
         items: [
-          '安装包：CPENetworkDashboard V3.5-Release.apk。',
+          '安装包：CPEPlusPlus-v3.5-legacy-release.apk。',
           'SHA-256：9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700。',
         ],
       },
@@ -499,18 +535,18 @@ export const changelogEntries: ChangelogEntry[] = [
 ]
 
 export const aboutInfo: AboutInfo = {
-  chineseName: 'CPE网络看板',
-  englishName: 'CPE Network Dashboard',
-  versionName: '3.5.2',
+  chineseName: 'CPE加加',
+  englishName: 'CPE++',
+  versionName: '3.5.3',
   userGroup: '955206409',
   description:
-    '面向 4G/5G CPE 的管理工具。覆盖连接状态、射频指标、SIM/AMBR、锁频锁小区、邻区扫描、测速、Ping 与路由测试。',
-  note: '感谢所有参与和帮助过我们的朋友。CPE 网络看板能走到 3.0，不只是代码的事，也有测试设备、接口抓包、UI 方案、建议和很多次反馈的功劳。',
+    '面向 4G/5G CPE 的管理工具。CPE加加覆盖连接状态、射频指标、SIM/AMBR、锁频锁小区、邻区扫描、测速、Ping 与路由测试。',
+  note: '感谢所有参与和帮助过我们的朋友。CPE加加能走到今天，不只是代码的事，也有测试设备、接口抓包、UI 方案、建议和很多次反馈的功劳。',
   sponsor: {
-    title: '支持 CPE 网络看板继续维护',
+    title: '支持 CPE加加继续维护',
     description:
-      '赞助会用于服务器、下载流量、测试设备和多平台适配。你可以通过爱发电主页支持项目，也可以使用微信或支付宝二维码赞助。',
-    ifdianUrl: 'https://ifdian.net/a/CPENetworkDashboard',
+      '赞助会用于服务器、下载流量、测试设备和多平台适配。你可以通过爱发电主页支持 CPE加加，也可以使用微信或支付宝二维码赞助。',
+    ifdianUrl: 'https://ifdian.net/a/CPEPlusPlus',
     qrs: [
       {
         label: '微信赞助',

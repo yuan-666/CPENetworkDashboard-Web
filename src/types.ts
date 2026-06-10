@@ -104,6 +104,14 @@ export interface DownloadStats extends DownloadCounter {
   channel?: string
 }
 
+export interface DownloadVersionStats extends DownloadCounter {
+  id: string
+  platform: string
+  version: string
+  label: string
+  fileIds: string[]
+}
+
 export interface DownloadTrackResult extends DownloadCounter {
   ok: boolean
   file: string
@@ -114,6 +122,7 @@ export interface AnalyticsSummary {
   visits: DownloadCounter
   downloadsTotal: number
   downloadsByFile: Record<string, DownloadStats>
+  downloadsByVersion: Record<string, DownloadVersionStats>
   pages: BreakdownItem[]
   referrers: BreakdownItem[]
   devices: BreakdownItem[]

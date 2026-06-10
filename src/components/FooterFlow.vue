@@ -40,15 +40,15 @@ onUnmounted(() => {
   <section ref="flowRef" class="footer-flow">
     <div class="footer-flow-brand" aria-hidden="true">
       <span>CPE</span>
-      <span>NETWORK</span>
-      <span>DASHBOARD</span>
+      <span>加加</span>
+      <span>CPE++</span>
     </div>
     <div class="footer-flow-line footer-flow-line-a" aria-hidden="true">
-      <span>CPE NETWORK DASHBOARD</span>
-      <span>CPE NETWORK DASHBOARD</span>
+      <span>CPE加加</span>
+      <span>CPE++</span>
     </div>
     <div class="footer-flow-line footer-flow-line-b" aria-hidden="true">
-      <span>SIGNAL LOCK TEST</span>
+      <span>CPEPlusPlus</span>
       <span>SIGNAL LOCK TEST</span>
     </div>
     <slot />

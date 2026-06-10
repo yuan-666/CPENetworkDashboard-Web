@@ -1,6 +1,6 @@
-302ceb8f1c145b8e41eac55aa33067bcc5eb9e5b19354a9bf09cd985211fc1b6  CPENetworkDashboard-v3.5.2.apk
-9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700  CPENetworkDashboard V3.5-Release.apk
-cf03bf8ae81ef106acce2b24fb69b868b8445c456cd01468b37d62cb24086288  CPE-Network-Dashboard-3.5.2-macos-arm64.dmg
-51ff1548a340b643fa0c9b1bc6640d1324b1a21cdf89bf75c2827cd82c1df3e5  CPE-Network-Dashboard-3.5.2-windows-x64.exe
-32ec9c0b3bc1de358ac8da89c902243874f0ed311a4d55234d4fd51c6d9e3362  CPE-Network-Dashboard-3.5.2-windows-x64.msi
-1587f5e4eea86718f7c1f3c6ada053a6d2c24b1608801667cd92dffb438ed549  CPE-Network-Dashboard-3.5.2-protected-portable-windows-x64.zip
+1f2180ff03f84a64aaeb413debebe349219ab3e739cea1c267d8e375995c99e1  CPEPlusPlus-v3.5.3.apk
+9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700  CPEPlusPlus-v3.5-legacy-release.apk
+c0cf7b64694f06d4dc6c45ef3c15f259aae1b442ff72f2dfd77b1cd56db165b4  CPEPlusPlus-3.5.3-macos-arm64.dmg
+0808a5a69bf1ac5a16561955f67cc55ac87cfb3c3298b28dbe8e6ab17290addf  CPEPlusPlus-3.5.3-windows-x64.exe
+a9d313bd7c77963ef650f7c7b40ea3ce986dbbb20cc8e7d67c36a90e47cbd1de  CPEPlusPlus-3.5.3-windows-x64.msi
+11091c7d2560000cf4167b6fc27231da3a0acb0cf6cfe7d17456de9dfcf703c5  CPEPlusPlus-3.5.3-protected-portable-windows-x64.zip

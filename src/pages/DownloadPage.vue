@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import DownloadActions from '@/components/DownloadActions.vue'
 import { downloads } from '@/content'
 import { useAnalytics } from '@/composables/useAnalytics'
 import { useDownloads } from '@/composables/useDownloads'
 
-const { statForDownload } = useAnalytics()
+const { statForDownload, statForVersion, downloadVersionTotals, totalDownloads, valueOrPreview } =
+  useAnalytics()
 const {
   copiedChecksum,
   downloadButtonText,
@@ -23,13 +24,22 @@ const {
 } = useDownloads()
 
 onMounted(initDownloadRecommendation)
+
+const versionRows = computed(() => {
+  return Object.values(downloadVersionTotals.value || {}).map((item) => ({
+    platform: item.platform,
+    version: item.version,
+    total: item.total,
+    label: item.label,
+  }))
+})
 </script>
 
 <template>
   <section class="page-view download-page">
     <header class="page-heading compact-heading">
       <p>下载</p>
-      <h1>按当前设备下载对应版本。</h1>
+      <h1>按当前设备下载 CPE加加 对应版本。</h1>
       <span>
         页面会自动识别 Android、macOS 或
         Windows。桌面大包会按分片下载，过程中可以看到实时进度，最后在浏览器里自动合并为完整安装包。
@@ -96,6 +106,17 @@ onMounted(initDownloadRecommendation)
         </div>
       </article>
     </div>
+
+    <section class="download-summary-strip">
+      <div class="download-summary-card">
+        <span>总下载量</span>
+        <strong>{{ valueOrPreview(totalDownloads) }}</strong>
+      </div>
+      <div class="download-summary-card" v-for="row in versionRows" :key="row.label">
+        <span>{{ row.label }}</span>
+        <strong>{{ statForVersion(row.platform, row.version) }}</strong>
+      </div>
+    </section>
 
     <div class="download-list">
       <article v-for="download in otherDownloads" :key="download.id" class="download-row">

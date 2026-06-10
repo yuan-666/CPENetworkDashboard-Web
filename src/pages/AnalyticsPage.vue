@@ -1,11 +1,14 @@
-<script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+﻿<script setup lang="ts">
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { useAnalytics } from '@/composables/useAnalytics'
 import { downloads } from '@/content'
 import type { CityStat, CountryStat, RecentEvent } from '@/types'
 import { formatNumber } from '@/utils/format'
 
-const { summary, analyticsState, loadSummary } = useAnalytics()
+const { summary, analyticsState, loadProtectedSummary } = useAnalytics()
+const token = ref('')
+const authorized = ref(false)
+const errorMessage = ref('')
 
 const mobileNavOpen = ref(false)
 
@@ -102,7 +105,7 @@ const downloadDistribution = computed(() =>
 
 /* ── Tabs ────────────────────────────────────────────────── */
 
-type TabKey = 'pages' | 'referrers' | 'countries' | 'cities' | 'devices' | 'recent'
+type TabKey = 'pages' | 'referrers' | 'countries' | 'cities' | 'devices' | 'recent' | 'versions'
 
 const tabs: { key: TabKey; label: string }[] = [
   { key: 'pages', label: '页面' },
@@ -376,6 +379,15 @@ const tabData = computed(() => {
       }))
     case 'devices':
       return normalizedDevices.value
+    case 'versions':
+      return Object.values(s.downloadsByVersion || {})
+        .map((item) => ({
+          name: item.label,
+          count: item.total,
+          today: item.today,
+        }))
+        .filter((item) => item.count > 0)
+        .sort((a, b) => b.count - a.count)
     default:
       return []
   }
@@ -404,6 +416,14 @@ const downloadRanking = computed(() => {
       today: stats.today ?? 0,
     }))
     .filter((d) => d.total > 0)
+    .sort((a, b) => b.total - a.total)
+})
+
+const downloadVersionRanking = computed(() => {
+  const byVersion = summary.value?.downloadsByVersion
+  if (!byVersion) return []
+  return Object.values(byVersion)
+    .filter((item) => item.total > 0)
     .sort((a, b) => b.total - a.total)
 })
 
@@ -493,11 +513,17 @@ const cityStrip = computed(() =>
 
 /* ── Lifecycle ───────────────────────────────────────────── */
 
-onMounted(async () => {
-  await loadSummary()
+async function unlockAnalytics(): Promise<void> {
+  errorMessage.value = ''
+  const ok = await loadProtectedSummary(token.value.trim())
+  if (!ok) {
+    errorMessage.value = '密码不正确，或统计接口暂时不可用。'
+    return
+  }
+  authorized.value = true
   await nextTick()
   setupMapObserver()
-})
+}
 
 onUnmounted(() => {
   mapObserver?.disconnect()
@@ -519,7 +545,7 @@ watch(cities, () => {
 
 <template>
   <div class="analytics-page">
-    <Teleport to="body">
+    <Teleport v-if="authorized" to="body">
       <button
         class="mobile-section-toggle"
         :class="{ active: mobileNavOpen }"
@@ -560,8 +586,26 @@ watch(cities, () => {
     <!-- Header -->
     <header class="analytics-header">
       <h1>访问统计</h1>
-      <p>访问、下载、地区。</p>
+      <p>维护者专用，全站访问与下载数据概览。</p>
     </header>
+
+    <form v-if="!authorized" class="analytics-gate" @submit.prevent="unlockAnalytics">
+      <label for="analytics-token">统计密码</label>
+      <div class="analytics-gate-row">
+        <input
+          id="analytics-token"
+          v-model="token"
+          type="password"
+          autocomplete="current-password"
+          placeholder="输入服务端统计 token"
+          required
+        />
+        <button type="submit">查看统计</button>
+      </div>
+      <p v-if="errorMessage">{{ errorMessage }}</p>
+    </form>
+
+    <template v-else>
 
     <!-- KPI Cards -->
     <div id="analytics-metrics" class="kpi-grid">
@@ -753,19 +797,41 @@ watch(cities, () => {
           <span>下载排行</span>
           <small>{{ summary?.downloadsTotal ?? 0 }} 次下载</small>
         </div>
-        <div v-if="!downloadRanking.length" class="empty-hint">还没有下载</div>
-        <div v-else class="rank-list">
-          <div
-            v-for="(item, i) in downloadRanking"
-            :key="item.id"
-            class="rank-item"
-          >
-            <span class="rank-num">{{ i + 1 }}</span>
-            <div class="rank-info">
-              <strong>{{ item.label }}</strong>
-              <small>{{ item.total }} 次下载{{ item.today ? ` · 今日 ${item.today}` : '' }}</small>
+        <div class="rank-sections">
+          <section class="rank-section">
+            <div class="panel-subtitle">文件</div>
+            <div v-if="!downloadRanking.length" class="empty-hint">还没有下载</div>
+            <div v-else class="rank-list">
+              <div
+                v-for="(item, i) in downloadRanking"
+                :key="item.id"
+                class="rank-item"
+              >
+                <span class="rank-num">{{ i + 1 }}</span>
+                <div class="rank-info">
+                  <strong>{{ item.label }}</strong>
+                  <small>{{ item.total }} 次下载{{ item.today ? ` · 今日 ${item.today}` : '' }}</small>
+                </div>
+              </div>
             </div>
-          </div>
+          </section>
+          <section class="rank-section">
+            <div class="panel-subtitle">版本</div>
+            <div v-if="!downloadVersionRanking.length" class="empty-hint">还没有版本下载</div>
+            <div v-else class="rank-list">
+              <div
+                v-for="(item, i) in downloadVersionRanking"
+                :key="item.id"
+                class="rank-item"
+              >
+                <span class="rank-num">{{ i + 1 }}</span>
+                <div class="rank-info">
+                  <strong>{{ item.label }}</strong>
+                  <small>{{ item.total }} 次下载{{ item.today ? ` · 今日 ${item.today}` : '' }}</small>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </section>
     </div>
@@ -778,6 +844,7 @@ watch(cities, () => {
     <div v-else-if="analyticsState === 'offline'" class="state-overlay offline">
       <span>统计暂时不可用</span>
     </div>
+    </template>
   </div>
 </template>
 
@@ -815,6 +882,58 @@ watch(cities, () => {
   margin: 0;
   color: var(--muted);
   font-size: 16px;
+}
+
+.analytics-gate {
+  max-width: 620px;
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow);
+}
+
+.analytics-gate label {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.analytics-gate-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.analytics-gate input {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
+  background: var(--paper);
+  color: var(--ink);
+  outline: none;
+}
+
+.analytics-gate input:focus {
+  border-color: var(--accent);
+}
+
+.analytics-gate button {
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 0 16px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  cursor: pointer;
+}
+
+.analytics-gate p {
+  margin: 0;
+  color: #8e4c22;
+  font-size: 14px;
 }
 
 /* ── Glass Panel ──────────────────────────────────────── */
@@ -1318,6 +1437,23 @@ watch(cities, () => {
 }
 
 /* ── Download Ranking ─────────────────────────────────── */
+
+.rank-sections {
+  display: grid;
+  gap: 18px;
+}
+
+.rank-section {
+  min-width: 0;
+}
+
+.panel-subtitle {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+}
 
 .rank-list {
   display: flex;

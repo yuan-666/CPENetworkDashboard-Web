@@ -40,11 +40,11 @@ onMounted(() => {
 
 <template>
   <header class="topbar">
-    <RouterLink class="brand-lockup" to="/" aria-label="CPE 网络看板首页">
+    <RouterLink class="brand-lockup" to="/" aria-label="CPE加加首页">
       <img :src="appIcon" alt="" loading="eager" decoding="async" fetchpriority="high" />
       <span>
-        <strong>CPE 网络看板</strong>
-        <small>Network Dashboard</small>
+        <strong>CPE加加</strong>
+        <small>CPE++</small>
       </span>
     </RouterLink>
     <div class="topbar-actions">

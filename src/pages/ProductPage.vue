@@ -79,14 +79,14 @@ const mobileFeatures = [
               <span></span>
               <span></span>
               <span></span>
-              <strong>macOS / Windows</strong>
+              <strong>CPE++ / macOS / Windows</strong>
             </div>
             <div class="desktop-screen-frame">
               <ScrollImageSwitcher
                 :images="desktopScreens"
                 :labels="desktopScreenLabels"
                 :image-tones="desktopScreenTones"
-                alt="CPE 网络看板电脑端截图"
+                alt="CPE加加电脑端截图"
               />
             </div>
           </div>
@@ -106,7 +106,7 @@ const mobileFeatures = [
               :images="mobileScreens"
               :labels="mobileScreenLabels"
               :image-tones="mobileScreenTones"
-              alt="CPE 网络看板 Android 手机截图"
+              alt="CPE加加 Android 手机截图"
             />
           </div>
         </div>

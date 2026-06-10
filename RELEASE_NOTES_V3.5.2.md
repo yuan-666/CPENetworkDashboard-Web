@@ -1,4 +1,4 @@
-# CPE 网络看板 v3.5.2
+# CPE加加 v3.5.2
 
 发布日期：2026-06-08
 
@@ -26,8 +26,8 @@
 
 | 文件 | SHA-256 |
 | --- | --- |
-| `CPENetworkDashboard-v3.5.2.apk` | `302ceb8f1c145b8e41eac55aa33067bcc5eb9e5b19354a9bf09cd985211fc1b6` |
-| `CPE-Network-Dashboard-3.5.2-macos-arm64.dmg` | `cf03bf8ae81ef106acce2b24fb69b868b8445c456cd01468b37d62cb24086288` |
-| `CPE-Network-Dashboard-3.5.2-protected-portable-windows-x64.zip` | `1587f5e4eea86718f7c1f3c6ada053a6d2c24b1608801667cd92dffb438ed549` |
-| `CPE-Network-Dashboard-3.5.2-windows-x64.exe` | `51ff1548a340b643fa0c9b1bc6640d1324b1a21cdf89bf75c2827cd82c1df3e5` |
-| `CPE-Network-Dashboard-3.5.2-windows-x64.msi` | `32ec9c0b3bc1de358ac8da89c902243874f0ed311a4d55234d4fd51c6d9e3362` |
+| `CPEPlusPlus-v3.5.2.apk` | `302ceb8f1c145b8e41eac55aa33067bcc5eb9e5b19354a9bf09cd985211fc1b6` |
+| `CPEPlusPlus-3.5.2-macos-arm64.dmg` | `cf03bf8ae81ef106acce2b24fb69b868b8445c456cd01468b37d62cb24086288` |
+| `CPEPlusPlus-3.5.2-protected-portable-windows-x64.zip` | `1587f5e4eea86718f7c1f3c6ada053a6d2c24b1608801667cd92dffb438ed549` |
+| `CPEPlusPlus-3.5.2-windows-x64.exe` | `51ff1548a340b643fa0c9b1bc6640d1324b1a21cdf89bf75c2827cd82c1df3e5` |
+| `CPEPlusPlus-3.5.2-windows-x64.msi` | `32ec9c0b3bc1de358ac8da89c902243874f0ed311a4d55234d4fd51c6d9e3362` |

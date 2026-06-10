@@ -5,9 +5,9 @@ import { changelogEntries } from '@/content'
 <template>
   <section class="page-view changelog-page">
     <header class="page-heading">
-      <p>更新日志</p>
+      <p>CPE加加</p>
       <h1>更新日志</h1>
-      <span>3.5.2 是当前最新正式版，已同步 Android、macOS 和 Windows；iOS 版本正在路上，敬请期待。</span>
+      <span>3.5.3 是当前最新正式版，已同步 Android、macOS 和 Windows；iOS 版本正在路上，敬请期待。</span>
     </header>
 
     <div class="timeline">

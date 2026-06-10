@@ -137,6 +137,57 @@ img {
   overflow-x: clip;
 }
 
+.privacy-notice {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 40;
+  width: min(520px, calc(100% - 36px));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
+  box-shadow: 0 18px 52px rgba(25, 32, 27, 0.18);
+  backdrop-filter: blur(20px);
+}
+
+.privacy-notice strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.privacy-notice p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.privacy-notice button {
+  min-height: 38px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 0 14px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  cursor: pointer;
+  font-size: 14px;
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.privacy-notice button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--button-hover-shadow);
+}
+
 .topbar {
   position: fixed;
   top: 16px;
@@ -1674,6 +1725,58 @@ p {
   gap: 8px;
 }
 
+.download-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.download-summary-card {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow);
+}
+
+.download-summary-card span {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.download-summary-card strong {
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.rank-sections {
+  display: grid;
+  gap: 16px;
+}
+
+.rank-section {
+  display: grid;
+  gap: 10px;
+}
+
+.panel-subtitle {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
 .download-list {
   display: grid;
   gap: 10px;
@@ -2784,6 +2887,14 @@ p {
 
   .footer-stats,
   .footer-links {
+    width: 100%;
+  }
+
+  .privacy-notice {
+    grid-template-columns: 1fr;
+  }
+
+  .privacy-notice button {
     width: 100%;
   }
 }

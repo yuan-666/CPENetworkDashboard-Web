@@ -29,8 +29,8 @@ import { aboutInfo, appIcon } from '@/content'
       <div class="section-copy split-title-copy">
         <p>开发者</p>
         <h2>
-          <span>本项目开发者：</span>
-          <small>Project Developers</small>
+          <span>CPE加加开发者：</span>
+          <small>CPE++ Developers</small>
         </h2>
       </div>
       <div class="person-grid">
@@ -40,7 +40,7 @@ import { aboutInfo, appIcon } from '@/content'
           class="person-card maker-card"
         >
           <div>
-            <small>Developer</small>
+            <small>CPE++ Developer</small>
             <h3>{{ person.name }}</h3>
           </div>
           <div class="person-links">
@@ -72,7 +72,7 @@ import { aboutInfo, appIcon } from '@/content'
           <article class="sponsor-channel-card ifdian-channel-card">
             <div class="sponsor-channel-copy">
               <strong>爱发电</strong>
-              <small>跳转主页支持项目</small>
+              <small>跳转主页支持 CPE加加</small>
             </div>
             <a
               class="ifdian-sponsor-link"
@@ -83,7 +83,7 @@ import { aboutInfo, appIcon } from '@/content'
               <img
                 width="200"
                 src="https://pic1.afdiancdn.com/static/img/welcome/button-sponsorme.png"
-                alt="在爱发电赞助"
+                alt="在爱发电赞助 CPE加加"
                 loading="lazy"
                 decoding="async"
               />
@@ -92,7 +92,7 @@ import { aboutInfo, appIcon } from '@/content'
           <article v-for="qr in aboutInfo.sponsor.qrs" :key="qr.image" class="sponsor-qr-card">
             <LazyImage :src="qr.image" :alt="qr.alt" />
             <strong>{{ qr.label }}</strong>
-            <small>扫码支持项目</small>
+            <small>扫码支持 CPE加加</small>
           </article>
         </div>
       </div>

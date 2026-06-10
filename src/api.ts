@@ -1,7 +1,6 @@
 import type { AnalyticsSummary, DownloadTrackResult, UpdateCheckResult } from './types'
 
 const API_BASE = (import.meta.env.VITE_API_BASE || '/api').replace(/\/+$/, '')
-const API_TOKEN = String(import.meta.env.VITE_API_TOKEN || '').trim()
 
 function apiUrl(path: string): string {
   return `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`
@@ -14,10 +13,9 @@ async function readJson<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>
 }
 
-function writeHeaders(): HeadersInit {
+function jsonHeaders(): HeadersInit {
   return {
     'Content-Type': 'application/json',
-    ...(API_TOKEN ? { 'X-CPE-Stats-Token': API_TOKEN } : {}),
   }
 }
 
@@ -68,6 +66,10 @@ function normalizeHourlyData(value: AnalyticsSummary['hourly'] | null | undefine
 
 function normalizeSummary(value: Partial<AnalyticsSummary> | null | undefined): AnalyticsSummary {
   const downloadsByFile = normalizeDownloadsByFile(value?.downloadsByFile)
+  const downloadsByVersion =
+    value?.downloadsByVersion && typeof value.downloadsByVersion === 'object'
+      ? value.downloadsByVersion
+      : {}
   const downloadsTotal = Object.values(downloadsByFile).reduce(
     (sum, item) => sum + numberOrZero(item?.total),
     0
@@ -80,6 +82,7 @@ function normalizeSummary(value: Partial<AnalyticsSummary> | null | undefined): 
     },
     downloadsTotal: Math.max(numberOrZero(value?.downloadsTotal), downloadsTotal),
     downloadsByFile,
+    downloadsByVersion,
     pages: arrayOrEmpty(value?.pages),
     referrers: arrayOrEmpty(value?.referrers),
     devices: arrayOrEmpty(value?.devices),
@@ -100,6 +103,34 @@ export async function fetchSummary(): Promise<AnalyticsSummary> {
   return normalizeSummary(await readJson<Partial<AnalyticsSummary>>(response))
 }
 
+export async function fetchPublicSummary(): Promise<AnalyticsSummary> {
+  const [visitsResponse, downloadsResponse] = await Promise.all([
+    fetch(apiUrl('/counter?skip=1'), { headers: { Accept: 'application/json' } }),
+    fetch(apiUrl('/downloads'), { headers: { Accept: 'application/json' } }),
+  ])
+  const visits = await readJson<{ total?: number; today?: number }>(visitsResponse)
+  const downloads = await readJson<Partial<AnalyticsSummary>>(downloadsResponse)
+  return normalizeSummary({
+    visits: {
+      total: visits.total || 0,
+      today: visits.today || 0,
+    },
+    downloadsTotal: downloads.downloadsTotal || 0,
+    downloadsByFile: downloads.downloadsByFile || {},
+    downloadsByVersion: downloads.downloadsByVersion || {},
+  })
+}
+
+export async function fetchProtectedSummary(token: string): Promise<AnalyticsSummary> {
+  const response = await fetch(apiUrl('/analytics/summary'), {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  return normalizeSummary(await readJson<Partial<AnalyticsSummary>>(response))
+}
+
 function currentPagePath(): string {
   const hashPath = window.location.hash?.startsWith('#/') ? window.location.hash.slice(1) : ''
   return hashPath || window.location.pathname || '/'
@@ -110,7 +141,7 @@ export async function trackVisit(
 ): Promise<{ ok: boolean; visits: { total: number; today: number } }> {
   const response = await fetch(apiUrl('/track'), {
     method: 'POST',
-    headers: writeHeaders(),
+    headers: jsonHeaders(),
     body: JSON.stringify({
       page,
       referrer: document.referrer || 'direct',
@@ -127,13 +158,12 @@ export async function trackDownload(fileId: string): Promise<DownloadTrackResult
     page: currentPagePath(),
     referrer: document.referrer || 'direct',
     ua: navigator.userAgent,
-    token: API_TOKEN || undefined,
   })
 
   try {
     const response = await fetch(apiUrl('/download'), {
       method: 'POST',
-      headers: writeHeaders(),
+      headers: jsonHeaders(),
       body: payload,
       keepalive: true,
     })
@@ -155,7 +185,7 @@ export async function checkAppUpdate(options: {
 }): Promise<UpdateCheckResult> {
   const response = await fetch(apiUrl('/updates/check'), {
     method: 'POST',
-    headers: writeHeaders(),
+    headers: jsonHeaders(),
     body: JSON.stringify({
       platform: options.platform,
       version: options.version,

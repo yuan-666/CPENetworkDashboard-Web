@@ -1,5 +1,5 @@
 /**
- * CPE Network Dashboard Web — ESA Edge Function
+ * CPE++ Web — ESA Edge Function
  *
  * Public routes:
  *   /api/health
@@ -7,6 +7,7 @@
  *   /api/track
  *   /api/download
  *   /api/downloads
+ *   /api/updates/latest
  *   /api/updates/check
  *   /api/updates/publish
  *   /api/analytics/summary
@@ -20,7 +21,7 @@
  */
 
 const KV_NAMESPACE = 'cpeweb'
-const EDGE_BUILD = '2026-06-08.2'
+const EDGE_BUILD = '2026-06-09.1'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
 const UPDATE_STORE_VERSION = 2
@@ -39,9 +40,10 @@ const AMAP_WEB_SERVICE_KEY =
   readEnv('AMAP_WEB_KEY') ||
   readEnv('VITE_AMAP_WEB_KEY') ||
   readEnv('AMAP_KEY')
+const READ_TOKEN = readEnv('CPE_ANALYTICS_TOKEN') || readEnv('ANALYTICS_READ_TOKEN') || WRITE_TOKEN
 
 function runtimeState() {
-  const key = '__CPE_NETWORK_DASHBOARD_EDGE_RUNTIME__'
+  const key = '__CPE_PLUS_PLUS_EDGE_RUNTIME__'
   if (!globalThis[key]) {
     globalThis[key] = {
       analyticsStore: null,
@@ -752,7 +754,7 @@ async function fetchGeo(ip) {
       timeout = setTimeout(() => controller.abort(), 900)
       const response = await fetch(provider.url(ip), {
         signal: controller.signal,
-        headers: { 'User-Agent': 'cpe-network-dashboard/1.0' },
+        headers: { 'User-Agent': 'cpe-plus-plus/1.0' },
       })
       if (!response.ok) continue
       const data = await response.json()
@@ -790,76 +792,76 @@ function normalizeGeo(geo, ip) {
 }
 
 const DOWNLOADS = {
-  'android-3.5.2': {
+  'android-3.5.3': {
     platform: 'android',
-    version: '3.5.2',
-    label: 'Android 3.5.2 Release APK',
-    fileName: 'CPENetworkDashboard-v3.5.2.apk',
-    href: '/downloads/CPENetworkDashboard-v3.5.2.apk',
-    size: '13.3 MiB',
-    checksum: '302ceb8f1c145b8e41eac55aa33067bcc5eb9e5b19354a9bf09cd985211fc1b6',
+    version: '3.5.3',
+    label: 'Android 3.5.3 Release APK',
+    fileName: 'CPEPlusPlus-v3.5.3.apk',
+    href: '/downloads/CPEPlusPlus-v3.5.3.apk',
+    size: '13.4 MiB',
+    checksum: '1f2180ff03f84a64aaeb413debebe349219ab3e739cea1c267d8e375995c99e1',
     channel: 'stable',
   },
   'android-3.5': {
     platform: 'android',
     version: '3.5',
     label: 'Android 3.5 Legacy APK',
-    fileName: 'CPENetworkDashboard V3.5-Release.apk',
-    href: '/downloads/CPENetworkDashboard V3.5-Release.apk',
+    fileName: 'CPEPlusPlus-v3.5-legacy-release.apk',
+    href: '/downloads/CPEPlusPlus-v3.5-legacy-release.apk',
     size: '13.3 MiB',
     checksum: '9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700',
     channel: 'stable',
   },
-  'macos-3.5.2': {
+  'macos-3.5.3': {
     platform: 'macos',
-    version: '3.5.2',
-    label: 'macOS 3.5.2 DMG',
-    fileName: 'CPE-Network-Dashboard-3.5.2-macos-arm64.dmg',
+    version: '3.5.3',
+    label: 'macOS 3.5.3 DMG',
+    fileName: 'CPEPlusPlus-3.5.3-macos-arm64.dmg',
     href: '/#/download',
-    chunks: chunkedParts('macos-3.5.2', 'CPE-Network-Dashboard-3.5.2-macos-arm64.dmg', 7),
-    chunkBytes: [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 1794421],
-    size: '121.7 MiB',
-    checksum: 'cf03bf8ae81ef106acce2b24fb69b868b8445c456cd01468b37d62cb24086288',
+    chunks: chunkedParts('macos-3.5.3', 'CPEPlusPlus-3.5.3-macos-arm64.dmg', 7),
+    chunkBytes: [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 8734301],
+    size: '128.3 MiB',
+    checksum: 'c0cf7b64694f06d4dc6c45ef3c15f259aae1b442ff72f2dfd77b1cd56db165b4',
     channel: 'stable',
   },
-  'windows-exe-3.5.2': {
+  'windows-exe-3.5.3': {
     platform: 'windows',
-    version: '3.5.2',
-    label: 'Windows 3.5.2 EXE',
-    fileName: 'CPE-Network-Dashboard-3.5.2-windows-x64.exe',
+    version: '3.5.3',
+    label: 'Windows 3.5.3 EXE',
+    fileName: 'CPEPlusPlus-3.5.3-windows-x64.exe',
     href: '/#/download',
-    chunks: chunkedParts('windows-exe-3.5.2', 'CPE-Network-Dashboard-3.5.2-windows-x64.exe', 7),
-    chunkBytes: [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 14713072],
-    size: '134.0 MiB',
-    checksum: '51ff1548a340b643fa0c9b1bc6640d1324b1a21cdf89bf75c2827cd82c1df3e5',
+    chunks: chunkedParts('windows-exe-3.5.3', 'CPEPlusPlus-3.5.3-windows-x64.exe', 7),
+    chunkBytes: [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 20737264],
+    size: '139.8 MiB',
+    checksum: '0808a5a69bf1ac5a16561955f67cc55ac87cfb3c3298b28dbe8e6ab17290addf',
     channel: 'stable',
   },
-  'windows-msi-3.5.2': {
+  'windows-msi-3.5.3': {
     platform: 'windows',
-    version: '3.5.2',
-    label: 'Windows 3.5.2 MSI',
-    fileName: 'CPE-Network-Dashboard-3.5.2-windows-x64.msi',
+    version: '3.5.3',
+    label: 'Windows 3.5.3 MSI',
+    fileName: 'CPEPlusPlus-3.5.3-windows-x64.msi',
     href: '/#/download',
-    chunks: chunkedParts('windows-msi-3.5.2', 'CPE-Network-Dashboard-3.5.2-windows-x64.msi', 7),
-    chunkBytes: [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 14004224],
-    size: '133.4 MiB',
-    checksum: '32ec9c0b3bc1de358ac8da89c902243874f0ed311a4d55234d4fd51c6d9e3362',
+    chunks: chunkedParts('windows-msi-3.5.3', 'CPEPlusPlus-3.5.3-windows-x64.msi', 7),
+    chunkBytes: [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 19996672],
+    size: '139.1 MiB',
+    checksum: 'a9d313bd7c77963ef650f7c7b40ea3ce986dbbb20cc8e7d67c36a90e47cbd1de',
     channel: 'stable',
   },
-  'windows-portable-3.5.2': {
+  'windows-portable-3.5.3': {
     platform: 'windows',
-    version: '3.5.2',
-    label: 'Windows 3.5.2 Portable',
-    fileName: 'CPE-Network-Dashboard-3.5.2-protected-portable-windows-x64.zip',
+    version: '3.5.3',
+    label: 'Windows 3.5.3 Portable',
+    fileName: 'CPEPlusPlus-3.5.3-protected-portable-windows-x64.zip',
     href: '/#/download',
     chunks: chunkedParts(
-      'windows-portable-3.5.2',
-      'CPE-Network-Dashboard-3.5.2-protected-portable-windows-x64.zip',
+      'windows-portable-3.5.3',
+      'CPEPlusPlus-3.5.3-protected-portable-windows-x64.zip',
       6
     ),
-    chunkBytes: [20971520, 20971520, 20971520, 20971520, 20971520, 14572374],
-    size: '113.9 MiB',
-    checksum: '1587f5e4eea86718f7c1f3c6ada053a6d2c24b1608801667cd92dffb438ed549',
+    chunkBytes: [20971520, 20971520, 20971520, 20971520, 20971520, 20534614],
+    size: '119.6 MiB',
+    checksum: '11091c7d2560000cf4167b6fc27231da3a0acb0cf6cfe7d17456de9dfcf703c5',
     channel: 'stable',
   },
 }
@@ -981,27 +983,27 @@ const DEFAULT_UPDATE_CHANNEL = 'stable'
 
 const DEFAULT_RELEASES = {
   android: {
-    stable: releaseFromDownload('android-3.5.2', {
-      versionCode: 10,
-      releaseDate: '2026-06-08',
-      notes: '3.5.2 正式版：修复烽火 / FiberHome 登录后连接页闪烁，新增应用内检查更新、下载进度和校验安装流程。',
+    stable: releaseFromDownload('android-3.5.3', {
+      versionCode: 353,
+      releaseDate: '2026-06-09',
+      notes: '3.5.3 正式版：统一 CPE加加 / CPE++ 品牌和新图标，修复混淆后 release / portable 更新检查异常，并同步烽火后台重登录优化。',
     }),
   },
   windows: {
-    stable: releaseFromDownload('windows-portable-3.5.2', {
-      versionCode: 352,
-      releaseDate: '2026-06-08',
-      notes: '3.5.2 Windows 桌面版：同步烽火后台重登录修复，默认推荐 Portable 免安装包，EXE 和 MSI 作为备选。',
-      alternatives: ['windows-exe-3.5.2', 'windows-msi-3.5.2'].map((id) =>
+    stable: releaseFromDownload('windows-portable-3.5.3', {
+      versionCode: 353,
+      releaseDate: '2026-06-09',
+      notes: '3.5.3 Windows 桌面版：统一 CPE加加 / CPE++ 品牌和新图标，修复更新检查字段混淆问题，默认推荐 Portable 免安装包，EXE 和 MSI 作为备选。',
+      alternatives: ['windows-exe-3.5.3', 'windows-msi-3.5.3'].map((id) =>
         releaseDownloadPayload(id)
       ),
     }),
   },
   macos: {
-    stable: releaseFromDownload('macos-3.5.2', {
-      versionCode: 352,
-      releaseDate: '2026-06-08',
-      notes: '3.5.2 macOS 桌面版：同步烽火后台重登录修复，并保留近期桌面端更新检测、设备保存和紧凑看板改进。',
+    stable: releaseFromDownload('macos-3.5.3', {
+      versionCode: 353,
+      releaseDate: '2026-06-09',
+      notes: '3.5.3 macOS 桌面版：统一 CPE加加 / CPE++ 品牌和新图标，修复更新检查字段混淆问题，并同步烽火后台重登录优化。',
     }),
   },
   ios: {
@@ -1512,9 +1514,10 @@ function verifyWriteToken(request, body = {}) {
   if (!WRITE_TOKEN) return true
   const auth = request.headers.get('Authorization') || ''
   const headerToken = request.headers.get('X-CPE-Stats-Token') || ''
+  const adminToken = request.headers.get('X-Admin-Token') || ''
   const bodyToken = body && typeof body === 'object' ? String(body.token || '') : ''
   const bearer = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : ''
-  return [headerToken, bodyToken, bearer].some((token) => token && token === WRITE_TOKEN)
+  return [headerToken, adminToken, bodyToken, bearer].some((token) => token && token === WRITE_TOKEN)
 }
 
 function hasConfiguredWriteToken(request, body = {}) {
@@ -1533,6 +1536,23 @@ function guardWriteRequest(request, body = {}) {
   const sameSite = sameSiteRequest(request)
   const hasToken = hasConfiguredWriteToken(request, body)
   if (!sameSite && !hasToken) return json({ error: 'Access denied' }, 403)
+  return null
+}
+
+function verifyReadToken(request) {
+  if (!READ_TOKEN) return false
+  const url = new URL(request.url)
+  const auth = request.headers.get('Authorization') || ''
+  const headerToken = request.headers.get('X-CPE-Stats-Token') || ''
+  const adminToken = request.headers.get('X-Admin-Token') || ''
+  const queryToken = url.searchParams.get('token') || ''
+  const bearer = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : ''
+  return [headerToken, adminToken, queryToken, bearer].some((token) => token && token === READ_TOKEN)
+}
+
+function guardAnalyticsRead(request) {
+  if (!READ_TOKEN) return json({ ok: false, error: 'Analytics token is not configured' }, 403)
+  if (!verifyReadToken(request)) return json({ ok: false, error: 'Access denied' }, 403)
   return null
 }
 
@@ -1982,6 +2002,11 @@ function summaryFromStore(store, todayKey) {
     if (counter.total <= 0 && !DOWNLOADS[id]) continue
     downloadsByFile[id] = serializeDownloadCounter(id, counter)
   }
+  const downloadsByVersion = buildDownloadsByVersion(downloadsByFile)
+  const downloadsTotal = Object.values(downloadsByFile).reduce(
+    (sum, item) => sum + (Number(item.total) || 0),
+    0
+  )
 
   const events = [...(store.events || [])].sort((a, b) =>
     String(b.time || '').localeCompare(String(a.time || ''))
@@ -1993,10 +2018,8 @@ function summaryFromStore(store, todayKey) {
   return {
     visits: normalizeStoredCounter(store.counters.visits, todayKey),
     downloadsByFile,
-    downloadsTotal: Object.values(downloadsByFile).reduce(
-      (sum, item) => sum + (Number(item.total) || 0),
-      0
-    ),
+    downloadsByVersion,
+    downloadsTotal,
     pages: topBreakdown(
       events.filter((event) => event.kind === 'view'),
       (event) => event.page
@@ -2008,6 +2031,43 @@ function summaryFromStore(store, todayKey) {
     hourly: buildHourlyBars(dailyVisits),
     downloadHourly: buildHourlyBars(events.filter((event) => event.kind === 'download')),
   }
+}
+
+function downloadVersionKey(download) {
+  return `${String(download.platform || '').toLowerCase()}-${download.version}`
+}
+
+function displayDownloadPlatform(platform) {
+  return {
+    android: 'Android',
+    macos: 'macOS',
+    windows: 'Windows',
+    ios: 'iOS',
+  }[platform] || platform || 'Unknown'
+}
+
+function buildDownloadsByVersion(downloadsByFile) {
+  const downloadsByVersion = {}
+  for (const id of Object.keys(DOWNLOADS)) {
+    const download = DOWNLOADS[id]
+    const key = downloadVersionKey(download)
+    const stats = downloadsByFile[id] || { total: 0, today: 0 }
+    const current =
+      downloadsByVersion[key] || {
+        id: key,
+        platform: displayDownloadPlatform(download.platform),
+        version: download.version,
+        label: `${displayDownloadPlatform(download.platform)} ${download.version}`,
+        total: 0,
+        today: 0,
+        fileIds: [],
+      }
+    current.total += Number(stats.total) || 0
+    current.today += Number(stats.today) || 0
+    current.fileIds.push(id)
+    downloadsByVersion[key] = current
+  }
+  return downloadsByVersion
 }
 
 function routePath(url) {
@@ -2139,12 +2199,14 @@ async function readDownloads(kv, todayKey) {
       downloadsByFile[id] = serializeDownloadCounter(id, counter)
     })
   )
+  const downloadsTotal = Object.values(downloadsByFile).reduce(
+    (sum, item) => sum + (Number(item.total) || 0),
+    0
+  )
   return {
     downloadsByFile,
-    downloadsTotal: Object.values(downloadsByFile).reduce(
-      (sum, item) => sum + (Number(item.total) || 0),
-      0
-    ),
+    downloadsByVersion: buildDownloadsByVersion(downloadsByFile),
+    downloadsTotal,
   }
 }
 
@@ -2238,13 +2300,17 @@ async function handleDownloads(request) {
     const todayKey = getTodayKey()
     const store = await readAnalyticsStore(kv)
     const summary = summaryFromStore(store, todayKey)
-    const downloads = mergeDownloadSummaries(
-      { downloadsByFile: summary.downloadsByFile },
-      await readDownloads(kv, todayKey)
-    )
-    return json({ ...downloads, build: EDGE_BUILD })
+    if (summary.downloadsTotal > 0) {
+      return json({
+        downloadsByFile: summary.downloadsByFile,
+        downloadsByVersion: summary.downloadsByVersion,
+        downloadsTotal: summary.downloadsTotal,
+        build: EDGE_BUILD,
+      })
+    }
+    return json({ ...(await readDownloads(kv, todayKey)), build: EDGE_BUILD })
   } catch {
-    return json({ downloadsByFile: {}, downloadsTotal: 0, build: EDGE_BUILD })
+    return json({ downloadsByFile: {}, downloadsByVersion: {}, downloadsTotal: 0, build: EDGE_BUILD })
   }
 }
 
@@ -2401,6 +2467,9 @@ async function handleUpdatePublish(request) {
 }
 
 async function handleSummary(request) {
+  const protectedRead = guardAnalyticsRead(request)
+  if (protectedRead) return protectedRead
+
   const blocked = await guardReadRequest(request, 'summary-read')
   if (blocked) return blocked
 
@@ -2457,7 +2526,7 @@ export default {
     if (path === '/health') {
       return json({
         ok: true,
-        service: 'cpe-network-dashboard-web',
+        service: 'cpe-plus-plus-web',
         namespace: KV_NAMESPACE,
         build: EDGE_BUILD,
       })
