@@ -26,12 +26,14 @@ const {
 onMounted(initDownloadRecommendation)
 
 const versionRows = computed(() => {
-  return Object.values(downloadVersionTotals.value || {}).map((item) => ({
-    platform: item.platform,
-    version: item.version,
-    total: item.total,
-    label: item.label,
-  }))
+  return Object.values(downloadVersionTotals.value || {})
+    .filter((item) => item.platform.toLowerCase() !== 'legacy')
+    .map((item) => ({
+      platform: item.platform,
+      version: item.version,
+      total: item.total,
+      label: item.label,
+    }))
 })
 </script>
 

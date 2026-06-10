@@ -25,7 +25,7 @@ ESA 静态构建产物单文件限制为 25MB。当前发布方式是：
 | -------- | ------------- | -------------------------------------------------------------------------------------------- |
 | 首页     | `#/`          | 应用图标、核心产品表达、电脑/手机界面动效和指标滚动条                                      |
 | 产品介绍 | `#/product`   | 排障流程、电脑端截图、手机端截图、平台说明和设备覆盖                                       |
-| 下载     | `#/download`  | 自动识别当前设备并推荐 Android APK、macOS DMG 或 Windows Portable，保留 EXE / MSI 手动选择 |
+| 下载     | `#/download`  | 自动识别当前设备并推荐 Android APK、macOS DMG 或 Windows EXE，保留 Portable / MSI 手动选择 |
 | 更新日志 | `#/changelog` | 展开 3.5.3、3.5.2、Android 3.5 旧版、Desktop 3.0.0、Cross-platform 3.0 等更新记录            |
 | 关于     | `#/about`     | 软件名、版本、QQ群、开发者、赞助入口和完整致谢名单                                          |
 
@@ -40,7 +40,7 @@ ESA 静态构建产物单文件限制为 25MB。当前发布方式是：
 | `CPEPlusPlus-3.5.3-windows-x64.exe`                                | Windows x64 | 3.5.3 | 139.8 MiB |
 | `CPEPlusPlus-3.5.3-windows-x64.msi`                                | Windows x64 | 3.5.3 | 139.1 MiB |
 
-Android 3.5 是旧版回退包，当前默认推荐 3.5.3。Windows 默认推荐 Portable 免安装包。
+Android 3.5 是旧版回退包，当前默认推荐 3.5.3。Windows 默认推荐 EXE 安装版。
 
 SHA-256 见 `public/downloads/checksums.txt`。桌面端大文件在网页里自动分片下载并合并，用户不需要手动处理分片。
 
@@ -216,7 +216,7 @@ Content-Type: application/json
     "version": "3.5.3",
     "versionCode": 10,
     "title": "Android 3.5.3 Release APK",
-    "notes": "3.5.3 正式版：统一 CPE加加 / CPE++ 品牌和新图标，修复混淆后 release / portable 更新检查异常，并同步烽火后台重登录优化。",
+    "notes": "3.5.3 正式版：统一 CPE加加 / CPE++ 品牌和新图标，优化更新检查，并同步烽火后台重登录优化。",
     "releaseDate": "2026-06-09",
     "publishedAt": "",
     "mandatory": false,
@@ -238,7 +238,7 @@ Content-Type: application/json
     "alternatives": []
   },
   "updatedAt": "",
-  "build": "2026-06-09.1"
+  "build": "2026-06-10.9"
 }
 ```
 
@@ -256,7 +256,7 @@ Content-Type: application/json
 | 平台      | channel  | version        | versionCode | 下载模式  | 说明                                  |
 | --------- | -------- | -------------- | ----------- | --------- | ------------------------------------- |
 | Android   | `stable` | `3.5.3`        | `10`        | `single`  | APK 直链，和 Android 包内 versionCode 保持一致 |
-| Windows   | `stable` | `3.5.3`        | `353`       | `chunked` | 默认 Portable，`alternatives` 含 EXE/MSI |
+| Windows   | `stable` | `3.5.3`        | `353`       | `chunked` | 默认 EXE，`alternatives` 含 Portable/MSI |
 | macOS     | `stable` | `3.5.3`        | `353`       | `chunked` | arm64 DMG 分片                        |
 | iOS       | `stable` | `coming-soon`  | `0`         | 无        | `download` 为 `null`                  |
 

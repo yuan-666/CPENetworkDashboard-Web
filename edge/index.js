@@ -22,7 +22,7 @@
 
 const KV_NAMESPACE = 'cpeweb'
 const LEGACY_KV_NAMESPACES = ['cpe_network_dashboard_web']
-const EDGE_BUILD = '2026-06-10.8'
+const EDGE_BUILD = '2026-06-10.9'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
 const CONFIG_KEY = 'config'
@@ -1045,15 +1045,15 @@ const DEFAULT_RELEASES = {
     stable: releaseFromDownload('android-3.5.3', {
       versionCode: ANDROID_STABLE_LATEST_VERSION_CODE,
       releaseDate: '2026-06-09',
-      notes: '3.5.3 正式版：统一 CPE加加 / CPE++ 品牌和新图标，修复混淆后 release / portable 更新检查异常，并同步烽火后台重登录优化。',
+      notes: '3.5.3 正式版：统一 CPE加加 / CPE++ 品牌和新图标，优化更新检查，并同步烽火后台重登录优化。',
     }),
   },
   windows: {
-    stable: releaseFromDownload('windows-portable-3.5.3', {
+    stable: releaseFromDownload('windows-exe-3.5.3', {
       versionCode: 353,
       releaseDate: '2026-06-09',
-      notes: '3.5.3 Windows 桌面版：统一 CPE加加 / CPE++ 品牌和新图标，修复更新检查字段混淆问题，默认推荐 Portable 免安装包，EXE 和 MSI 作为备选。',
-      alternatives: ['windows-exe-3.5.3', 'windows-msi-3.5.3'].map((id) =>
+      notes: '3.5.3 Windows 桌面版：统一 CPE加加 / CPE++ 品牌和新图标，优化更新检查；默认推荐 EXE 安装版，Portable 和 MSI 可手动选择。',
+      alternatives: ['windows-portable-3.5.3', 'windows-msi-3.5.3'].map((id) =>
         releaseDownloadPayload(id)
       ),
     }),
@@ -1062,7 +1062,7 @@ const DEFAULT_RELEASES = {
     stable: releaseFromDownload('macos-3.5.3', {
       versionCode: 353,
       releaseDate: '2026-06-09',
-      notes: '3.5.3 macOS 桌面版：统一 CPE加加 / CPE++ 品牌和新图标，修复更新检查字段混淆问题，并同步烽火后台重登录优化。',
+      notes: '3.5.3 macOS 桌面版：统一 CPE加加 / CPE++ 品牌和新图标，优化更新检查，并同步烽火后台重登录优化。',
     }),
   },
   ios: {

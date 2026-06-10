@@ -15,9 +15,9 @@ export const platformAdviceMap: Record<Platform, PlatformAdvice> = {
   },
   windows: {
     device: 'Windows 电脑',
-    primaryId: 'windows-portable-3.5.3',
-    title: '检测到 Windows，推荐免安装 Portable。',
-    copy: '临时电脑、U 盘携带和无安装权限环境优先用 Portable；固定电脑也可以改选 EXE 或 MSI。',
+    primaryId: 'windows-exe-3.5.3',
+    title: '检测到 Windows，推荐下载 EXE 安装版。',
+    copy: 'EXE 安装版更适合大多数用户；需要免安装时也可以手动选择 Portable。',
   },
   ios: {
     device: 'iPhone / iPad',
@@ -27,9 +27,9 @@ export const platformAdviceMap: Record<Platform, PlatformAdvice> = {
   },
   linux: {
     device: 'Linux / 其他桌面',
-    primaryId: 'windows-portable-3.5.3',
+    primaryId: 'windows-exe-3.5.3',
     title: '暂时没有 Linux 桌面包。',
-    copy: '当前公开下载是 Android、macOS 和 Windows；Linux 用户建议先用 Android 或 Windows 便携版。',
+    copy: '当前公开下载是 Android、macOS 和 Windows；Linux 用户建议先用 Android 或 Windows 版本。',
   },
   unknown: {
     device: '未知设备',

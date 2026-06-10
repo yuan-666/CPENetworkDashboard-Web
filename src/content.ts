@@ -131,7 +131,7 @@ export const platformCards: PlatformCard[] = [
     name: 'Windows',
     version: '3.5.3',
     title: '维护电脑、临时电脑，都能用。',
-    copy: '默认推荐免安装 Portable，常规 EXE 和固定环境 MSI 也都保留，方便把 CPE加加 放到随手可用的位置。',
+    copy: '默认推荐 EXE 安装版，适合大多数用户直接安装使用；Portable 和 MSI 也保留给需要的场景。',
   },
   {
     name: 'iOS',
@@ -160,7 +160,7 @@ export const downloads: Download[] = [
     size: '13.4 MiB',
     checksum: '1f2180ff03f84a64aaeb413debebe349219ab3e739cea1c267d8e375995c99e1',
     label: '最新正式版',
-    copy: '当前 CPE加加 Android 最新正式版。统一 CPE加加 / CPE++ 品牌和新图标，并修复混淆后 release / portable 更新检查异常。',
+    copy: '当前 CPE加加 Android 最新正式版。统一 CPE加加 / CPE++ 品牌和新图标，并优化更新检查体验。',
   },
   {
     id: 'macos-3.5.3',
@@ -173,7 +173,7 @@ export const downloads: Download[] = [
     size: '128.3 MiB',
     checksum: 'c0cf7b64694f06d4dc6c45ef3c15f259aae1b442ff72f2dfd77b1cd56db165b4',
     label: 'Mac 桌面版',
-    copy: '当前 CPE加加 macOS arm64 最新桌面版。同步品牌、图标、更新检测修复和烽火后台重登录优化。',
+    copy: '当前 CPE加加 macOS arm64 最新桌面版。同步品牌、新图标和烽火后台重登录优化。',
   },
   {
     id: 'windows-portable-3.5.3',
@@ -189,8 +189,8 @@ export const downloads: Download[] = [
     chunkBytes: chunkBytes['windows-portable-3.5.3'],
     size: '119.6 MiB',
     checksum: '11091c7d2560000cf4167b6fc27231da3a0acb0cf6cfe7d17456de9dfcf703c5',
-    label: 'Windows 免安装（推荐）',
-    copy: '当前 CPE加加 Windows 默认推荐版本。适合临时电脑、U 盘携带和没有安装权限的环境。',
+    label: 'Windows 免安装',
+    copy: '适合临时电脑、U 盘携带和没有安装权限的环境。使用前请先完整解压。',
   },
   {
     id: 'windows-exe-3.5.3',
@@ -202,8 +202,8 @@ export const downloads: Download[] = [
     chunkBytes: chunkBytes['windows-exe-3.5.3'],
     size: '139.8 MiB',
     checksum: '0808a5a69bf1ac5a16561955f67cc55ac87cfb3c3298b28dbe8e6ab17290addf',
-    label: 'Windows 常规安装',
-    copy: '适合固定使用的维护电脑。安装后可以像普通桌面应用一样使用 CPE加加。',
+    label: 'Windows 常规安装（推荐）',
+    copy: '当前 CPE加加 Windows 默认推荐版本。适合大多数用户直接安装后使用。',
   },
   {
     id: 'windows-msi-3.5.3',
@@ -238,15 +238,15 @@ export const changelogEntries: ChangelogEntry[] = [
     date: '2026-06-09',
     badge: 'Android / macOS / Windows 最新正式版',
     lead:
-      'CPE加加 3.5.3 已经同步发布 Android、macOS 和 Windows。这个版本统一品牌与新图标，修复混淆后更新检查异常，并继续同步烽火后台重登录优化。',
+      'CPE加加 3.5.3 已经同步发布 Android、macOS 和 Windows。这个版本统一品牌与新图标，优化更新检查，并继续同步烽火后台重登录优化。',
     sections: [
       {
         title: '主要变化',
         items: [
-          'Android 更新到 versionCode 10 / versionName 3.5.3；桌面端和共享应用元数据升级到 3.5.3 / versionCode 353。',
+          'Android、macOS 和 Windows 均更新到 3.5.3。',
           '应用品牌统一为 CPE加加，英文名 CPE++；发布文件名统一使用 CPEPlusPlus，避免符号在部分系统里不兼容。',
           'Android、Windows 和 macOS 图标资源替换为新的 CPE++ 图标。',
-          '修复 ProGuard 混淆后 release / portable 更新检查异常：更新请求使用显式 JSON key，响应字段名保持稳定。',
+          '优化更新检查，提升版本检测和下载信息展示的稳定性。',
         ],
       },
       {
@@ -254,7 +254,7 @@ export const changelogEntries: ChangelogEntry[] = [
         items: [
           '同步烽火 / FiberHome 后台自动重登录优化：登录成功后记录并重置重登录时间，空小区重登录独立限流。',
           '后台重登录会保留当前可见连接数据；刷新异常时触发后台重登，但不会先清空仍然有效的旧数据。',
-          'Windows 继续保留受保护 Portable 打包流程和 .cpe-portable 标记，并保留固定签名辅助脚本。',
+          'Windows 保留 EXE、MSI 和 Portable 三种下载包，默认推荐 EXE 安装版。',
           '延续桌面 UI/UX、更新检查、已保存设备、测试页、AMBR/QCI 和紧凑看板等近期工作。',
         ],
       },
@@ -297,8 +297,8 @@ export const changelogEntries: ChangelogEntry[] = [
         title: '桌面端同步',
         items: [
           'macOS 和 Windows 桌面端版本同步到 3.5.2，继续保留更新检测、已保存设备、测试页面、AMBR/QCI 和紧凑看板等近期改进。',
-          'Windows 继续保留受保护便携版打包流程，并在官网下载页默认推荐 Portable 免安装包。',
-          'Windows 新增固定签名辅助脚本，便于后续统一处理安装包签名。',
+          'Windows 保留 EXE、MSI 和 Portable 三种下载包，官网下载页默认推荐 EXE 安装版。',
+          '继续整理 Windows 桌面版发布包，方便后续稳定发版。',
         ],
       },
       {

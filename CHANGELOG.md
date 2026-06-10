@@ -6,8 +6,8 @@
 - Android 更新到 `versionCode = 10` / `versionName = "3.5.3"`；桌面端和共享应用元数据升级到 `3.5.3` / `versionCode = 353`。
 - 品牌统一为 CPE加加，英文名 CPE++；发布文件名统一使用 CPEPlusPlus。
 - Android、Windows 和 macOS 图标资源替换为新的 CPE++ 图标。
-- 修复 ProGuard 混淆后 release / portable 更新检查异常，请求 payload 使用显式 JSON key，响应字段名保持稳定。
-- 官网下载页更新到 3.5.3，Windows 默认推荐 Portable 免安装包；Android 旧版继续只保留 3.5，并显著标记为旧版本。
+- 优化更新检查，提升版本检测和下载信息展示的稳定性。
+- 官网下载页更新到 3.5.3，Windows 默认推荐 EXE 安装版；Android 旧版继续只保留 3.5，并显著标记为旧版本。
 - 后端 `/api/updates/check` 默认数据更新到 Android / Windows / macOS 3.5.3，并继续保留 iOS “正在路上”的占位信息。
 - 公共前端不再内置统计 token，完整统计页改为维护者 token 门禁；首页和导航不再展示统计页入口。
 - 公共页面只展示访问总量、下载总量和各版本下载量；页面、来源、设备和地理统计只通过受保护 `/api/analytics/summary` 查看。

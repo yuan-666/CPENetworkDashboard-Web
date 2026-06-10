@@ -6,7 +6,7 @@ describe('platform recommendations', () => {
     expect(platformAdviceMap.android.primaryId).toBe('android-3.5.3')
   })
 
-  it('recommends the portable package for Windows users', () => {
-    expect(platformAdviceMap.windows.primaryId).toBe('windows-portable-3.5.3')
+  it('recommends the EXE installer for Windows users', () => {
+    expect(platformAdviceMap.windows.primaryId).toBe('windows-exe-3.5.3')
   })
 })
