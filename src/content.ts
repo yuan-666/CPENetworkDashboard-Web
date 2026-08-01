@@ -117,7 +117,7 @@ export const productMoments: ProductMoment[] = [
 export const platformCards: PlatformCard[] = [
   {
     name: 'Android',
-    version: '3.5.3',
+    version: '3.6.5',
     title: '在设备旁边，手机最方便。',
     copy: '打开 CPE加加，先看信号、扫邻区、改锁定。弱电箱、窗边、机柜旁边，用手机比搬电脑省事多了。',
   },
@@ -151,16 +151,16 @@ export const supportedDevices: Array<[string, string]> = [
 
 export const downloads: Download[] = [
   {
-    id: 'android-3.5.3',
+    id: 'android-3.6.5',
     platform: 'Android',
-    version: '3.5.3',
+    version: '3.6.5',
     title: 'Android APK',
-    fileName: 'CPEPlusPlus-v3.5.3.apk',
-    href: '/downloads/CPEPlusPlus-v3.5.3.apk',
-    size: '13.4 MiB',
-    checksum: '1f2180ff03f84a64aaeb413debebe349219ab3e739cea1c267d8e375995c99e1',
+    fileName: 'CPENetworkDashboard V3.6.5.apk',
+    href: '/downloads/CPENetworkDashboard V3.6.5.apk',
+    size: '16.0 MiB',
+    checksum: '0789b5d2c39382c58715b50aaf9c4e4a40c27e3f652ed944c9a619e424626a96',
     label: '最新正式版',
-    copy: '当前 CPE加加 Android 最新正式版。统一 CPE加加 / CPE++ 品牌和新图标，并优化更新检查体验。',
+    copy: 'Android 版软件名暂时改回 CPE网络看板。本次更新优化 UI 设计，修复烽火载波聚合显示及其他已知问题。',
   },
   {
     id: 'macos-3.5.3',
@@ -228,15 +228,40 @@ export const downloads: Download[] = [
     size: '13.3 MiB',
     checksum: '9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700',
     label: '旧版 Android 3.5',
-    copy: '这是旧版本的 CPE加加，仅保留给暂时需要回退的 Android 用户。新用户建议下载 3.5.3。',
+    copy: '这是旧版本的 CPE加加，仅保留给暂时需要回退的 Android 用户。新用户建议下载 3.6.5。',
   },
 ]
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: '3.6.5',
+    date: '2026-08-01',
+    badge: 'Android 最新正式版',
+    lead:
+      'Android 3.6.5 已单独发布，软件名暂时改回 CPE网络看板；macOS 和 Windows 当前仍为 3.5.3。',
+    sections: [
+      {
+        title: '主要变化',
+        items: [
+          '优化 Android 界面设计。',
+          '修复烽火 / FiberHome 载波聚合显示相关问题。',
+          '修复其他已知问题。',
+          'Android 软件名暂时改回 CPE网络看板，后续名称仍会继续斟酌。',
+        ],
+      },
+      {
+        title: '发布包',
+        items: [
+          'Android：CPENetworkDashboard V3.6.5.apk，versionCode 12，SHA-256：0789b5d2c39382c58715b50aaf9c4e4a40c27e3f652ed944c9a619e424626a96。',
+          '本次仅更新 Android；macOS 和 Windows 继续保留 3.5.3。',
+        ],
+      },
+    ],
+  },
+  {
     version: '3.5.3',
     date: '2026-06-09',
-    badge: 'Android / macOS / Windows 最新正式版',
+    badge: 'Android / macOS / Windows 3.5.3 历史版本',
     lead:
       'CPE加加 3.5.3 已经同步发布 Android、macOS 和 Windows。这个版本统一品牌与新图标，优化更新检查，并继续同步烽火后台重登录优化。',
     sections: [
@@ -537,7 +562,7 @@ export const changelogEntries: ChangelogEntry[] = [
 export const aboutInfo: AboutInfo = {
   chineseName: 'CPE加加',
   englishName: 'CPE++',
-  versionName: '3.5.3',
+  versionName: 'Android 3.6.5 · Desktop 3.5.3',
   userGroup: '955206409',
   description:
     '面向 4G/5G CPE 的管理工具。CPE加加覆盖连接状态、射频指标、SIM/AMBR、锁频锁小区、邻区扫描、测速、Ping 与路由测试。',

@@ -3,7 +3,7 @@ import type { Platform, PlatformAdvice } from '@/types'
 export const platformAdviceMap: Record<Platform, PlatformAdvice> = {
   android: {
     device: 'Android 手机',
-    primaryId: 'android-3.5.3',
+    primaryId: 'android-3.6.5',
     title: '检测到 Android，直接下载 APK。',
     copy: '现场调试通常就是这个场景：手机在手边，CPE 也在旁边。',
   },
@@ -33,7 +33,7 @@ export const platformAdviceMap: Record<Platform, PlatformAdvice> = {
   },
   unknown: {
     device: '未知设备',
-    primaryId: 'android-3.5.3',
+    primaryId: 'android-3.6.5',
     title: '没能判断你的设备，先给你 Android 最新版。',
     copy: '下面也保留了 macOS 和 Windows 的全部安装包，可以手动选择。',
   },

@@ -26,21 +26,21 @@ ESA 静态构建产物单文件限制为 25MB。当前发布方式是：
 | 首页     | `#/`          | 应用图标、核心产品表达、电脑/手机界面动效和指标滚动条                                      |
 | 产品介绍 | `#/product`   | 排障流程、电脑端截图、手机端截图、平台说明和设备覆盖                                       |
 | 下载     | `#/download`  | 自动识别当前设备并推荐 Android APK、macOS DMG 或 Windows EXE，保留 Portable / MSI 手动选择 |
-| 更新日志 | `#/changelog` | 展开 3.5.3、3.5.2、Android 3.5 旧版、Desktop 3.0.0、Cross-platform 3.0 等更新记录            |
+| 更新日志 | `#/changelog` | 展开 Android 3.6.5、3.5.3、3.5.2、Android 3.5 旧版、Desktop 3.0.0 等更新记录              |
 | 关于     | `#/about`     | 软件名、版本、QQ群、开发者、赞助入口和完整致谢名单                                          |
 
 ## 当前公开下载
 
 | 文件                                                               | 平台        | 版本  | 大小      |
 | ------------------------------------------------------------------ | ----------- | ----- | --------- |
-| `CPEPlusPlus-v3.5.3.apk`                                           | Android     | 3.5.3 | 13.4 MiB  |
+| `CPENetworkDashboard V3.6.5.apk`                                   | Android     | 3.6.5 | 16.0 MiB  |
 | `CPEPlusPlus-v3.5-legacy-release.apk`                              | Android     | 3.5   | 13.3 MiB  |
 | `CPEPlusPlus-3.5.3-macos-arm64.dmg`                                | macOS arm64 | 3.5.3 | 128.3 MiB |
 | `CPEPlusPlus-3.5.3-protected-portable-windows-x64.zip`             | Windows x64 | 3.5.3 | 119.6 MiB |
 | `CPEPlusPlus-3.5.3-windows-x64.exe`                                | Windows x64 | 3.5.3 | 139.8 MiB |
 | `CPEPlusPlus-3.5.3-windows-x64.msi`                                | Windows x64 | 3.5.3 | 139.1 MiB |
 
-Android 3.5 是旧版回退包，当前默认推荐 3.5.3。Windows 默认推荐 EXE 安装版。
+Android 3.5 是旧版回退包，当前默认推荐 Android 3.6.5。macOS 和 Windows 仍为 3.5.3，Windows 默认推荐 EXE 安装版。
 
 SHA-256 见 `public/downloads/checksums.txt`。桌面端大文件在网页里自动分片下载并合并，用户不需要手动处理分片。
 
@@ -113,7 +113,7 @@ KV value 填 JSON：
 /*     -> dist 静态站点
 ```
 
-5. `updates` 是版本数据 KV，不是必须手动填。默认版本已经内置在 `edge/index.js`；后续发版推荐调用 `POST /api/updates/publish` 写入。当前函数会把历史 KV 中 Android `3.5.3 / versionCode 353` 自动规范成 Android APK 真实的 `versionCode 10`，所以部署本函数后 3.5.3 不会再误报更新。
+5. `updates` 是版本数据 KV，不是必须手动填。默认版本已经内置在 `edge/index.js`；后续发版推荐调用 `POST /api/updates/publish` 写入。当前 Android 稳定版为 `3.6.5 / versionCode 12`，macOS 和 Windows 仍为 `3.5.3 / versionCode 353`。
 
 ### ESA KV 配置和维护密码
 
@@ -166,7 +166,7 @@ VITE_API_BASE=/api npm run build
 | `/api/updates/publish`    | POST     | 使用写入 token 发布云端最新版本           |
 | `/api/analytics/summary`  | GET      | 受保护完整统计，需要服务端读取 token      |
 
-3.5.3 起，更新检测默认数据包括 Android、Windows、macOS；iOS 返回“正在路上”的占位信息，不提供下载包。
+更新检测默认数据包括 Android、Windows、macOS；当前 Android 为 3.6.5，Windows 和 macOS 为 3.5.3，iOS 返回“正在路上”的占位信息。
 
 ### App 更新接口对接
 
@@ -213,27 +213,27 @@ Content-Type: application/json
   "latest": {
     "platform": "android",
     "channel": "stable",
-    "version": "3.5.3",
-    "versionCode": 10,
-    "title": "Android 3.5.3 Release APK",
-    "notes": "3.5.3 正式版：统一 CPE加加 / CPE++ 品牌和新图标，优化更新检查，并同步烽火后台重登录优化。",
-    "releaseDate": "2026-06-09",
+    "version": "3.6.5",
+    "versionCode": 12,
+    "title": "Android 3.6.5 Release APK",
+    "notes": "Android 3.6.5 正式版：优化 UI 设计，修复烽火载波聚合显示及其他已知问题。",
+    "releaseDate": "2026-08-01",
     "publishedAt": "",
     "mandatory": false,
     "minSupportedVersion": "",
     "download": {
-      "fileId": "android-3.5.3",
+      "fileId": "android-3.6.5",
       "platform": "android",
-      "version": "3.5.3",
-      "label": "Android 3.5.3 Release APK",
-      "fileName": "CPEPlusPlus-v3.5.3.apk",
+      "version": "3.6.5",
+      "label": "Android 3.6.5 Release APK",
+      "fileName": "CPENetworkDashboard V3.6.5.apk",
       "mode": "single",
-      "href": "/downloads/CPEPlusPlus-v3.5.3.apk",
-      "url": "https://cpe.yuan6.cn/downloads/CPEPlusPlus-v3.5.3.apk",
+      "href": "/downloads/CPENetworkDashboard%20V3.6.5.apk",
+      "url": "https://cpe.yuan6.cn/downloads/CPENetworkDashboard%20V3.6.5.apk",
       "chunks": [],
       "chunkBytes": [],
-      "size": "13.4 MiB",
-      "checksum": "1f2180ff03f84a64aaeb413debebe349219ab3e739cea1c267d8e375995c99e1"
+      "size": "16.0 MiB",
+      "checksum": "0789b5d2c39382c58715b50aaf9c4e4a40c27e3f652ed944c9a619e424626a96"
     },
     "alternatives": []
   },
@@ -255,7 +255,7 @@ Content-Type: application/json
 
 | 平台      | channel  | version        | versionCode | 下载模式  | 说明                                  |
 | --------- | -------- | -------------- | ----------- | --------- | ------------------------------------- |
-| Android   | `stable` | `3.5.3`        | `10`        | `single`  | APK 直链，和 Android 包内 versionCode 保持一致 |
+| Android   | `stable` | `3.6.5`        | `12`        | `single`  | APK 直链，和 Android 包内 versionCode 保持一致 |
 | Windows   | `stable` | `3.5.3`        | `353`       | `chunked` | 默认 EXE，`alternatives` 含 Portable/MSI |
 | macOS     | `stable` | `3.5.3`        | `353`       | `chunked` | arm64 DMG 分片                        |
 | iOS       | `stable` | `coming-soon`  | `0`         | 无        | `download` 为 `null`                  |
@@ -265,7 +265,7 @@ Content-Type: application/json
 App 侧建议这样用：
 
 - Android 检查更新时，把本机 `versionName` 和实际 APK 的 `versionCode` 一起传给 `/api/updates/check`。
-- 如果是 Android 3.5.3，请使用 `versionName = 3.5.3`、`versionCode = 10`，不要再传 353。
+- Android 3.6.5 应使用 `versionName = 3.6.5`、`versionCode = 12`；Windows 和 macOS 继续使用各自的桌面构建号。
 - Windows 和 macOS 继续用桌面端自己的版本号与打包号即可。
 - 完整统计页 `#/analytics` 只给维护者使用，输入服务端配置的 `CPE_ANALYTICS_TOKEN` 后才能打开。
 
@@ -305,7 +305,7 @@ VITE_API_BASE=/api npm run build
 
 ## 内容来源
 
-- 3.5.3 更新记录来自 Android、Windows 和 macOS 3.5.3 发布说明。
+- Android 3.6.5 更新记录来自本次 Android 单独发布说明；macOS 和 Windows 当前仍为 3.5.3。
 - 3.5.2 更新记录来自 Android 3.5.1/3.5.2 与桌面 3.5.2 发布说明。
 - Android 3.5 更新记录来自官网发布需求。
 - 桌面 3.0.0、跨平台 3.0 记录整理自当前产品仓库的 `README.md`、`VERSION.md` 和 `RELEASE_NOTES_V3.0.0.md`。

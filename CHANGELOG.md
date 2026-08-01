@@ -1,5 +1,15 @@
 # CPE++ Web Changelog
 
+## Android 3.6.5 (2026-08-01)
+
+- 仅发布 Android 3.6.5，APK 为 `CPENetworkDashboard V3.6.5.apk`；macOS 和 Windows 继续保持 3.5.3。
+- Android 包内版本为 `versionCode = 12` / `versionName = "3.6.5"`。
+- Android 软件名暂时改回 CPE网络看板，后续名称继续斟酌。
+- 优化 Android UI 设计。
+- 修复烽火 / FiberHome 载波聚合显示相关问题，并修复其他已知问题。
+- APK 大小为 16.0 MiB，SHA-256 为 `0789b5d2c39382c58715b50aaf9c4e4a40c27e3f652ed944c9a619e424626a96`。
+- 官网 Android 下载推荐和 `/api/updates/check` 默认数据更新到 3.6.5，不修改桌面端下载包。
+
 ## Release 3.5.3 (2026-06-09)
 
 - 发布 Android、macOS arm64、Windows EXE、Windows MSI 和 Windows Portable 3.5.3 安装包。

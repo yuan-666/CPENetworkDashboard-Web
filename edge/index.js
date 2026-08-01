@@ -807,6 +807,16 @@ function normalizeGeo(geo, ip) {
 }
 
 const DOWNLOADS = {
+  'android-3.6.5': {
+    platform: 'android',
+    version: '3.6.5',
+    label: 'Android 3.6.5 Release APK',
+    fileName: 'CPENetworkDashboard V3.6.5.apk',
+    href: '/downloads/CPENetworkDashboard%20V3.6.5.apk',
+    size: '16.0 MiB',
+    checksum: '0789b5d2c39382c58715b50aaf9c4e4a40c27e3f652ed944c9a619e424626a96',
+    channel: 'stable',
+  },
   'android-3.5.3': {
     platform: 'android',
     version: '3.5.3',
@@ -1037,15 +1047,15 @@ const UPDATE_PLATFORM_ALIASES = {
 }
 
 const DEFAULT_UPDATE_CHANNEL = 'stable'
-const ANDROID_STABLE_LATEST_VERSION = '3.5.3'
-const ANDROID_STABLE_LATEST_VERSION_CODE = 10
+const ANDROID_STABLE_LATEST_VERSION = '3.6.5'
+const ANDROID_STABLE_LATEST_VERSION_CODE = 12
 
 const DEFAULT_RELEASES = {
   android: {
-    stable: releaseFromDownload('android-3.5.3', {
+    stable: releaseFromDownload('android-3.6.5', {
       versionCode: ANDROID_STABLE_LATEST_VERSION_CODE,
-      releaseDate: '2026-06-09',
-      notes: '3.5.3 正式版：统一 CPE加加 / CPE++ 品牌和新图标，优化更新检查，并同步烽火后台重登录优化。',
+      releaseDate: '2026-08-01',
+      notes: 'Android 3.6.5 正式版：软件名暂时改回 CPE网络看板，优化 UI 设计，修复烽火载波聚合显示及其他已知问题。',
     }),
   },
   windows: {
@@ -1274,6 +1284,18 @@ async function readUpdateStore(kv) {
           channel: release.channel || normalizedChannel,
           version: release.version || release.versionName || '',
         })
+      }
+    }
+    const storedAndroidStable = releases.android?.[DEFAULT_UPDATE_CHANNEL]
+    if (
+      !storedAndroidStable ||
+      compareVersions(storedAndroidStable.version, ANDROID_STABLE_LATEST_VERSION) < 0
+    ) {
+      releases.android = {
+        ...(releases.android || {}),
+        [DEFAULT_UPDATE_CHANNEL]: JSON.parse(
+          JSON.stringify(DEFAULT_RELEASES.android[DEFAULT_UPDATE_CHANNEL])
+        ),
       }
     }
     return {
@@ -3136,6 +3158,7 @@ async function readDiagnosticsForKv(kv, todayKey, options = {}) {
     deep
       ? knownDownloadIds(Object.keys(summary.downloadsByFile || {}))
       : [
+          'android-3.6.5',
           'android-3.5.3',
           'android-3.5',
           'android-3.2-beta',

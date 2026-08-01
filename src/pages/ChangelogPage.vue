@@ -7,7 +7,7 @@ import { changelogEntries } from '@/content'
     <header class="page-heading">
       <p>CPE加加</p>
       <h1>更新日志</h1>
-      <span>3.5.3 是当前最新正式版，已同步 Android、macOS 和 Windows；iOS 版本正在路上，敬请期待。</span>
+      <span>Android 最新正式版为 3.6.5；macOS 和 Windows 当前仍为 3.5.3。</span>
     </header>
 
     <div class="timeline">
