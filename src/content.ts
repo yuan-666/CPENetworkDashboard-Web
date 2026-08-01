@@ -157,8 +157,8 @@ export const downloads: Download[] = [
     title: 'Android APK',
     fileName: 'CPENetworkDashboard V3.6.5.apk',
     href: '/downloads/CPENetworkDashboard V3.6.5.apk',
-    size: '16.0 MiB',
-    checksum: '0789b5d2c39382c58715b50aaf9c4e4a40c27e3f652ed944c9a619e424626a96',
+    size: '16.1 MiB',
+    checksum: 'd7f0a351de5809b8095e45adbb74b5dff62f95768525c7832ce1ae66db085e72',
     label: '最新正式版',
     copy: 'Android 版软件名暂时改回 CPE网络看板。本次更新优化 UI 设计，修复烽火载波聚合显示及其他已知问题。',
   },
@@ -252,7 +252,7 @@ export const changelogEntries: ChangelogEntry[] = [
       {
         title: '发布包',
         items: [
-          'Android：CPENetworkDashboard V3.6.5.apk，versionCode 12，SHA-256：0789b5d2c39382c58715b50aaf9c4e4a40c27e3f652ed944c9a619e424626a96。',
+          'Android：CPENetworkDashboard V3.6.5.apk，versionCode 12，SHA-256：d7f0a351de5809b8095e45adbb74b5dff62f95768525c7832ce1ae66db085e72。',
           '本次仅更新 Android；macOS 和 Windows 继续保留 3.5.3。',
         ],
       },
