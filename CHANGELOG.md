@@ -1,5 +1,14 @@
 # CPE++ Web Changelog
 
+## Android 3.7.0 (2026-10-15)
+
+- 发布 `CPENetworkDashboard v3.7.0-Release.apk`，包内版本为 `3.7.0 / versionCode 14`，应用名为 CPE数据看板，最低支持 Android 8.0。
+- 新增 Wi-Fi 信道扫描与测速悬浮窗，完善插件签名、权限、回滚和交互卡片，多厂家载波聚合及页面交互；详细变化见官网更新日志。
+- 官网推荐版本、首页、关于、更新日志和 `/api/updates/check` 同步到 Android 3.7.0；macOS、Windows 保持 3.5.3，保留 Android 3.6.5 和 3.5 回退下载。
+- APK 为 31,852,556 字节（30.4 MiB），超过现有 ESA 单文件限制，按 20MiB 拆成两片。官网和应用内更新均复用分片下载及合并逻辑，首片通过统计跳转下载。
+- 完整 APK SHA-256：`cc0402fa02606fbe8d96a63dbb8a9adf857dd164acf9b39d976a40b8d29393c5`；签名校验通过，证书与现有 3.6.5 APK 一致。
+- 部署新版 Edge Function 后，低于 3.7.0 的 Android stable KV 自动使用内置新版数据，保留其他平台、渠道和未来发布版本。
+
 ## Android 3.6.5 (2026-08-01)
 
 - 仅发布 Android 3.6.5，APK 为 `CPENetworkDashboard V3.6.5.apk`；macOS 和 Windows 继续保持 3.5.3。

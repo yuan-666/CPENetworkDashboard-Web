@@ -22,7 +22,7 @@
 
 const KV_NAMESPACE = 'cpeweb'
 const LEGACY_KV_NAMESPACES = ['cpe_network_dashboard_web']
-const EDGE_BUILD = '2026-06-10.9'
+const EDGE_BUILD = '2026-10-16.1'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
 const CONFIG_KEY = 'config'
@@ -807,6 +807,17 @@ function normalizeGeo(geo, ip) {
 }
 
 const DOWNLOADS = {
+  'android-3.7.0': {
+    platform: 'android',
+    version: '3.7.0',
+    label: 'Android 3.7.0 Release APK',
+    fileName: 'CPENetworkDashboard v3.7.0-Release.apk',
+    chunks: chunkedParts('android-3.7.0', 'CPENetworkDashboard v3.7.0-Release.apk', 2),
+    chunkBytes: [20971520, 10881036],
+    size: '30.4 MiB',
+    checksum: 'cc0402fa02606fbe8d96a63dbb8a9adf857dd164acf9b39d976a40b8d29393c5',
+    channel: 'stable',
+  },
   'android-3.6.5': {
     platform: 'android',
     version: '3.6.5',
@@ -1047,15 +1058,15 @@ const UPDATE_PLATFORM_ALIASES = {
 }
 
 const DEFAULT_UPDATE_CHANNEL = 'stable'
-const ANDROID_STABLE_LATEST_VERSION = '3.6.5'
-const ANDROID_STABLE_LATEST_VERSION_CODE = 12
+const ANDROID_STABLE_LATEST_VERSION = '3.7.0'
+const ANDROID_STABLE_LATEST_VERSION_CODE = 14
 
 const DEFAULT_RELEASES = {
   android: {
-    stable: releaseFromDownload('android-3.6.5', {
+    stable: releaseFromDownload('android-3.7.0', {
       versionCode: ANDROID_STABLE_LATEST_VERSION_CODE,
-      releaseDate: '2026-08-01',
-      notes: 'Android 3.6.5 正式版：软件名暂时改回 CPE网络看板，优化 UI 设计，修复烽火载波聚合显示及其他已知问题。',
+      releaseDate: '2026-10-15',
+      notes: 'Android 3.7.0 正式版（CPE数据看板）：新增 Wi-Fi 信道扫描与测速悬浮窗，完善插件签名与权限、多厂家载波聚合和界面交互，修复 HTML 插件滑动闪退，并加固应用内更新校验。',
     }),
   },
   windows: {

@@ -1,3 +1,4 @@
+cc0402fa02606fbe8d96a63dbb8a9adf857dd164acf9b39d976a40b8d29393c5  CPENetworkDashboard v3.7.0-Release.apk
 d7f0a351de5809b8095e45adbb74b5dff62f95768525c7832ce1ae66db085e72  CPENetworkDashboard V3.6.5.apk
 1f2180ff03f84a64aaeb413debebe349219ab3e739cea1c267d8e375995c99e1  CPEPlusPlus-v3.5.3.apk
 9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700  CPEPlusPlus-v3.5-legacy-release.apk

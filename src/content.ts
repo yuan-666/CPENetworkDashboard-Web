@@ -68,6 +68,7 @@ function chunkedParts(folder: string, fileName: string, count: number): string[]
 }
 
 const chunkBytes: Record<string, number[]> = {
+  'android-3.7.0': [20971520, 10881036],
   'macos-3.5.3': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 8734301],
   'windows-exe-3.5.3': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 20737264],
   'windows-msi-3.5.3': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 19996672],
@@ -117,7 +118,7 @@ export const productMoments: ProductMoment[] = [
 export const platformCards: PlatformCard[] = [
   {
     name: 'Android',
-    version: '3.6.5',
+    version: '3.7.0',
     title: '在设备旁边，手机最方便。',
     copy: '打开 CPE加加，先看信号、扫邻区、改锁定。弱电箱、窗边、机柜旁边，用手机比搬电脑省事多了。',
   },
@@ -151,6 +152,19 @@ export const supportedDevices: Array<[string, string]> = [
 
 export const downloads: Download[] = [
   {
+    id: 'android-3.7.0',
+    platform: 'Android',
+    version: '3.7.0',
+    title: 'Android APK',
+    fileName: 'CPENetworkDashboard v3.7.0-Release.apk',
+    chunks: chunkedParts('android-3.7.0', 'CPENetworkDashboard v3.7.0-Release.apk', 2),
+    chunkBytes: chunkBytes['android-3.7.0'],
+    size: '30.4 MiB',
+    checksum: 'cc0402fa02606fbe8d96a63dbb8a9adf857dd164acf9b39d976a40b8d29393c5',
+    label: '最新正式版',
+    copy: 'Android 应用名为 CPE数据看板。新增 Wi-Fi 信道扫描与测速悬浮窗，完善插件能力、多厂家载波聚合和界面交互，并加固应用内更新校验。',
+  },
+  {
     id: 'android-3.6.5',
     platform: 'Android',
     version: '3.6.5',
@@ -159,8 +173,8 @@ export const downloads: Download[] = [
     href: '/downloads/CPENetworkDashboard V3.6.5.apk',
     size: '16.1 MiB',
     checksum: 'd7f0a351de5809b8095e45adbb74b5dff62f95768525c7832ce1ae66db085e72',
-    label: '最新正式版',
-    copy: 'Android 版软件名暂时改回 CPE网络看板。本次更新优化 UI 设计，修复烽火载波聚合显示及其他已知问题。',
+    label: '旧版 Android 3.6.5',
+    copy: '保留给需要回退的 Android 用户。此版本应用名为 CPE网络看板，新用户建议下载 3.7.0。',
   },
   {
     id: 'macos-3.5.3',
@@ -228,17 +242,50 @@ export const downloads: Download[] = [
     size: '13.3 MiB',
     checksum: '9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700',
     label: '旧版 Android 3.5',
-    copy: '这是旧版本的 CPE加加，仅保留给暂时需要回退的 Android 用户。新用户建议下载 3.6.5。',
+    copy: '这是旧版本的 CPE加加，仅保留给暂时需要回退的 Android 用户。新用户建议下载 3.7.0。',
   },
 ]
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: '3.7.0',
+    date: '2026-10-15',
+    badge: 'Android 最新正式版',
+    lead: 'Android 3.7.0 已发布，应用名为 CPE数据看板；macOS 和 Windows 当前仍为 3.5.3。',
+    sections: [
+      {
+        title: '网络诊断与设备支持',
+        items: [
+          '新增 Wi-Fi 周边信道扫描，按 2.4 / 5 / 6 GHz 展示信道与接入点能力。',
+          '测速页新增应用内悬浮实时速率窗，改进上传统计、请求大小自适应和限流恢复。',
+          '统一多厂家载波聚合与载波选择，连接概览整合信号、电池和电源状态，增加烽火 SSH 支持。',
+        ],
+      },
+      {
+        title: '插件与界面',
+        items: [
+          '完善 Manifest v2 插件签名、权限确认、安全存储和升级失败回滚，支持 HTML 与原生交互卡片。',
+          '看板磁贴适配不同屏幕宽度，调整大屏旋转策略和设置、测试详情导航。',
+          '默认关闭卡片边缘高光，调整模糊背景与页面过渡，修复 HTML 插件滑动闪退和部分页面状态问题。',
+          '应用内更新加强 HTTPS 来源、SHA-256、包名、版本与签名校验。',
+        ],
+      },
+      {
+        title: '发布包',
+        items: [
+          'Android：CPENetworkDashboard v3.7.0-Release.apk，versionCode 14，支持 Android 8.0 及以上。',
+          '安装包为 30.4 MiB，官网与应用内更新使用两片下载并合并为完整 APK。',
+          'SHA-256：cc0402fa02606fbe8d96a63dbb8a9adf857dd164acf9b39d976a40b8d29393c5。',
+          '本次仅更新 Android；macOS 和 Windows 继续保留 3.5.3。',
+        ],
+      },
+    ],
+  },
+  {
     version: '3.6.5',
     date: '2026-08-01',
-    badge: 'Android 最新正式版',
-    lead:
-      'Android 3.6.5 已单独发布，软件名暂时改回 CPE网络看板；macOS 和 Windows 当前仍为 3.5.3。',
+    badge: 'Android 历史版本',
+    lead: 'Android 3.6.5 已单独发布，软件名暂时改回 CPE网络看板；macOS 和 Windows 当前仍为 3.5.3。',
     sections: [
       {
         title: '主要变化',
@@ -262,8 +309,7 @@ export const changelogEntries: ChangelogEntry[] = [
     version: '3.5.3',
     date: '2026-06-09',
     badge: 'Android / macOS / Windows 3.5.3 历史版本',
-    lead:
-      'CPE加加 3.5.3 已经同步发布 Android、macOS 和 Windows。这个版本统一品牌与新图标，优化更新检查，并继续同步烽火后台重登录优化。',
+    lead: 'CPE加加 3.5.3 已经同步发布 Android、macOS 和 Windows。这个版本统一品牌与新图标，优化更新检查，并继续同步烽火后台重登录优化。',
     sections: [
       {
         title: '主要变化',
@@ -299,8 +345,7 @@ export const changelogEntries: ChangelogEntry[] = [
     version: '3.5.2',
     date: '2026-06-08',
     badge: '上一版正式版',
-    lead:
-      'CPE加加 3.5.2 已经同步发布 Android、macOS 和 Windows。这个版本重点修复烽火 / FiberHome 登录后连接页反复闪烁的问题，并把 Android 应用内检查更新和桌面端近期改进一起纳入当前公开版本。',
+    lead: 'CPE加加 3.5.2 已经同步发布 Android、macOS 和 Windows。这个版本重点修复烽火 / FiberHome 登录后连接页反复闪烁的问题，并把 Android 应用内检查更新和桌面端近期改进一起纳入当前公开版本。',
     sections: [
       {
         title: '修复问题',
@@ -342,8 +387,7 @@ export const changelogEntries: ChangelogEntry[] = [
     version: 'Android 3.5',
     date: '2026-06-08',
     badge: '旧版 Android 正式版',
-    lead:
-      'Android 3.5 是当前保留的旧版 Android 包，主要用于需要回退的用户。新用户建议下载 3.5.3。',
+    lead: 'Android 3.5 是当前保留的旧版 Android 包，主要用于需要回退的用户。新用户建议下载 3.7.0。',
     sections: [
       {
         title: '新增功能',
@@ -416,15 +460,11 @@ export const changelogEntries: ChangelogEntry[] = [
       },
       {
         title: '测速页改进',
-        items: [
-          '测速界面速率监控重新适配，减少数值溢出。',
-        ],
+        items: ['测速界面速率监控重新适配，减少数值溢出。'],
       },
       {
         title: 'OPPO 系设备修复',
-        items: [
-          '修复 OPPO 系在烽火配置下闪屏问题。',
-        ],
+        items: ['修复 OPPO 系在烽火配置下闪屏问题。'],
       },
     ],
   },
@@ -562,7 +602,7 @@ export const changelogEntries: ChangelogEntry[] = [
 export const aboutInfo: AboutInfo = {
   chineseName: 'CPE加加',
   englishName: 'CPE++',
-  versionName: 'Android 3.6.5 · Desktop 3.5.3',
+  versionName: 'Android 3.7.0 · Desktop 3.5.3',
   userGroup: '955206409',
   description:
     '面向 4G/5G CPE 的管理工具。CPE加加覆盖连接状态、射频指标、SIM/AMBR、锁频锁小区、邻区扫描、测速、Ping 与路由测试。',

@@ -44,7 +44,7 @@ const versionRows = computed(() => {
       <h1>按当前设备下载 CPE加加 对应版本。</h1>
       <span>
         页面会自动识别 Android、macOS 或
-        Windows。桌面大包会按分片下载，过程中可以看到实时进度，最后在浏览器里自动合并为完整安装包。
+        Windows。较大的安装包会自动下载并合并，过程中可以看到实时进度，最后保存完整安装包。
       </span>
     </header>
 
