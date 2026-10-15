@@ -232,18 +232,6 @@ export const downloads: Download[] = [
     label: 'Windows 固定部署',
     copy: '适合固定部署、统一安装或更偏企业维护习惯的 Windows 环境，方便统一分发 CPE加加。',
   },
-  {
-    id: 'android-3.5',
-    platform: 'Android',
-    version: '3.5',
-    title: 'Android APK',
-    fileName: 'CPEPlusPlus-v3.5-legacy-release.apk',
-    href: '/downloads/CPEPlusPlus-v3.5-legacy-release.apk',
-    size: '13.3 MiB',
-    checksum: '9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700',
-    label: '旧版 Android 3.5',
-    copy: '这是旧版本的 CPE加加，仅保留给暂时需要回退的 Android 用户。新用户建议下载 3.7.0。',
-  },
 ]
 
 export const changelogEntries: ChangelogEntry[] = [
@@ -387,7 +375,7 @@ export const changelogEntries: ChangelogEntry[] = [
     version: 'Android 3.5',
     date: '2026-06-08',
     badge: '旧版 Android 正式版',
-    lead: 'Android 3.5 是当前保留的旧版 Android 包，主要用于需要回退的用户。新用户建议下载 3.7.0。',
+    lead: 'Android 3.5 为历史版本，安装包已下架。新用户建议下载 3.7.0，需要旧版可选择 3.6.5。',
     sections: [
       {
         title: '新增功能',

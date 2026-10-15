@@ -1,5 +1,10 @@
 # CPE++ Web Changelog
 
+## 官网下载清理 (2026-10-16)
+
+- Android 仅保留 3.7.0 与 3.6.5 下载，移除更早版本的下载入口、APK 与当前校验清单记录。
+- 旧版下载接口返回 404；历史更新日志和下载统计继续保留。macOS 与 Windows 下载不变。
+
 ## Android 3.7.0 (2026-10-15)
 
 - 发布 `CPENetworkDashboard v3.7.0-Release.apk`，包内版本为 `3.7.0 / versionCode 14`，应用名为 CPE数据看板，最低支持 Android 8.0。

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { downloads } from '@/content'
@@ -83,13 +83,27 @@ describe('Android 3.7.0 release delivery', () => {
     expect(hash.digest('hex')).toBe(download.checksum)
   })
 
-  it('keeps desktop releases on 3.5.3 and old Android downloads available', async () => {
+  it('keeps desktop releases on 3.5.3 and only offers Android 3.6.5 or later', async () => {
     const edge = edgeWithStoredRelease()
     const response = await edge.fetch(new Request(`${origin}/api/updates/latest`))
     const { releases } = await response.json()
     expect(releases.windows.stable.version).toBe('3.5.3')
     expect(releases.macos.stable.version).toBe('3.5.3')
-    expect(downloads.some((item) => item.id === 'android-3.6.5')).toBe(true)
-    expect(downloads.some((item) => item.id === 'android-3.5')).toBe(true)
+    expect(
+      downloads.filter((item) => item.platform === 'Android').map((item) => item.version)
+    ).toEqual(['3.7.0', '3.6.5'])
+    expect(existsSync(resolve('public/downloads/CPENetworkDashboard V3.6.5.apk'))).toBe(true)
+  })
+
+  it('rejects retired Android downloads and removes their APK files', async () => {
+    const edge = edgeWithStoredRelease()
+    for (const [id, fileName] of [
+      ['android-3.5.3', 'CPEPlusPlus-v3.5.3.apk'],
+      ['android-3.5', 'CPEPlusPlus-v3.5-legacy-release.apk'],
+    ]) {
+      const response = await edge.fetch(new Request(`${origin}/api/download?file=${id}`))
+      expect(response.status).toBe(404)
+      expect(existsSync(resolve('public/downloads', fileName))).toBe(false)
+    }
   })
 })

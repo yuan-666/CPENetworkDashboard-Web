@@ -35,13 +35,12 @@ ESA 静态构建产物单文件限制为 25MB。当前发布方式是：
 | ------------------------------------------------------ | --------------- | ----- | --------- |
 | `CPENetworkDashboard v3.7.0-Release.apk`               | Android         | 3.7.0 | 30.4 MiB  |
 | `CPENetworkDashboard V3.6.5.apk`                       | Android（旧版） | 3.6.5 | 16.1 MiB  |
-| `CPEPlusPlus-v3.5-legacy-release.apk`                  | Android         | 3.5   | 13.3 MiB  |
 | `CPEPlusPlus-3.5.3-macos-arm64.dmg`                    | macOS arm64     | 3.5.3 | 128.3 MiB |
 | `CPEPlusPlus-3.5.3-protected-portable-windows-x64.zip` | Windows x64     | 3.5.3 | 119.6 MiB |
 | `CPEPlusPlus-3.5.3-windows-x64.exe`                    | Windows x64     | 3.5.3 | 139.8 MiB |
 | `CPEPlusPlus-3.5.3-windows-x64.msi`                    | Windows x64     | 3.5.3 | 139.1 MiB |
 
-Android 3.6.5 和 3.5 是旧版回退包，当前默认推荐 Android 3.7.0。macOS 和 Windows 仍为 3.5.3，Windows 默认推荐 EXE 安装版。
+Android 仅保留 3.7.0 和 3.6.5 下载，默认推荐 3.7.0，3.6.5 作为旧版回退包。3.6.5 之前的 Android 安装包和下载入口已下架，历史日志和下载统计保留。macOS 和 Windows 仍为 3.5.3，Windows 默认推荐 EXE 安装版。
 
 SHA-256 见 `public/downloads/checksums.txt`。Android 3.7.0 和桌面端大文件在网页里自动分片下载并合并，用户不需要手动处理分片。
 
@@ -257,7 +256,7 @@ Content-Type: application/json
     "alternatives": []
   },
   "updatedAt": "",
-  "build": "2026-10-16.1"
+  "build": "2026-10-16.2"
 }
 ```
 

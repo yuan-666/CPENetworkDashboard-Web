@@ -22,7 +22,7 @@
 
 const KV_NAMESPACE = 'cpeweb'
 const LEGACY_KV_NAMESPACES = ['cpe_network_dashboard_web']
-const EDGE_BUILD = '2026-10-16.1'
+const EDGE_BUILD = '2026-10-16.2'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
 const CONFIG_KEY = 'config'
@@ -828,26 +828,6 @@ const DOWNLOADS = {
     checksum: 'd7f0a351de5809b8095e45adbb74b5dff62f95768525c7832ce1ae66db085e72',
     channel: 'stable',
   },
-  'android-3.5.3': {
-    platform: 'android',
-    version: '3.5.3',
-    label: 'Android 3.5.3 Release APK',
-    fileName: 'CPEPlusPlus-v3.5.3.apk',
-    href: '/downloads/CPEPlusPlus-v3.5.3.apk',
-    size: '13.4 MiB',
-    checksum: '1f2180ff03f84a64aaeb413debebe349219ab3e739cea1c267d8e375995c99e1',
-    channel: 'stable',
-  },
-  'android-3.5': {
-    platform: 'android',
-    version: '3.5',
-    label: 'Android 3.5 Legacy APK',
-    fileName: 'CPEPlusPlus-v3.5-legacy-release.apk',
-    href: '/downloads/CPEPlusPlus-v3.5-legacy-release.apk',
-    size: '13.3 MiB',
-    checksum: '9c562d0f7a61191c6b31a596a43d2fce44a9093d5f8329a698aed7e6a6a03700',
-    channel: 'stable',
-  },
   'macos-3.5.3': {
     platform: 'macos',
     version: '3.5.3',
@@ -903,6 +883,20 @@ const DOWNLOADS = {
 }
 
 const LEGACY_DOWNLOADS = {
+  'android-3.5.3': {
+    platform: 'android',
+    version: '3.5.3',
+    label: 'Android 3.5.3 Release APK',
+    href: '/#/download',
+    channel: 'stable',
+  },
+  'android-3.5': {
+    platform: 'android',
+    version: '3.5',
+    label: 'Android 3.5 Legacy APK',
+    href: '/#/download',
+    channel: 'stable',
+  },
   'legacy-downloads-total': {
     platform: 'legacy',
     version: 'history',
