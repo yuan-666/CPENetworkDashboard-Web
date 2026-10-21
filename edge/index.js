@@ -22,7 +22,7 @@
 
 const KV_NAMESPACE = 'cpeweb'
 const LEGACY_KV_NAMESPACES = ['cpe_network_dashboard_web']
-const EDGE_BUILD = '2026-10-21.1'
+const EDGE_BUILD = '2026-10-21.2'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
 const CONFIG_KEY = 'config'
@@ -1226,22 +1226,26 @@ function trackedPrimaryDownloadUrl(request, download) {
 
 function withAbsoluteDownloadUrls(download, request) {
   if (!download) return null
+  // Android's pinned update client rejects redirects, including tracking redirects.
+  const requiresDirectUrl = download.platform === 'android'
   const chunks = Array.isArray(download.chunks)
     ? download.chunks.map((href, index) => ({
         index,
         href,
         url:
-          index === 0
+          index === 0 && !requiresDirectUrl
             ? trackedDownloadUrl(request, download.fileId, { part: index })
             : absoluteUrl(request, href),
         directUrl: absoluteUrl(request, href),
-        tracked: index === 0,
+        tracked: index === 0 && !requiresDirectUrl,
         bytes: Number(download.chunkBytes?.[index] || 0) || 0,
       }))
     : []
   return {
     ...download,
-    url: trackedPrimaryDownloadUrl(request, download),
+    url: requiresDirectUrl
+      ? chunks[0]?.url || absoluteUrl(request, download.href)
+      : trackedPrimaryDownloadUrl(request, download),
     directUrl: absoluteUrl(request, download.href),
     chunks,
   }

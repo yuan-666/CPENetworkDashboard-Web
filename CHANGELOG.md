@@ -1,5 +1,12 @@
 # CPE++ Web Changelog
 
+## Android 应用内更新兼容修复 (2026-10-21)
+
+- Android 更新接口改为返回同域名 HTTPS 静态直链，修复首片下载经统计入口返回 HTTP 302、被 App 禁止重定向策略拒绝的问题；单 APK 更新同时使用直链。
+- 保留网页下载统计和桌面端原有下载方式；Android 应用内直链下载不再经过统计入口。
+- 回归检查改用与 App 相同的 POST 请求，并验证所有 Android 分片 URL 无需重定向、分片合并校验值正确。
+- Edge build 更新为 `2026-10-21.2`。
+
 ## Android 3.7.1 (2026-10-21)
 
 - 发布 `CPENetworkDashboard V3.7.1.apk`，实际 APK 版本为 `3.7.1 / versionCode 15`，包名为 `com.chazime.cpenetworkdashboard`，最低支持 Android 8.0。

@@ -23,9 +23,11 @@ function edgeWithStoredRelease(release) {
 
 async function checkUpdate(edge, version, code) {
   const response = await edge.fetch(
-    new Request(
-      `${origin}/api/updates/check?platform=android&version=${version}&versionCode=${code}`
-    )
+    new Request(`${origin}/api/updates/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ platform: 'android', version, versionCode: code, channel: 'stable' }),
+    })
   )
   expect(response.status).toBe(200)
   return response.json()
@@ -66,20 +68,18 @@ describe('Android 3.7.1 release delivery', () => {
     expect(download.checksum).toBe(website.checksum)
     expect(download.chunkBytes).toEqual(website.chunkBytes)
     expect(download.chunks.map((chunk) => chunk.href)).toEqual(website.chunks)
+    expect(download.url).toBe(download.chunks[0].directUrl)
 
     const hash = createHash('sha256')
     let size = 0
     for (const [index, chunk] of download.chunks.entries()) {
       expect(chunk.index).toBe(index)
-      const request = new Request(chunk.url)
-      let href = new URL(request.url).pathname
-      if (chunk.index === 0) {
-        const response = await edge.fetch(request)
-        expect(response.status).toBe(302)
-        href = new URL(response.headers.get('location')).pathname
-      } else {
-        expect(new URL(chunk.url).searchParams.has('part')).toBe(false)
-      }
+      expect(chunk.url).toBe(chunk.directUrl)
+      expect(chunk.tracked).toBe(false)
+      const url = new URL(chunk.url)
+      expect(url.origin).toBe(origin)
+      expect(url.pathname.startsWith('/downloads/chunks/')).toBe(true)
+      const href = url.pathname
       expect(decodeURIComponent(href)).toBe(chunk.href)
       const bytes = readFileSync(resolve('public', `.${decodeURIComponent(href)}`))
       expect(bytes.length).toBe(chunk.bytes)
@@ -94,12 +94,36 @@ describe('Android 3.7.1 release delivery', () => {
     )
   })
 
+  it('uses a direct APK URL for Android single-file updates too', async () => {
+    const edge = edgeWithStoredRelease({
+      platform: 'android',
+      channel: 'stable',
+      version: '3.8.0',
+      versionCode: 16,
+      download: {
+        fileId: 'android-3.8.0',
+        platform: 'android',
+        mode: 'single',
+        href: '/downloads/app 3.8.0.apk',
+        chunks: [],
+      },
+    })
+    const { latest } = await checkUpdate(edge, '3.7.1', 15)
+    expect(latest.download.url).toBe(`${origin}/downloads/app%203.8.0.apk`)
+    expect(latest.download.url).toBe(latest.download.directUrl)
+  })
+
   it('keeps desktop releases on 3.5.3 and only offers Android 3.6.5 or later', async () => {
     const edge = edgeWithStoredRelease()
     const response = await edge.fetch(new Request(`${origin}/api/updates/latest`))
     const { releases } = await response.json()
     expect(releases.windows.stable.version).toBe('3.5.3')
     expect(releases.macos.stable.version).toBe('3.5.3')
+    for (const platform of ['windows', 'macos']) {
+      const download = releases[platform].stable.download
+      expect(new URL(download.chunks[0].url).pathname).toBe('/api/download')
+      expect(download.chunks[0].tracked).toBe(true)
+    }
     expect(
       downloads.filter((item) => item.platform === 'Android').map((item) => item.version)
     ).toEqual(['3.7.1', '3.6.5'])

@@ -233,9 +233,9 @@ Content-Type: application/json
         {
           "index": 0,
           "href": "/downloads/chunks/android-3.7.1/CPENetworkDashboard V3.7.1.apk.part00",
-          "url": "https://cpe.yuan6.cn/api/download?file=android-3.7.1&source=app-update&part=0",
+          "url": "https://cpe.yuan6.cn/downloads/chunks/android-3.7.1/CPENetworkDashboard%20V3.7.1.apk.part00",
           "directUrl": "https://cpe.yuan6.cn/downloads/chunks/android-3.7.1/CPENetworkDashboard%20V3.7.1.apk.part00",
-          "tracked": true,
+          "tracked": false,
           "bytes": 20971520
         },
         {
@@ -250,13 +250,13 @@ Content-Type: application/json
       "chunkBytes": [20971520, 10841841],
       "size": "30.3 MiB",
       "checksum": "ee0cb8b3ea23ee69d7f2d42f014c089c961c5687c1966ee3fff1ef1bb904bbf5",
-      "url": "https://cpe.yuan6.cn/api/download?file=android-3.7.1&source=app-update&part=0",
+      "url": "https://cpe.yuan6.cn/downloads/chunks/android-3.7.1/CPENetworkDashboard%20V3.7.1.apk.part00",
       "directUrl": ""
     },
     "alternatives": []
   },
   "updatedAt": "",
-  "build": "2026-10-21.1"
+  "build": "2026-10-21.2"
 }
 ```
 
@@ -279,6 +279,8 @@ Content-Type: application/json
 | iOS     | `stable` | `coming-soon` | `0`         | 无        | `download` 为 `null`                           |
 
 也可以用 `GET /api/updates/check?platform=android&version=3.5.1&versionCode=9&channel=stable` 检查更新。`GET /api/updates/latest` 返回全平台数据，`GET /api/updates/latest?platform=windows` 只返回指定平台。`POST /api/updates/publish` 用于带 token 发布云端版本，App 端不需要调用。
+
+Android 更新接口中的 `download.url` 和 `chunks[].url` 使用同域名 HTTPS 静态直链，兼容 App 禁止重定向的安全策略。Android 应用内下载不再经过 302 统计入口，因此不计入该入口的下载次数；官网点击下载的统计保持原有方式。
 
 App 侧建议这样用：
 
