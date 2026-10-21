@@ -14,7 +14,7 @@ CPE加加产品官网。英文名 CPE++，在不能使用符号的场景可写�
 
 ESA 静态构建产物单文件限制为 25MB。当前发布方式是：
 
-- Android 3.7.0 APK 为 30.4 MiB，按 20MiB 拆成两片；官网在浏览器里合并，应用内更新按接口的 `chunks` 顺序下载合并。旧版小于 25MB 的 APK 继续保留直链。
+- Android 3.7.1 APK 为 30.3 MiB，按 20MiB 拆成两片；官网在浏览器里合并，应用内更新按接口的 `chunks` 顺序下载合并。旧版小于 25MB 的 APK 继续保留直链。
 - macOS DMG、Windows EXE、Windows MSI、Windows Portable 原始大包不直接放入 `dist`。
 - 大文件按 20MiB 拆到 `public/downloads/chunks/<file-id>/`，前端点击下载时逐片读取并在浏览器中合成为原文件。
 - 原始大文件仅作为 GitHub Release 附件发布；ESA 侧继续使用分片下载，保持当前省成本分发方式。
@@ -26,23 +26,23 @@ ESA 静态构建产物单文件限制为 25MB。当前发布方式是：
 | 首页     | `#/`          | 应用图标、核心产品表达、电脑/手机界面动效和指标滚动条                                      |
 | 产品介绍 | `#/product`   | 排障流程、电脑端截图、手机端截图、平台说明和设备覆盖                                       |
 | 下载     | `#/download`  | 自动识别当前设备并推荐 Android APK、macOS DMG 或 Windows EXE，保留 Portable / MSI 手动选择 |
-| 更新日志 | `#/changelog` | 展开 Android 3.7.0、3.6.5、3.5.3、3.5.2、Android 3.5 旧版、Desktop 3.0.0 等更新记录        |
+| 更新日志 | `#/changelog` | 展开 Android 3.7.1、3.7.0、3.6.5、3.5.3、3.5.2、Android 3.5 旧版、Desktop 3.0.0 等更新记录        |
 | 关于     | `#/about`     | 软件名、版本、QQ群、开发者、赞助入口和完整致谢名单                                         |
 
 ## 当前公开下载
 
 | 文件                                                   | 平台            | 版本  | 大小      |
 | ------------------------------------------------------ | --------------- | ----- | --------- |
-| `CPENetworkDashboard v3.7.0-Release.apk`               | Android         | 3.7.0 | 30.4 MiB  |
+| `CPENetworkDashboard V3.7.1.apk`               | Android         | 3.7.1 | 30.3 MiB  |
 | `CPENetworkDashboard V3.6.5.apk`                       | Android（旧版） | 3.6.5 | 16.1 MiB  |
 | `CPEPlusPlus-3.5.3-macos-arm64.dmg`                    | macOS arm64     | 3.5.3 | 128.3 MiB |
 | `CPEPlusPlus-3.5.3-protected-portable-windows-x64.zip` | Windows x64     | 3.5.3 | 119.6 MiB |
 | `CPEPlusPlus-3.5.3-windows-x64.exe`                    | Windows x64     | 3.5.3 | 139.8 MiB |
 | `CPEPlusPlus-3.5.3-windows-x64.msi`                    | Windows x64     | 3.5.3 | 139.1 MiB |
 
-Android 仅保留 3.7.0 和 3.6.5 下载，默认推荐 3.7.0，3.6.5 作为旧版回退包。3.6.5 之前的 Android 安装包和下载入口已下架，历史日志和下载统计保留。macOS 和 Windows 仍为 3.5.3，Windows 默认推荐 EXE 安装版。
+Android 仅保留 3.7.1 和 3.6.5 下载，默认推荐 3.7.1，3.6.5 作为旧版回退包。3.7.0 安装包已由 3.7.1 替代，其历史日志和下载统计保留。3.6.5 之前的 Android 安装包和下载入口已下架，历史日志和下载统计保留。macOS 和 Windows 仍为 3.5.3，Windows 默认推荐 EXE 安装版。
 
-SHA-256 见 `public/downloads/checksums.txt`。Android 3.7.0 和桌面端大文件在网页里自动分片下载并合并，用户不需要手动处理分片。
+SHA-256 见 `public/downloads/checksums.txt`。Android 3.7.1 和桌面端大文件在网页里自动分片下载并合并，用户不需要手动处理分片。
 
 ## 本地开发
 
@@ -113,7 +113,7 @@ KV value 填 JSON：
 /*     -> dist 静态站点
 ```
 
-5. `updates` 是版本数据 KV，不是必须手动填。默认版本已经内置在 `edge/index.js`；后续发版推荐调用 `POST /api/updates/publish` 写入。当前 Android 稳定版为 `3.7.0 / versionCode 14`，macOS 和 Windows 仍为 `3.5.3 / versionCode 353`。部署新版函数后，已有 KV 中低于 3.7.0 的 Android stable 数据会自动回退到新版内置发布数据；高于 3.7.0 的版本和其他平台、渠道会保留。
+5. `updates` 是版本数据 KV，不是必须手动填。默认版本已经内置在 `edge/index.js`；后续发版推荐调用 `POST /api/updates/publish` 写入。当前 Android 稳定版为 `3.7.1 / versionCode 15`，macOS 和 Windows 仍为 `3.5.3 / versionCode 353`。部署新版函数后，已有 KV 中低于 3.7.1 的 Android stable 数据会自动回退到新版内置发布数据；高于 3.7.1 的版本和其他平台、渠道会保留。
 
 ### ESA KV 配置和维护密码
 
@@ -166,7 +166,7 @@ VITE_API_BASE=/api npm run build
 | `/api/updates/publish`    | POST     | 使用写入 token 发布云端最新版本        |
 | `/api/analytics/summary`  | GET      | 受保护完整统计，需要服务端读取 token   |
 
-更新检测默认数据包括 Android、Windows、macOS；当前 Android 为 3.7.0，Windows 和 macOS 为 3.5.3，iOS 返回“正在路上”的占位信息。
+更新检测默认数据包括 Android、Windows、macOS；当前 Android 为 3.7.1，Windows 和 macOS 为 3.5.3，iOS 返回“正在路上”的占位信息。
 
 ### App 更新接口对接
 
@@ -213,50 +213,50 @@ Content-Type: application/json
   "latest": {
     "platform": "android",
     "channel": "stable",
-    "version": "3.7.0",
-    "versionCode": 14,
-    "title": "Android 3.7.0 Release APK",
-    "notes": "Android 3.7.0 正式版（CPE数据看板）：新增 Wi-Fi 信道扫描与测速悬浮窗，完善插件签名与权限、多厂家载波聚合和界面交互，修复 HTML 插件滑动闪退，并加固应用内更新校验。",
-    "releaseDate": "2026-10-15",
+    "version": "3.7.1",
+    "versionCode": 15,
+    "title": "Android 3.7.1 Release APK",
+    "notes": "Android 3.7.1 正式版（CPE数据看板），支持 Android 8.0 及以上。",
+    "releaseDate": "2026-10-21",
     "publishedAt": "",
     "mandatory": false,
     "minSupportedVersion": "",
     "download": {
-      "fileId": "android-3.7.0",
+      "fileId": "android-3.7.1",
       "platform": "android",
-      "version": "3.7.0",
-      "label": "Android 3.7.0 Release APK",
-      "fileName": "CPENetworkDashboard v3.7.0-Release.apk",
+      "version": "3.7.1",
+      "label": "Android 3.7.1 Release APK",
+      "fileName": "CPENetworkDashboard V3.7.1.apk",
       "mode": "chunked",
       "href": "",
       "chunks": [
         {
           "index": 0,
-          "href": "/downloads/chunks/android-3.7.0/CPENetworkDashboard v3.7.0-Release.apk.part00",
-          "url": "https://cpe.yuan6.cn/api/download?file=android-3.7.0&source=app-update&part=0",
-          "directUrl": "https://cpe.yuan6.cn/downloads/chunks/android-3.7.0/CPENetworkDashboard%20v3.7.0-Release.apk.part00",
+          "href": "/downloads/chunks/android-3.7.1/CPENetworkDashboard V3.7.1.apk.part00",
+          "url": "https://cpe.yuan6.cn/api/download?file=android-3.7.1&source=app-update&part=0",
+          "directUrl": "https://cpe.yuan6.cn/downloads/chunks/android-3.7.1/CPENetworkDashboard%20V3.7.1.apk.part00",
           "tracked": true,
           "bytes": 20971520
         },
         {
           "index": 1,
-          "href": "/downloads/chunks/android-3.7.0/CPENetworkDashboard v3.7.0-Release.apk.part01",
-          "url": "https://cpe.yuan6.cn/downloads/chunks/android-3.7.0/CPENetworkDashboard%20v3.7.0-Release.apk.part01",
-          "directUrl": "https://cpe.yuan6.cn/downloads/chunks/android-3.7.0/CPENetworkDashboard%20v3.7.0-Release.apk.part01",
+          "href": "/downloads/chunks/android-3.7.1/CPENetworkDashboard V3.7.1.apk.part01",
+          "url": "https://cpe.yuan6.cn/downloads/chunks/android-3.7.1/CPENetworkDashboard%20V3.7.1.apk.part01",
+          "directUrl": "https://cpe.yuan6.cn/downloads/chunks/android-3.7.1/CPENetworkDashboard%20V3.7.1.apk.part01",
           "tracked": false,
-          "bytes": 10881036
+          "bytes": 10841841
         }
       ],
-      "chunkBytes": [20971520, 10881036],
-      "size": "30.4 MiB",
-      "checksum": "cc0402fa02606fbe8d96a63dbb8a9adf857dd164acf9b39d976a40b8d29393c5",
-      "url": "https://cpe.yuan6.cn/api/download?file=android-3.7.0&source=app-update&part=0",
+      "chunkBytes": [20971520, 10841841],
+      "size": "30.3 MiB",
+      "checksum": "ee0cb8b3ea23ee69d7f2d42f014c089c961c5687c1966ee3fff1ef1bb904bbf5",
+      "url": "https://cpe.yuan6.cn/api/download?file=android-3.7.1&source=app-update&part=0",
       "directUrl": ""
     },
     "alternatives": []
   },
   "updatedAt": "",
-  "build": "2026-10-16.2"
+  "build": "2026-10-21.1"
 }
 ```
 
@@ -273,7 +273,7 @@ Content-Type: application/json
 
 | 平台    | channel  | version       | versionCode | 下载模式  | 说明                                           |
 | ------- | -------- | ------------- | ----------- | --------- | ---------------------------------------------- |
-| Android | `stable` | `3.7.0`       | `14`        | `chunked` | 两片 APK，和 Android 包内 versionCode 保持一致 |
+| Android | `stable` | `3.7.1`       | `15`        | `chunked` | 两片 APK，和 Android 包内 versionCode 保持一致 |
 | Windows | `stable` | `3.5.3`       | `353`       | `chunked` | 默认 EXE，`alternatives` 含 Portable/MSI       |
 | macOS   | `stable` | `3.5.3`       | `353`       | `chunked` | arm64 DMG 分片                                 |
 | iOS     | `stable` | `coming-soon` | `0`         | 无        | `download` 为 `null`                           |
@@ -283,7 +283,7 @@ Content-Type: application/json
 App 侧建议这样用：
 
 - Android 检查更新时，把本机 `versionName` 和实际 APK 的 `versionCode` 一起传给 `/api/updates/check`。
-- Android 3.7.0 应使用 `versionName = 3.7.0`、`versionCode = 14`；Windows 和 macOS 继续使用各自的桌面构建号。
+- Android 3.7.1 应使用 `versionName = 3.7.1`、`versionCode = 15`；Windows 和 macOS 继续使用各自的桌面构建号。
 - Windows 和 macOS 继续用桌面端自己的版本号与打包号即可。
 - 完整统计页 `#/analytics` 只给维护者使用，输入服务端配置的 `CPE_ANALYTICS_TOKEN` 后才能打开。
 
@@ -323,7 +323,7 @@ VITE_API_BASE=/api npm run build
 
 ## 内容来源
 
-- Android 3.7.0 版本、包名和最低系统要求来自实际 APK，更新记录整理自 Android 项目的 CHANGELOG.md 与 HANDOFF.md；macOS 和 Windows 当前仍为 3.5.3。
+- Android 3.7.1 版本、包名、最低系统要求和校验值来自用户提供的实际 APK；本次未提供独立功能更新说明，更新记录仅列出已核实的发布包信息。Android 3.7.0 历史记录整理自 Android 项目的 CHANGELOG.md 与 HANDOFF.md；macOS 和 Windows 当前仍为 3.5.3。
 - 3.5.2 更新记录来自 Android 3.5.1/3.5.2 与桌面 3.5.2 发布说明。
 - Android 3.5 更新记录来自官网发布需求。
 - 桌面 3.0.0、跨平台 3.0 记录整理自当前产品仓库的 `README.md`、`VERSION.md` 和 `RELEASE_NOTES_V3.0.0.md`。

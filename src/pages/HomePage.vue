@@ -12,14 +12,14 @@ const marqueeGroups = [telemetryWords, telemetryWords, telemetryWords, telemetry
     <div class="hero-copy">
       <div class="app-mark">
         <img :src="appIcon" alt="" loading="eager" decoding="async" fetchpriority="high" />
-        <span>Android 3.7.0 · macOS / Windows 3.5.3</span>
+        <span>Android 3.7.1 · macOS / Windows 3.5.3</span>
       </div>
       <h1 class="hero-title">
         <span class="hero-title-main">CPE加加</span>
         <span class="hero-title-sub">CPE++</span>
       </h1>
       <p>
-        Android 3.7.0 已单独发布，应用名为 CPE数据看板；macOS 和 Windows 当前仍为 3.5.3。 它把 CPE
+        Android 3.7.1 已单独发布，应用名为 CPE数据看板；macOS 和 Windows 当前仍为 3.5.3。 它把 CPE
         当前状态、锁定结果和链路测试放到同一个工作界面。
       </p>
       <p class="hero-note">

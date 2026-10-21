@@ -68,7 +68,7 @@ function chunkedParts(folder: string, fileName: string, count: number): string[]
 }
 
 const chunkBytes: Record<string, number[]> = {
-  'android-3.7.0': [20971520, 10881036],
+  'android-3.7.1': [20971520, 10841841],
   'macos-3.5.3': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 8734301],
   'windows-exe-3.5.3': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 20737264],
   'windows-msi-3.5.3': [20971520, 20971520, 20971520, 20971520, 20971520, 20971520, 19996672],
@@ -118,7 +118,7 @@ export const productMoments: ProductMoment[] = [
 export const platformCards: PlatformCard[] = [
   {
     name: 'Android',
-    version: '3.7.0',
+    version: '3.7.1',
     title: '在设备旁边，手机最方便。',
     copy: '打开 CPE加加，先看信号、扫邻区、改锁定。弱电箱、窗边、机柜旁边，用手机比搬电脑省事多了。',
   },
@@ -152,17 +152,17 @@ export const supportedDevices: Array<[string, string]> = [
 
 export const downloads: Download[] = [
   {
-    id: 'android-3.7.0',
+    id: 'android-3.7.1',
     platform: 'Android',
-    version: '3.7.0',
+    version: '3.7.1',
     title: 'Android APK',
-    fileName: 'CPENetworkDashboard v3.7.0-Release.apk',
-    chunks: chunkedParts('android-3.7.0', 'CPENetworkDashboard v3.7.0-Release.apk', 2),
-    chunkBytes: chunkBytes['android-3.7.0'],
-    size: '30.4 MiB',
-    checksum: 'cc0402fa02606fbe8d96a63dbb8a9adf857dd164acf9b39d976a40b8d29393c5',
+    fileName: 'CPENetworkDashboard V3.7.1.apk',
+    chunks: chunkedParts('android-3.7.1', 'CPENetworkDashboard V3.7.1.apk', 2),
+    chunkBytes: chunkBytes['android-3.7.1'],
+    size: '30.3 MiB',
+    checksum: 'ee0cb8b3ea23ee69d7f2d42f014c089c961c5687c1966ee3fff1ef1bb904bbf5',
     label: '最新正式版',
-    copy: 'Android 应用名为 CPE数据看板。新增 Wi-Fi 信道扫描与测速悬浮窗，完善插件能力、多厂家载波聚合和界面交互，并加固应用内更新校验。',
+    copy: 'Android 3.7.1 正式版（CPE数据看板），支持 Android 8.0 及以上。',
   },
   {
     id: 'android-3.6.5',
@@ -174,7 +174,7 @@ export const downloads: Download[] = [
     size: '16.1 MiB',
     checksum: 'd7f0a351de5809b8095e45adbb74b5dff62f95768525c7832ce1ae66db085e72',
     label: '旧版 Android 3.6.5',
-    copy: '保留给需要回退的 Android 用户。此版本应用名为 CPE网络看板，新用户建议下载 3.7.0。',
+    copy: '保留给需要回退的 Android 用户。此版本应用名为 CPE网络看板，新用户建议下载 3.7.1。',
   },
   {
     id: 'macos-3.5.3',
@@ -236,9 +236,26 @@ export const downloads: Download[] = [
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: '3.7.1',
+    date: '2026-10-21',
+    badge: 'Android 最新正式版',
+    lead: 'Android 3.7.1 已发布，应用名为 CPE数据看板；macOS 和 Windows 当前仍为 3.5.3。',
+    sections: [
+      {
+        title: '发布包',
+        items: [
+          'Android：CPENetworkDashboard V3.7.1.apk，versionCode 15，支持 Android 8.0 及以上。',
+          '安装包为 30.3 MiB，官网与应用内更新使用两片下载并合并为完整 APK。',
+          'SHA-256：ee0cb8b3ea23ee69d7f2d42f014c089c961c5687c1966ee3fff1ef1bb904bbf5。',
+          '保留 Android 3.6.5 回退下载，macOS 和 Windows 继续保留 3.5.3。',
+        ],
+      },
+    ],
+  },
+  {
     version: '3.7.0',
     date: '2026-10-15',
-    badge: 'Android 最新正式版',
+    badge: 'Android 历史版本',
     lead: 'Android 3.7.0 已发布，应用名为 CPE数据看板；macOS 和 Windows 当前仍为 3.5.3。',
     sections: [
       {
@@ -375,7 +392,7 @@ export const changelogEntries: ChangelogEntry[] = [
     version: 'Android 3.5',
     date: '2026-06-08',
     badge: '旧版 Android 正式版',
-    lead: 'Android 3.5 为历史版本，安装包已下架。新用户建议下载 3.7.0，需要旧版可选择 3.6.5。',
+    lead: 'Android 3.5 为历史版本，安装包已下架。新用户建议下载 3.7.1，需要旧版可选择 3.6.5。',
     sections: [
       {
         title: '新增功能',
@@ -590,7 +607,7 @@ export const changelogEntries: ChangelogEntry[] = [
 export const aboutInfo: AboutInfo = {
   chineseName: 'CPE加加',
   englishName: 'CPE++',
-  versionName: 'Android 3.7.0 · Desktop 3.5.3',
+  versionName: 'Android 3.7.1 · Desktop 3.5.3',
   userGroup: '955206409',
   description:
     '面向 4G/5G CPE 的管理工具。CPE加加覆盖连接状态、射频指标、SIM/AMBR、锁频锁小区、邻区扫描、测速、Ping 与路由测试。',

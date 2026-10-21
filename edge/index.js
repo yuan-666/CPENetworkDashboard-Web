@@ -22,7 +22,7 @@
 
 const KV_NAMESPACE = 'cpeweb'
 const LEGACY_KV_NAMESPACES = ['cpe_network_dashboard_web']
-const EDGE_BUILD = '2026-10-16.2'
+const EDGE_BUILD = '2026-10-21.1'
 const ANALYTICS_KEY = 'analytics'
 const UPDATES_KEY = 'updates'
 const CONFIG_KEY = 'config'
@@ -807,15 +807,15 @@ function normalizeGeo(geo, ip) {
 }
 
 const DOWNLOADS = {
-  'android-3.7.0': {
+  'android-3.7.1': {
     platform: 'android',
-    version: '3.7.0',
-    label: 'Android 3.7.0 Release APK',
-    fileName: 'CPENetworkDashboard v3.7.0-Release.apk',
-    chunks: chunkedParts('android-3.7.0', 'CPENetworkDashboard v3.7.0-Release.apk', 2),
-    chunkBytes: [20971520, 10881036],
-    size: '30.4 MiB',
-    checksum: 'cc0402fa02606fbe8d96a63dbb8a9adf857dd164acf9b39d976a40b8d29393c5',
+    version: '3.7.1',
+    label: 'Android 3.7.1 Release APK',
+    fileName: 'CPENetworkDashboard V3.7.1.apk',
+    chunks: chunkedParts('android-3.7.1', 'CPENetworkDashboard V3.7.1.apk', 2),
+    chunkBytes: [20971520, 10841841],
+    size: '30.3 MiB',
+    checksum: 'ee0cb8b3ea23ee69d7f2d42f014c089c961c5687c1966ee3fff1ef1bb904bbf5',
     channel: 'stable',
   },
   'android-3.6.5': {
@@ -883,6 +883,13 @@ const DOWNLOADS = {
 }
 
 const LEGACY_DOWNLOADS = {
+  'android-3.7.0': {
+    platform: 'android',
+    version: '3.7.0',
+    label: 'Android 3.7.0 Release APK',
+    href: '/#/download',
+    channel: 'stable',
+  },
   'android-3.5.3': {
     platform: 'android',
     version: '3.5.3',
@@ -1052,15 +1059,15 @@ const UPDATE_PLATFORM_ALIASES = {
 }
 
 const DEFAULT_UPDATE_CHANNEL = 'stable'
-const ANDROID_STABLE_LATEST_VERSION = '3.7.0'
-const ANDROID_STABLE_LATEST_VERSION_CODE = 14
+const ANDROID_STABLE_LATEST_VERSION = '3.7.1'
+const ANDROID_STABLE_LATEST_VERSION_CODE = 15
 
 const DEFAULT_RELEASES = {
   android: {
-    stable: releaseFromDownload('android-3.7.0', {
+    stable: releaseFromDownload('android-3.7.1', {
       versionCode: ANDROID_STABLE_LATEST_VERSION_CODE,
-      releaseDate: '2026-10-15',
-      notes: 'Android 3.7.0 正式版（CPE数据看板）：新增 Wi-Fi 信道扫描与测速悬浮窗，完善插件签名与权限、多厂家载波聚合和界面交互，修复 HTML 插件滑动闪退，并加固应用内更新校验。',
+      releaseDate: '2026-10-21',
+      notes: 'Android 3.7.1 正式版（CPE数据看板），支持 Android 8.0 及以上。',
     }),
   },
   windows: {

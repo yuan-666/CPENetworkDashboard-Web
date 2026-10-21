@@ -1,5 +1,14 @@
 # CPE++ Web Changelog
 
+## Android 3.7.1 (2026-10-21)
+
+- 发布 `CPENetworkDashboard V3.7.1.apk`，实际 APK 版本为 `3.7.1 / versionCode 15`，包名为 `com.chazime.cpenetworkdashboard`，最低支持 Android 8.0。
+- 安装包为 31,813,361 字节（30.3 MiB），按 20 MiB 拆成两片（20,971,520 / 10,841,841 字节），继续兼容 ESA 单文件限制。
+- SHA-256：`ee0cb8b3ea23ee69d7f2d42f014c089c961c5687c1966ee3fff1ef1bb904bbf5`。
+- 官网推荐下载、首页、关于、更新日志和应用内更新接口同步为 3.7.1；保留 Android 3.6.5 回退下载，3.7.0 的更新记录与统计保留。macOS 和 Windows 仍为 3.5.3。
+- 部署新版 Edge Function 后，低于 3.7.1 的 Android stable KV 自动使用内置新版数据，保留未来版本与其他平台、渠道。
+- 本次未提供独立的功能更新说明，仅记录已核实的安装包与分发信息。
+
 ## 官网下载清理 (2026-10-16)
 
 - Android 仅保留 3.7.0 与 3.6.5 下载，移除更早版本的下载入口、APK 与当前校验清单记录。

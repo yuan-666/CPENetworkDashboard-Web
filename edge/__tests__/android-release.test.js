@@ -31,20 +31,28 @@ async function checkUpdate(edge, version, code) {
   return response.json()
 }
 
-describe('Android 3.7.0 release delivery', () => {
+describe('Android 3.7.1 release delivery', () => {
   it('offers the new package to old clients and no update to current clients', async () => {
     const edge = edgeWithStoredRelease()
-    const old = await checkUpdate(edge, '3.6.5', 12)
+    const old = await checkUpdate(edge, '3.7.0', 14)
     expect(old.updateAvailable).toBe(true)
-    expect(old.latest).toMatchObject({ version: '3.7.0', versionCode: 14 })
-    expect((await checkUpdate(edge, '3.7.0', 14)).updateAvailable).toBe(false)
+    expect(old.latest).toMatchObject({ version: '3.7.1', versionCode: 15 })
+    expect((await checkUpdate(edge, '3.7.1', 15)).updateAvailable).toBe(false)
   })
 
   it('migrates stale Android KV releases and preserves future releases', async () => {
-    const oldEdge = edgeWithStoredRelease({ version: '3.6.5', versionCode: 12 })
-    expect((await checkUpdate(oldEdge, '3.6.5', 12)).latest.version).toBe('3.7.0')
-    const futureEdge = edgeWithStoredRelease({ version: '3.8.0', versionCode: 15 })
-    expect((await checkUpdate(futureEdge, '3.7.0', 14)).latest.version).toBe('3.8.0')
+    for (const [version, code] of [
+      ['3.6.5', 12],
+      ['3.7.0', 14],
+    ]) {
+      const oldEdge = edgeWithStoredRelease({ version, versionCode: code })
+      expect((await checkUpdate(oldEdge, version, code)).latest).toMatchObject({
+        version: '3.7.1',
+        versionCode: 15,
+      })
+    }
+    const futureEdge = edgeWithStoredRelease({ version: '3.8.0', versionCode: 16 })
+    expect((await checkUpdate(futureEdge, '3.7.1', 15)).latest.version).toBe('3.8.0')
   })
 
   it('serves matching website and app chunks that reconstruct the verified APK', async () => {
@@ -79,8 +87,11 @@ describe('Android 3.7.0 release delivery', () => {
       hash.update(bytes)
       size += bytes.length
     }
-    expect(size).toBe(31852556)
+    expect(size).toBe(31813361)
     expect(hash.digest('hex')).toBe(download.checksum)
+    expect(readFileSync(resolve('public/downloads/checksums.txt'), 'utf8')).toContain(
+      `${download.checksum}  ${download.fileName}`
+    )
   })
 
   it('keeps desktop releases on 3.5.3 and only offers Android 3.6.5 or later', async () => {
@@ -91,13 +102,14 @@ describe('Android 3.7.0 release delivery', () => {
     expect(releases.macos.stable.version).toBe('3.5.3')
     expect(
       downloads.filter((item) => item.platform === 'Android').map((item) => item.version)
-    ).toEqual(['3.7.0', '3.6.5'])
+    ).toEqual(['3.7.1', '3.6.5'])
     expect(existsSync(resolve('public/downloads/CPENetworkDashboard V3.6.5.apk'))).toBe(true)
   })
 
   it('rejects retired Android downloads and removes their APK files', async () => {
     const edge = edgeWithStoredRelease()
     for (const [id, fileName] of [
+      ['android-3.7.0', 'chunks/android-3.7.0'],
       ['android-3.5.3', 'CPEPlusPlus-v3.5.3.apk'],
       ['android-3.5', 'CPEPlusPlus-v3.5-legacy-release.apk'],
     ]) {
